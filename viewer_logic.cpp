@@ -234,6 +234,7 @@ void panView(Direction dir) {
 }
 
 void promptFocusAdd(Graph& graph) {
+    if (Config::quietMode) return;
     std::cout << "Enter node index to ADD as focus: ";
     int idx; std::cin >> idx;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -241,6 +242,7 @@ void promptFocusAdd(Graph& graph) {
 }
 
 void promptFocusRemove(Graph& graph) {
+    if (Config::quietMode) return;
     std::cout << "Enter focus index to REMOVE: ";
     int idx; std::cin >> idx;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -248,6 +250,7 @@ void promptFocusRemove(Graph& graph) {
 }
 
 void promptSetDistance(Graph& graph) {
+    if (Config::quietMode) return;
     std::cout << "Enter new max render distance: ";
     int d; std::cin >> d;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -353,7 +356,15 @@ void handleKeyPress(Graph& graph, char key) {
     }
 }
 
-void runEditor(Graph& graph) {
+#include "test_logic.h"
+#include "testsuite2_logic.h"
+
+void runEditor(Graph& graph, bool runTests) {
+    if (runTests) {
+        runAllTests();
+        runAll2Tests();
+        return;
+    }
     drawViewerMenu();
 
     while (true) {

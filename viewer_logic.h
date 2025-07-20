@@ -39,7 +39,7 @@ bool saveGraphToCSV(const Graph& graph, const std::string& filename);  // serial
 bool loadGraphFromCSV(Graph& graph, const std::string& filename);      // parses graph from file
 
 // Viewer Engine (optional)
-void runEditor(Graph& graph);                     // main viewer loop with menu+analytics
+void runEditor(Graph& graph, bool runTests = false);                     // main viewer loop with menu+analytics
 void renderGraph(const Graph& graph);                   // renders visual graph content
 
 void promptFocusAdd(Graph& graph);

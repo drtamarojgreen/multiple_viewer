@@ -22,6 +22,7 @@ namespace Config {
     inline int panOffsetY = 0;
     inline float viewerZoom = 1.0f;
     inline int nodePadding = 1;
+    inline bool quietMode = false;
 
 }
 
