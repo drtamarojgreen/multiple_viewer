@@ -1,0 +1,30 @@
+"Behavioral Activation",0,[1,2],10,0
+"Cognitive Distortions",1,[0,3,4],9,0
+"Exposure Therapy",2,[0,5],8,0
+"Thought Record",3,[1],7,0
+"Relaxation Techniques",4,[1,6],6,0
+"Mindfulness Meditation",5,[2,7,8],9,1
+"Self-Monitoring",6,[4,9],8,1
+"Problem Solving",7,[5,10],7,1
+"Sleep Hygiene",8,[5],6,1
+"Activity Scheduling",9,[6,11],5,1
+"Schema Therapy",10,[7,12],10,2
+"Emotional Regulation",11,[9,13],9,2
+"Interpersonal Skills",12,[10,14],8,2
+"Stress Management",13,[11],7,2
+"Assertiveness Training",14,[12],6,2
+"Relapse Prevention",15,[16,17],10,3
+"Motivational Interviewing",16,[15,18],9,3
+"Problematic Thinking",17,[15,19],8,3
+"Goal Setting",18,[16],7,3
+"Social Skills Training",19,[17],6,3
+"Psychoeducation",20,[21,22],10,4
+"Emotion-Focused Therapy",21,[20,23],9,4
+"Dialectical Behavior Therapy",22,[20,24],8,4
+"Acceptance and Commitment Therapy",23,[21],7,4
+"Mindfulness-Based Cognitive Therapy",24,[22],6,4
+"Coping Strategies",25,[26,27],5,0
+"Thought Challenging",26,[25],4,0
+"Behavioral Experiments",27,[25],3,0
+"Self-Efficacy",28,[29],2,1
+"Motivation Enhancement",29,[28],1,1
