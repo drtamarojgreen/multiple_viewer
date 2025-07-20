@@ -133,7 +133,15 @@ std::vector<int> extractTopIndices(const std::vector<std::pair<int, int>>& list,
 }
 
 void Graph::addFocus(int idx) {
-    if (nodeExists(idx)) focusedNodeIndices.insert(idx);
+    if (!nodeExists(idx)) return;
+    if (Config::allowMultiFocus) {
+        focusedNodeIndices.insert(idx);
+        focusedNodeIndex = idx; 
+    } else {
+        focusedNodeIndices.clear();
+        focusedNodeIndices.insert(idx);
+        focusedNodeIndex = idx;
+    }
 }
 
 void Graph::removeFocus(int idx) {
@@ -296,6 +304,33 @@ int calculateNodeSize(int depth, Graph::ZoomLevel zoom) {
     const int sizes[] = { 3, 4, 5, 5, 5 };  // Z1 → 3, Z2 → 4, then clamp to 5
     int idx = std::min(static_cast<int>(zoom), 4);
     return sizes[idx];
+}
+
+double calculateClusteringCoefficient(const Graph& g) {
+    double total = 0.0;
+    for (const auto& node : g.nodes) {
+        const auto& nbrs = node.neighbors;
+        int k = nbrs.size();
+        if (k < 2) continue;
+        int links = 0;
+        for (int u : nbrs) {
+            for (int v : nbrs) {
+                if (u != v) {
+                    // Find GraphNode for u
+                    auto it_u = std::find_if(g.nodes.begin(), g.nodes.end(),
+                        [u](const GraphNode& n) { return n.index == u; });
+                    if (it_u != g.nodes.end()) {
+                        // Check if v is a neighbor of u
+                        if (std::find(it_u->neighbors.begin(), it_u->neighbors.end(), v) != it_u->neighbors.end()) {
+                            links++;
+                        }
+                    }
+                }
+            }
+        }
+        total += links / float(k * (k - 1));
+    }
+    return g.nodes.empty() ? 0.0f : total / g.nodes.size();
 }
 
 // Update Cached Summary

@@ -118,7 +118,6 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
                 if (!part.empty()) nbrStrs.push_back(part);
             }
             neighborTokens.push_back(std::move(nbrStrs));
-            node.label        = fields[0];
             node.index        = std::stoi(fields[1]);
             std::set<int> neighborSet = parseNeighbors(fields[2]);
             node.neighbors    = std::vector<int>(neighborSet.begin(), neighborSet.end());

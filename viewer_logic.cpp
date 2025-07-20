@@ -23,8 +23,9 @@ using namespace std;
 void drawViewerMenu() {
     std::cout << "\n=== CBT Graph Viewer Menu ===\n";
     std::cout << "[↑↓←→] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist  [/] Search\n";
-    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [L] Load  [P] Overlay  [ESC] Exit\n";
     std::cout << "[TAB] Cycle Focus [B] Book View [E] Page View [V] Page Cycle [Z] Zoom In   [X] Zoom Out\n";
+    std::cout << "[M] Multi Foci Toggle\n";
+    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [L] Load  [ESC] Exit\n";
     std::cout << "==============================\n\n";
 }
 
@@ -53,46 +54,86 @@ void renderGraph(const Graph& graph) {
 
     map<int, Coord3> pos;
     queue<tuple<int, int, int>> q;
-    int focus = graph.focusedNodeIndex;
-    if (focus < 0 || focus >= graph.nodes.size()) {
-        std::cout << "[Viewer] No valid focus found. Defaulting to node 0\n";
-        if (graph.nodes.empty()) {
-            std::cout << "No nodes in graph. Skipping render.\n";
-            return;
+
+    // --- Multi-Focus Layout Seeding ---
+    // The goal is to place all focused nodes into the initial view.
+    if (graph.focusedNodeIndices.empty() || graph.focusedNodeIndices.size() == 1) {
+        // Handle single focus or no focus (default)
+        int focus = -1;
+        if (!graph.focusedNodeIndices.empty()) {
+            focus = *graph.focusedNodeIndices.begin();
+        } else if (!graph.nodes.empty()) {
+            focus = graph.nodes.front().index; // Default to first node
         }
-        focus = 0;
+
+        if (graph.nodeExists(focus)) {
+            int baseRow = (CONSOLE_HEIGHT - 1) / 2;
+            int baseCol = (CONSOLE_WIDTH - 1) / 2;
+            pos[focus] = { baseRow, baseCol, 0 };
+            q.push({ focus, baseRow, baseCol });
+        }
+    } else {
+        // Multi-focus: Distribute the focused nodes horizontally across the screen.
+        const auto& focused_nodes = graph.focusedNodeIndices;
+        int num_focused = focused_nodes.size();
+        int spacing = CONSOLE_WIDTH / (num_focused + 1); // e.g., 3 nodes -> space at 20, 40, 60
+        int i = 1;
+        for (int focus_id : focused_nodes) {
+            if (graph.nodeExists(focus_id)) {
+                int row = CONSOLE_HEIGHT / 2;
+                int col = i * spacing;
+                pos[focus_id] = { row, col, 0 };
+                q.push({ focus_id, row, col });
+                i++;
+            }
+        }
     }
 
-    //if (focus < 0 || focus >= graph.nodes.size()) return;
-
-    int baseRow = (CONSOLE_HEIGHT - 1) / 2;
-    int baseCol = (CONSOLE_WIDTH - 1) / 2;
-    pos[focus] = { baseRow, baseCol, 0 };
-    q.push({ focus, baseRow, baseCol });
+    if (q.empty()) { // Fallback if no valid focus nodes were found or graph is empty
+        std::cout << "No valid focus or nodes in graph. Skipping render.\n";
+        return;
+    }
 
     //int maxDist = graph.getMaxDistance();
     int maxDist = graph.getMaxRenderDistance();
 
-    //const auto& focusNode = graph.nodes.at(focus);
     while (!q.empty()) {
         auto [u, wr, wc] = q.front(); q.pop();
         int dz = pos[u].z;
         if (dz >= maxDist) continue;
-        for (auto [dr, dc] : vector<pair<int, int>>{
-            { 1, 0 },{ -1, 0 },{ 0, 1 },{ 0, -1 },{ 1, 1 },{ 1, -1 },{ -1, 1 },{ -1, -1 } })
-        {
-            for (int v : graph.nodes.at(u).neighbors) {
-                if (pos.count(v)) continue;
-                int nz = dz +1;
-                if (nz > maxDist) continue;
-                int size = graph.calculateNodeSize(nz);
-                int step = size + Config::nodePadding;
-                int nr = wr + dr * step;
-                int nc = wc + dc * step;
-                if (!graph.isInViewport(nr, nc, size)) continue;
-                pos[v] = { nr, nc, nz };
-                q.push({ v, nr, nc });
+
+        const auto& u_node = graph.nodeMap.at(u);
+        const vector<pair<int, int>> directions = {
+            {0, 1}, {1, 0}, {0, -1}, {-1, 0}, // Cardinal
+            {1, 1}, {1, -1}, {-1, 1}, {-1, -1}  // Diagonal
+        };
+        int dir_idx = 0;
+
+        for (int v : u_node.neighbors) {
+            if (pos.count(v)) continue; // Already placed
+            if (dir_idx >= (int)directions.size()) break; // Ran out of directions for this node
+
+            auto [dr, dc] = directions[dir_idx++];
+            int nz = dz + 1;
+            if (nz > maxDist) continue;
+
+            int size = graph.calculateNodeSize(nz);
+            int step = size + Config::nodePadding + 3; // Increased step for more spacing
+            int nr = wr + dr * step;
+            int nc = wc + dc * step;
+
+            // A simple check to avoid placing on top of another node in the same spot
+            bool collision = false;
+            for(const auto& [_, other_pos] : pos) {
+                if (other_pos.x == nr && other_pos.y == nc) {
+                    collision = true;
+                    break;
+                }
             }
+            if (collision) continue;
+
+            pos[v] = { nr, nc, nz };
+            q.push({ v, nr, nc });
         }
     }
 
@@ -100,7 +141,7 @@ void renderGraph(const Graph& graph) {
     vector<vector<float>> zbuf(CONSOLE_HEIGHT, vector<float>(CONSOLE_WIDTH, numeric_limits<float>::infinity()));
 
     for (const auto& [nid, coord] : pos) {
-        const auto& node = graph.nodes.at(nid);
+        const auto& node = graph.nodeMap.at(nid);
         int d = coord.z;
         int wr = coord.x, wc = coord.y;
         int size = graph.calculateNodeSize(d);
@@ -145,11 +186,13 @@ void renderGraph(const Graph& graph) {
     }
 
     for (const auto& [nid, coord] : pos) {
-        for (int v : graph.nodes.at(nid).neighbors) {
+        for (int v : graph.nodeMap.at(nid).neighbors) {
             if (!pos.count(v)) continue;
 
-            int r1 = coord.x, c1 = coord.y;
-            int r2 = pos[v].x, c2 = pos[v].y;
+            // Apply pan offset to the start and end points of the edge
+            int r1 = coord.x + graph.panY, c1 = coord.y + graph.panX;
+            int r2 = pos[v].x + graph.panY, c2 = pos[v].y + graph.panX;
+
             int dr = abs(r2 - r1), dc = abs(c2 - c1);
             int sr = (r1 < r2) ? 1 : -1;
             int sc = (c1 < c2) ? 1 : -1;
@@ -224,10 +267,9 @@ void handleKeyPress(Graph& graph, char key) {
         }},
         {'S', [&]() { saveGraphToCSV(graph, "graph_output.csv"); }},
         {'L', [&]() { loadGraphFromCSV(graph, "graph_input.csv"); }},
-        {'G', [&]() { Config::showAnalyticsPanel = !Config::showAnalyticsPanel; }},
+        {'G', [&]() { Config::viewerOverlayMode = !Config::viewerOverlayMode; }},
         {'D', [&]() { Config::autoScaleDepth = !Config::autoScaleDepth; }},
         {'W', [&]() { Config::showTopicWeights = !Config::showTopicWeights; }},
-        {'P', [&]() { Config::viewerOverlayMode = !Config::viewerOverlayMode; }},
         {'F', [&]() { promptFocusAdd(graph); }},
         {'O', [&]() { promptFocusRemove(graph); }},
         {'T', [&]() { promptSetDistance(graph); }},
@@ -296,6 +338,8 @@ void handleKeyPress(Graph& graph, char key) {
             else
                 std::cout << "[Page] No focused node selected.\n";
         }},
+        {'M', [&]() { Config::allowMultiFocus = !Config::allowMultiFocus; }},
+        {'[', [&]() { graph.cycleFocus(); }},
         {'\t', [&]() { graph.cycleFocus(); }}
 
  };
@@ -359,10 +403,10 @@ bool Graph::isFocusOnlyView() const {
 
 // continuous zoom sizing
 int Graph::calculateNodeSize(int depth) const {
-    // Turn zoomLevel 0–4 into a multiplier 1–5, ignore depth
-    int zf = static_cast<int>(zoomLevel) + 1;        // Z1→1, Z2→2 … Z5→5
-    int baseSize = 5;                                // always display 5×5 at Z1
-    return baseSize * zf;                            // Z1=5, Z2=10, … Z5=25
+    // Turn zoomLevel Z1-Z5 (internally 0-4) into a size from 1-5.
+    // This ensures node size is affected by zoom but capped at 5x5.
+    // The depth parameter is currently ignored for a simpler sizing model.
+    return static_cast<int>(zoomLevel) + 1;
 }
 
 // proximity depth

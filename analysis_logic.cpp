@@ -10,33 +10,46 @@ void drawAnalyticsPanelOverlay(const Graph& g) {
     copy.updateSummary();
     const auto& s = copy.summary;
 
-    std::cout << "\n==== FULL ANALYTICS OVERLAY ====\n";
+    std::cout << "\n==== ANALYTICS OVERLAY ====\n";
     std::cout << "Nodes: " << s.totalNodes << " | Edges: " << s.totalEdges << "\n";
     std::cout << "Average Degree: " << s.averageDegree << "\n";
     std::cout << "Is Connected: " << std::boolalpha << s.isConnected << "\n";
     std::cout << "Isolated Nodes: " << s.isolatedNodeCount << "\n";
 
-    std::cout << "\nFocused Nodes: ";
-    for (int idx : s.focusedNodes) std::cout << "#" << idx << " ";
-    std::cout << "\n\nTopic Weights:\n";
-    for (const auto& [i, w] : s.topicWeights) std::cout << "#" << i << ": " << w << "\n";
+    auto printNodeList = [&](const std::string& title, const std::vector<int>& nodes) {
+        std::cout << title;
+        if (nodes.empty()) {
+            std::cout << " None\n";
+            return;
+        }
+        for (int idx : nodes) {
+            if (g.nodeExists(idx)) {
+                std::cout << " [" << g.nodeMap.at(idx).label << "]";
+            } else {
+                std::cout << " [#?" << idx << "]";
+            }
+        }
+        std::cout << "\n";
+    };
 
-    std::cout << "\nTop Connected Nodes: ";
-    for (int i : s.topConnectedNodes) std::cout << "#" << i << " ";
+    std::cout << "\n";
+    printNodeList("Focused Nodes:          ", s.focusedNodes);
+    printNodeList("Top Connected Nodes:    ", s.topConnectedNodes);
+    printNodeList("Top Connected Subjects: ", s.topConnectedSubjects);
+    printNodeList("Least Connected Nodes:  ", s.leastConnectedNodes);
+    printNodeList("Least Connected Subjects:", s.leastConnectedSubjects);
 
-    std::cout << "\nTop Connected Subjects: ";
-    for (int i : s.topConnectedSubjects) std::cout << "#" << i << " ";
-
-    std::cout << "\nLeast Connected Nodes: ";
-    for (int i : s.leastConnectedNodes) std::cout << "#" << i << " ";
-
-    std::cout << "\nLeast Connected Subjects: ";
-    for (int i : s.leastConnectedSubjects) std::cout << "#" << i << " ";
+    std::cout << "\nTopic Weights:\n";
+    for (const auto& [i, w] : s.topicWeights) {
+        if (g.nodeExists(i)) {
+            std::cout << "  [" << g.nodeMap.at(i).label << "]: " << w << "\n";
+        }
+    }
+    std::cout << "Clustering Coefficient: " << calculateClusteringCoefficient(g) << "\n";
+    std::cout << "Average Degree: " << s.averageDegree << "\n";
 
     std::cout << "\n\nPerformance:\n";
     std::cout << "Load Time: " << s.timeToLoadMs << " ms\n";
     std::cout << "Render Time: " << s.timeToRenderMs << " ms\n";
     std::cout << "=================================\n";
-    g.pause();  // <-- wait for keypress before continuing
 }
-
