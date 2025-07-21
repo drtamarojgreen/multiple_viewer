@@ -1,6 +1,7 @@
 #include "viewer_logic.h"
 #include "file_logic.h"
 #include "map_logic.h"
+#include "search_logic.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -12,11 +13,10 @@
 #include <tuple>
 #include <cmath>
 #include <limits>
-#include <windows.h>
-#include <conio.h>
 #include <unordered_map>
 #include <functional>
 #include <cctype>
+#include <climits>
 
 using namespace std;
 
@@ -283,16 +283,7 @@ void handleKeyPress(Graph& graph, char key) {
                 return;
             }
 
-            std::vector<int> matches;
-            for (const auto& node : graph.nodes) {
-                std::string label = node.label;
-                std::transform(label.begin(), label.end(), label.begin(), ::tolower);
-                std::string loweredKeyword = keyword;
-                std::transform(loweredKeyword.begin(), loweredKeyword.end(), loweredKeyword.begin(), ::tolower);
-
-                if (label.find(loweredKeyword) != std::string::npos)
-                    matches.push_back(node.index);
-            }
+            std::vector<int> matches = findSimilarTopics(graph, keyword);
 
             if (matches.empty()) {
                 std::cout << "[Search] No matches found for \"" << keyword << "\"\n";
@@ -360,20 +351,11 @@ void runEditor(Graph& graph) {
         renderGraph(graph);
         //renderMindMap(graph);
         if (Config::viewerOverlayMode) drawAnalyticsPanelOverlay(graph);
-        int key = _getch(); // Use int to handle special key codes
+        int key = std::cin.get(); // Use int to handle special key codes
         //key = std::toupper(key);  // Allow both 'a' and 'A' for example
         if (key == 27) { // ESC key always exits
             std::cout << "[Viewer] Exiting viewer mode\n";
             break;
-        } else if (key == 0 || key == 224) { // Special key prefix for arrows, etc.
-            key = _getch(); // Get the actual key code
-            std::cout << "[DBG] Extended key received: " << key << "\n";
-            switch (key) {
-                case 72: graph.pan(0, -1); break; // Up Arrow
-                case 80: graph.pan(0, 1);  break; // Down Arrow
-                case 75: graph.pan(-1, 0); break; // Left Arrow
-                case 77: graph.pan(1, 0);  break; // Right Arrow
-            }
         } else {
             handleKeyPress(graph, static_cast<char>(key));
         }

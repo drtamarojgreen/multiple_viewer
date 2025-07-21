@@ -18,6 +18,7 @@ namespace Config {
     inline bool viewerOverlayMode = false;
     inline bool autoScaleDepth = true;
     inline bool showTopicWeights = true;
+    inline bool allowMultiFocus = false;
     inline int panOffsetX = 0;
     inline int panOffsetY = 0;
     inline float viewerZoom = 1.0f;

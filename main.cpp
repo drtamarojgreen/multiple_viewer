@@ -1,16 +1,15 @@
 #include "map_logic.h"
 #include "viewer_logic.h"
+#include "search_logic.h"
 #include <iostream>
 #include "test_logic.h"
 #include "testsuite2_logic.h"
-
-#include <conio.h>
 
 int main() {
     //runAllTests();
     //runAll2Tests();
     std::cout<<"Press any key to continue...";
-    _getch();
+    std::cin.get();
     std::cout<<"\n";
     Graph graph;
 

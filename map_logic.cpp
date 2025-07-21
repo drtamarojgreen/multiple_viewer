@@ -2,7 +2,6 @@
 #include <queue>
 #include <algorithm>
 #include <chrono>
-#include <conio.h>
 
 void Graph::addNode(const GraphNode& node) {
     if (nodeExists(node.index)) return;
@@ -170,7 +169,7 @@ int Graph::getMaxDistance() const {
 // Wait for key
 void Graph::pause() const {
     std::cout<<"Press any key to continue...";
-    _getch();
+    std::cin.get();
     std::cout<<"\n";
 }
 
