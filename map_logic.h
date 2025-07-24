@@ -22,7 +22,7 @@ namespace Config {
     inline int panOffsetY = 0;
     inline float viewerZoom = 1.0f;
     inline int nodePadding = 1;
-
+    inline bool allowMultiFocus = true; 
 }
 
 // === RenderBuffer (formerly render_buffer.h) ===
@@ -115,6 +115,7 @@ public:
 
     void addNode(const GraphNode& node);
     void removeNode(int index);
+    void updateNode(int index, const GraphNode& updatedNode);
     bool nodeExists(int index) const;
     void addEdge(int from, int to);
     void clear();

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <iostream>
 #include <algorithm>
+#include <cstddef>
 
 bool saveGraphToCSV(const Graph& graph, const std::string& filename) {
     std::cout << "Starting save...\n";
