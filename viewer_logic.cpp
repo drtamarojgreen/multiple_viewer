@@ -117,15 +117,19 @@ void renderGraph(const Graph& graph) {
             int nz = dz + 1;
             if (nz > maxDist) continue;
 
-            int size = graph.calculateNodeSize(nz);
-            int step = size + Config::nodePadding + 3; // Increased step for more spacing
+            int parent_size = graph.calculateNodeSize(dz);
+            int child_size = graph.calculateNodeSize(nz);
+            int step = (parent_size / 2) + (child_size / 2) + Config::nodePadding + 2;
             int nr = wr + dr * step;
             int nc = wc + dc * step;
 
-            // A simple check to avoid placing on top of another node in the same spot
+            // Bounding box collision check
             bool collision = false;
-            for(const auto& [_, other_pos] : pos) {
-                if (other_pos.x == nr && other_pos.y == nc) {
+            for (const auto& [other_id, other_pos] : pos) {
+                int other_node_size = graph.calculateNodeSize(other_pos.z);
+                // AABB check: if distance between centers is less than half the sum of sizes
+                if (abs(nr - other_pos.x) * 2 < (child_size + other_node_size) &&
+                    abs(nc - other_pos.y) * 2 < (child_size + other_node_size)) {
                     collision = true;
                     break;
                 }
@@ -403,10 +407,14 @@ bool Graph::isFocusOnlyView() const {
 
 // continuous zoom sizing
 int Graph::calculateNodeSize(int depth) const {
-    // Turn zoomLevel Z1-Z5 (internally 0-4) into a size from 1-5.
-    // This ensures node size is affected by zoom but capped at 5x5.
-    // The depth parameter is currently ignored for a simpler sizing model.
-    return static_cast<int>(zoomLevel) + 1;
+    // Base size is determined by the global zoom level.
+    int base_size = static_cast<int>(zoomLevel) + 1;
+
+    // Node size decreases with depth to create a perspective effect.
+    // The size is clamped to a minimum of 1.
+    int size = std::max(1, base_size - depth);
+
+    return size;
 }
 
 // proximity depth
