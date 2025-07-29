@@ -4,38 +4,42 @@ This document outlines the plan for implementing key enhancements for the CBT Gr
 
 ---
 
-## 1. External API for Automation (Req. 52)
+## 1. External API for Automation and Scripting (Req. 52, 51, 90)
 
 **Objective:**
 To provide an external API that allows programmatic control over the application for automation, scripting, and integration with other tools.
 
 **Current Status:**
-The application currently lacks any external API, forcing all interactions to be manual through the UI. This is tracked as issue #11.
+The application currently lacks any external API, forcing all interactions to be manual through the UI. This is tracked in issues #11, #10, and #45.
 
 **Proposed Solution:**
-We will implement a command-line interface (CLI) API as a first step, as it aligns well with the console-based nature of the application and is faster to implement than a full REST API.
+We will implement a command-line interface (CLI) API. This approach avoids external library dependencies, aligns with the console-based nature of the application, and provides a powerful foundation for scripting.
 
 *   **Phase 1: Core CLI Framework**
-    *   Implement a command-line argument parser (e.g., using a library like `cxxopts` or a simple custom one).
+    *   Implement a simple, custom command-line argument parser to handle flags and values without external dependencies.
     *   Define a set of initial commands for core functionalities:
         *   `--load-graph <filepath>`: Load a graph from a CSV file.
         *   `--save-graph <filepath>`: Save the current graph to a CSV file.
         *   `--run-command <command>`: Execute an internal application command (e.g., 'pan-right', 'zoom-in').
-        *   `--get-node-details <nodeId>`: Output details for a specific node.
+        *   `--get-node-details <nodeId>`: Output details for a specific node in JSON format.
     *   Modify the application's entry point (`main` function) to handle CLI arguments and execute them, potentially in a non-interactive "headless" mode.
 
 *   **Phase 2: Expanded Command Set**
-    *   Add commands for graph manipulation: `add-node`, `remove-node`, `add-edge`, `remove-edge`.
-    *   Add commands for analytics: `get-degree <nodeId>`, `get-density`, `find-components`.
+    *   Add commands for graph manipulation: `add-node`, `remove-node`, `add-edge`, `remove-edge` (with parameters passed as arguments).
+    *   Add commands for analytics: `get-degree <nodeId>`, `get-density`, `find-components`. These commands will invoke the modular analytics engine and return results as JSON.
     *   Add commands for exporting data: `export-analytics <type> <filepath>`.
+
+*   **Phase 3: Scripting via CLI**
+    *   True scripting language integration will be avoided to eliminate external dependencies. Instead, automation and "scripting" will be achieved by invoking the application's CLI from standard shell scripts (e.g., Bash, PowerShell).
+    *   Users can chain commands to perform complex workflows. The JSON output from one command can be parsed by common shell tools (like `jq`) and used as input for a subsequent command.
 
 **Dependencies:**
 *   None for Phase 1.
-*   Phase 2 depends on the completion of the respective analytics and editing functions.
+*   Phase 2 depends on the completion of the Modular Analytics Engine.
 
 **Testing Strategy:**
 *   **Unit Tests:** Test the argument parser and individual command handlers.
-*   **Integration Tests:** Create shell scripts that run the application with various CLI arguments and validate the output (e.g., file content, stdout).
+*   **Integration Tests:** Create shell scripts that run the application with various CLI arguments and validate the output (e.g., file content, stdout JSON structure).
 
 **Documentation:**
 *   Create a new `docs/api_guide.md` detailing all available CLI commands, arguments, and examples.
@@ -43,23 +47,60 @@ We will implement a command-line interface (CLI) API as a first step, as it alig
 
 ---
 
-## 2. Logging Framework
+## 2. Modular Analytics & Data Interchange
+
+**Objective:**
+To refactor the analytics logic into a self-contained, modular component and implement a dependency-free JSON parser to standardize data exchange for the API and other features.
+
+**Current Status:**
+Analytics are currently hardcoded and tightly coupled with other application logic. There is no standard format for data interchange, and the project lacks JSON handling capabilities.
+
+**Proposed Solution:**
+*   **Phase 1: Analytics Engine Refactoring**
+    *   Create a dedicated `AnalyticsEngine` class.
+    *   Move all analytics functions (`getNodeDegree`, `computeDensity`, `findConnectedComponents`, etc.) into this class.
+    *   Ensure these functions operate on graph data (`const Graph&`) and return results in plain C++ data structures, with no direct dependency on UI or rendering.
+
+*   **Phase 2: Dependency-Free JSON Implementation**
+    *   Implement JSON parsing and serialization functionality in `file_logic.h` and `file_logic.cpp` to avoid external libraries.
+    *   This will involve:
+        *   Creating a data structure (e.g., a `struct` or `class` using `std::variant` or a custom tagged union) to represent the JSON data model (object, array, string, number, boolean, null).
+        *   Writing a recursive-descent parser that reads a `std::string` and populates this internal data structure.
+        *   Writing a serializer that traverses the internal data structure and generates a valid JSON string.
+
+*   **Phase 3: Integration**
+    *   The CLI API will use the `AnalyticsEngine` to perform calculations.
+    *   The results from the engine will be converted to the internal JSON representation and then serialized to a string for output to the console.
+    *   This design ensures analytics are modular, testable, and easily exposed via the API in a standard format.
+
+**Dependencies:**
+*   None.
+
+**Testing Strategy:**
+*   **Unit Tests:** Test each function in the `AnalyticsEngine`.
+*   **Integration Tests:** Create extensive unit tests for the JSON parser and serializer, covering valid inputs, edge cases, and malformed data.
+
+**Documentation:**
+*   Document the `AnalyticsEngine`'s public interface.
+*   Document the JSON data structures and the public API of the parser/serializer for internal developers.
+
+---
+
+## 3. Logging Framework
 
 **Objective:**
 To implement a structured logging system for debugging, monitoring application health, and tracking user actions.
 
 **Current Status:**
-No formal logging system exists. Debugging relies on `printf` statements or a debugger.
+No formal logging system exists. Debugging relies on `std::cout` statements or a debugger.
 
 **Proposed Solution:**
-Integrate a lightweight, header-only C++ logging library like `spdlog` for its performance and flexibility.
+We will implement a simple, custom, header-only logging utility to avoid external dependencies.
 
 *   **Phase 1: Setup and Basic Logging**
-    *   Integrate `spdlog` into the project build system.
-    *   Create a central `Logger` utility class to initialize and configure the logger (e.g., set log level, define log format).
-    *   Configure two default sinks:
-        *   A rotating file sink (`logs/app.log`) for persistent logging.
-        *   A console sink for real-time output during development (configurable log level).
+    *   Create a `Logger` singleton class to provide a global access point for logging.
+    *   It will manage a `std::ofstream` for file logging to a configurable path (e.g., `logs/app.log`).
+    *   Configure two output streams: A file stream for persistent logging and a console stream (`std::cout`/`std::cerr`) for real-time output, which can be enabled/disabled by a log level setting.
     *   Replace critical `std::cerr` or `std::cout` error messages with logger calls (`logger->error(...)`).
 
 *   **Phase 2: Comprehensive Logging**
@@ -80,23 +121,25 @@ Integrate a lightweight, header-only C++ logging library like `spdlog` for its p
 
 ---
 
-## 3. Unit & Integration Testing (Req. 57, 58)
+## 4. Unit & Integration Testing (Req. 57, 58)
 
 **Objective:**
 To establish a robust testing framework and increase test coverage to ensure code quality, prevent regressions, and facilitate safer refactoring.
 
 **Current Status:**
-Unit and integration test coverage is incomplete or missing entirely, as noted in issues #12 and #13.
+Unit and integration test coverage is incomplete, as noted in issues #12 and #13.
 
 **Proposed Solution:**
-We will adopt the Google Test framework for both unit and integration testing.
+We will adopt a lightweight, custom testing approach using standard C++ features to avoid external frameworks.
 
 *   **Phase 1: Framework Setup and Core Logic Tests**
-    *   Integrate Google Test into the build system.
-    *   Create a separate `tests` directory.
+    *   Create a separate `tests` directory and a main test runner executable.
+    *   Write simple test functions for each module or class.
+    *   Use the standard `assert()` macro or create custom assertion macros (e.g., `ASSERT_EQUAL(a, b)`) for checking conditions. Test failures will terminate the program or print a detailed error message to `std::cerr`.
     *   Prioritize writing unit tests for critical, non-UI logic:
         *   `Graph` class methods (add/remove nodes/edges, validation).
-        *   Analytics functions (`getNodeDegree`, `computeDensity`, etc.).
+        *   The `AnalyticsEngine` and its functions.
+        *   The custom JSON parser.
         *   CSV parsing and serialization logic.
 
 *   **Phase 2: Expanding Test Coverage**
@@ -120,7 +163,7 @@ We will adopt the Google Test framework for both unit and integration testing.
 
 ---
 
-## 4. Performance Benchmarking (Req. 59)
+## 5. Performance Benchmarking (Req. 59)
 
 **Objective:**
 To measure, track, and optimize the performance of critical application functions, especially for large graphs.
@@ -129,12 +172,13 @@ To measure, track, and optimize the performance of critical application function
 Performance is unmeasured, and potential bottlenecks are unknown, as tracked in issue #14.
 
 **Proposed Solution:**
-We will use the Google Benchmark library to create a dedicated benchmarking suite.
+We will use the standard C++ `<chrono>` library to create a dedicated benchmarking suite, avoiding external dependencies.
 
 *   **Phase 1: Setup and Core Benchmarks**
-    *   Integrate Google Benchmark into the build system.
+    *   Integrate the benchmark runner into the build system as a separate executable.
     *   Create a `benchmarks` directory.
     *   Implement benchmarks for:
+        *   The JSON parser with large input files.
         *   `loadGraphFromCSV` with varying graph sizes (small, medium, large).
         *   Core analytics functions (`findConnectedComponents`, `shortestPath`).
 
@@ -154,42 +198,40 @@ We will use the Google Benchmark library to create a dedicated benchmarking suit
 *   The benchmarks themselves are a form of testing. Results should be consistent and reproducible. The CI pipeline should optionally be able to run benchmarks to detect performance regressions.
 
 **Documentation:**
-*   Create a `benchmarks/README.md` explaining how to build and run the benchmarks.
-*   Maintain a `docs/performance.md` file to log benchmark results over time and document significant optimizations.
+*   Create a `docs/analytics.md` explaining how to build and run the benchmarks and documenting significant optimizations.
+*   Benchmark results will be appended to `logs/performance.log` to track performance over time.
 
 ---
 
-## 5. Code Documentation (Req. 60)
+## 6. Code and API Documentation (Req. 60)
 
 **Objective:**
-To create comprehensive and automatically generated documentation for the codebase, making it easier for current and future developers to understand and contribute.
+To create comprehensive documentation for the codebase and its public API, making it easier for developers and users to understand and contribute.
 
 **Current Status:**
 Code documentation is sparse and inconsistent, as noted in issue #15.
 
 **Proposed Solution:**
-We will adopt Doxygen as the documentation generator and enforce a consistent comment style.
+We will adopt a manual documentation approach using Markdown files and enforce a consistent in-code commenting style. This avoids external documentation generator tools.
 
-*   **Phase 1: Setup and Initial Pass**
-    *   Create a Doxygen configuration file (`Doxyfile`) in the project root.
-    *   Add Doxygen-style docstrings (`/** ... */`) to all public classes, methods, and functions in the core `Graph` and `Node`/`Edge` structures.
-    *   Generate the initial HTML documentation and add it to `.gitignore`.
+*   **Phase 1: In-Code Commenting Standard**
+    *   Establish a clear and consistent style for commenting functions, classes, and complex logic blocks directly within the source code.
+    *   Go through the entire codebase and add comments explaining the purpose of each function, its parameters, and what it returns.
 
-*   **Phase 2: Full Coverage**
-    *   Go through the entire codebase and add docstrings to all remaining functions and files.
-    *   Explain the purpose of each function, its parameters, and what it returns.
-    *   Integrate the Doxygen generation step into the CI pipeline to ensure documentation stays up-to-date.
+*   **Phase 2: Developer and API Documentation**
+    *   Create a `docs/developer_guide.md` file to describe the high-level architecture, major components (`AnalyticsEngine`, `Graph`, `Renderer`), and the build process.
+    *   The CLI API documentation, previously defined as `docs/api_guide.md`, will serve as the primary user-facing API document. A template will be created to ensure all commands are documented consistently (command, parameters, output format, examples).
 
 **Dependencies:**
 *   None.
 
 **Documentation:**
-*   This task is about creating documentation. The output will be a browsable HTML documentation set.
-*   Add a section to the main `README.md` on how to generate the documentation locally.
+*   This task is about creating documentation. The output will be the `developer_guide.md`, a populated `api_guide.md`, and improved in-code comments.
+*   Add a section to the main `README.md` pointing to the new documentation files.
 
 ---
 
-## 6. 3D Graph Rendering (Req. 71)
+## 7. 3D Graph Rendering (Req. 71)
 
 **Objective:**
 To provide an alternative 3D rendering mode for visualizing complex graph structures. This is considered an advanced, optional feature.
@@ -223,46 +265,3 @@ Given the console-based nature, a true 3D rendering is complex. We will implemen
 **Documentation:**
 *   Update user documentation to explain the 3D mode, how to activate it, and its limitations.
 *   Document the 3D layout and rendering algorithms for developers.
-
----
-
-## 7. Custom Analytics Scripts (Req. 50, 51, 90)
-
-**Objective:**
-To allow users to extend the application's functionality by writing and running their own analytics scripts.
-
-**Current Status:**
-All analytics are hardcoded. There is no plugin or scripting system, as noted in issues #9, #10, and #45.
-
-**Proposed Solution:**
-Integrate an embedded scripting language. Lua is an excellent choice due to its small footprint, simple C API, and ease of sandboxing.
-
-*   **Phase 1: Scripting Engine Integration**
-    *   Integrate the Lua scripting engine into the application.
-    *   Create a C++ "binding" layer to expose core graph data and functions to the Lua environment.
-    *   Expose read-only functions first:
-        *   `graph.getNodeCount()`
-        *   `graph.getEdgeCount()`
-        *   `graph.getNodes()` (returns a table of node IDs)
-        *   `graph.getNode(id)` (returns a table with node data: label, x, y)
-        *   `graph.getEdges()`
-
-*   **Phase 2: Running Scripts**
-    *   Implement a mechanism to load and execute a Lua script file (e.g., via a CLI command `--run-script <script.lua>`).
-    *   The script's output (from `print()` calls in Lua) will be directed to the console.
-
-*   **Phase 3: Advanced Bindings and Sandboxing**
-    *   Expose graph modification functions (`graph.addNode(...)`, etc.) to the scripting environment.
-    *   Implement sandboxing to prevent scripts from accessing the file system or other sensitive OS functions, ensuring they can only interact with the graph data provided.
-    *   Allow scripts to return structured data (e.g., a list of node IDs to highlight) that the application can then use for visualization.
-
-**Dependencies:**
-*   The CLI API (Req. 52) would be useful for triggering scripts.
-
-**Testing Strategy:**
-*   **Unit Tests:** Test the C++/Lua binding functions individually.
-*   **Integration Tests:** Create a suite of test Lua scripts (both valid and invalid) and run them through the application, asserting the correctness of the output or the state of the graph.
-
-**Documentation:**
-*   Create a `docs/scripting_api.md` that documents the entire Lua API exposed by the application, with examples for each function.
-*   Provide a
