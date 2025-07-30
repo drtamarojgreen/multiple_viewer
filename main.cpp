@@ -3,10 +3,14 @@
 #include <iostream>
 #include "test_logic.h"
 #include "testsuite2_logic.h"
+#include "file_logic.h" // Explicitly include for file operations
+#include <string>
+#include <vector>
 
 #include <conio.h>
 
-int main() {
+// Encapsulates the original interactive session logic
+void runInteractiveSession() {
     //runAllTests();
     //runAll2Tests();
     std::cout<<"Press any key to continue...";
@@ -29,5 +33,26 @@ int main() {
     saveGraphToCSV(graph, "graph_output.csv");
 
     std::cout << "Goodbye.\n";
+}
+
+int main(int argc, char* argv[]) {
+    // If no command-line arguments are provided, run the default interactive session.
+    if (argc < 2) {
+        runInteractiveSession();
+        return 0;
+    }
+
+    // --- Command-Line Interface Mode ---
+    std::cout << "Running in command-line mode..." << std::endl;
+    std::vector<std::string> args(argv + 1, argv + argc);
+
+    // In the next step, we will parse these arguments.
+    // For now, we just print them to confirm the framework is in place.
+    for (size_t i = 0; i < args.size(); ++i) {
+        std::cout << "Argument " << i << ": " << args[i] << std::endl;
+    }
+
+    std::cout << "CLI execution finished." << std::endl;
+
     return 0;
 }
