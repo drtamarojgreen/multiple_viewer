@@ -1,0 +1,9 @@
+# Build artifacts
+graph_viewer
+graph_viewer_debug
+*.o
+*.log
+
+# Test artifacts
+test_graph.csv
+test_output.csv
