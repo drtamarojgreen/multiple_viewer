@@ -384,6 +384,28 @@ void runEditor(Graph& graph) {
     }
 }
 
+bool executeGraphCommand(Graph& graph, const std::string& command) {
+    static const std::unordered_map<std::string, std::function<void(Graph&)>> command_handlers = {
+        {"pan-up", [](Graph& g){ g.pan(0, -1); }},
+        {"pan-down", [](Graph& g){ g.pan(0, 1); }},
+        {"pan-left", [](Graph& g){ g.pan(-1, 0); }},
+        {"pan-right", [](Graph& g){ g.pan(1, 0); }},
+        {"zoom-in", [](Graph& g){ g.zoomIn(); }},
+        {"zoom-out", [](Graph& g){ g.zoomOut(); }},
+        {"cycle-focus", [](Graph& g){ g.cycleFocus(); }},
+    };
+
+    auto it = command_handlers.find(command);
+    if (it != command_handlers.end()) {
+        it->second(graph);
+        std::cout << "Executed command: " << command << std::endl;
+        return true;
+    }
+
+    std::cerr << "Error: Unknown internal command '" << command << "'" << std::endl;
+    return false;
+}
+
 
 // Adaptive label length
 int Graph::getAdaptiveLabelLength(int depth) const {

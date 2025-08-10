@@ -49,5 +49,9 @@ void promptSetDistance(Graph& graph);
 std::vector<BookChapter> createBookStructure(const Graph& g);
 int getGridLayer(int nodeIndex, int layerCount);
 void renderNodePage(const Graph& graph, int nodeId);
+
+// New function for executing commands from the CLI
+bool executeGraphCommand(Graph& graph, const std::string& command);
+
 #endif
 
