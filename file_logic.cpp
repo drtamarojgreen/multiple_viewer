@@ -177,3 +177,41 @@ std::set<int> parseNeighbors(const std::string& neighborStr) {
 
     return neighbors;
 }
+
+std::string serializeNodeToJson(const Graph& graph, int nodeId) {
+    auto it = graph.nodeMap.find(nodeId);
+    if (it == graph.nodeMap.end()) {
+        return "{ \"error\": \"Node not found\" }";
+    }
+
+    const GraphNode& node = it->second;
+
+    // Find position
+    auto pos_it = graph.nodePos.find(nodeId);
+    int x = 0, y = 0, z = 0;
+    if (pos_it != graph.nodePos.end()) {
+        x = pos_it->second.x;
+        y = pos_it->second.y;
+        z = pos_it->second.z;
+    }
+
+    std::stringstream ss;
+    ss << "{";
+    ss << "\"id\": " << nodeId << ",";
+    ss << "\"label\": \"" << node.label << "\","; // Note: This doesn't handle escaping quotes in the label
+    ss << "\"position\": { \"x\": " << x << ", \"y\": " << y << ", \"z\": " << z << " },";
+    ss << "\"weight\": " << node.weight << ",";
+    ss << "\"subjectIndex\": " << node.subjectIndex << ",";
+    ss << "\"degree\": " << node.neighbors.size() << ",";
+    ss << "\"neighbors\": [";
+    for (size_t i = 0; i < node.neighbors.size(); ++i) {
+        ss << node.neighbors[i];
+        if (i < node.neighbors.size() - 1) {
+            ss << ",";
+        }
+    }
+    ss << "]";
+    ss << "}";
+
+    return ss.str();
+}
