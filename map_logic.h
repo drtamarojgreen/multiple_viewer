@@ -36,6 +36,17 @@ public:
     }
 };
 
+// Different visualization layouts (from viewer_logic.h)
+enum ViewMode {
+    VM_PERSPECTIVE,  // full BFS‐based 3D perspective
+    VM_TABBED,       // show depth tabs (with truncated names)
+    VM_PAGED,        // render one depth “page” at a time
+    VM_BOOK,         // render by subject‐chapter grouping
+    VM_GRID,         // uniform grid layers
+    VM_NEXUS_FLOW,   // force-directed animated layout
+    VM_COUNT
+};
+
 // 3D coordinate for node placement and depth sorting
 struct Coord3 {
     int x, y, z;
@@ -138,6 +149,11 @@ public:
     bool isFocusOnlyView() const;
     // 5) Proximity-based depth
     float getProximityDepth(int nodeId) const;
+
+    // --- View Mode State ---
+    ViewMode currentViewMode = VM_PERSPECTIVE;
+    bool needsLayoutReset = true;
+    bool isNodeFocused(int index) const;
 };
 
 

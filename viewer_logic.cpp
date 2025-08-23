@@ -29,6 +29,134 @@ void drawViewerMenu() {
     std::cout << "==============================\n\n";
 }
 
+void renderNexusFlow(Graph& graph) {
+    // --- Physics and Layout State (static to persist across calls) ---
+    static std::map<int, Point2D> positions;
+    static std::map<int, Point2D> velocities;
+    static bool initialized = false;
+
+    // --- Constants for Force-Directed Layout ---
+    const float k_repel = 2000.0f;  // Repulsive force strength
+    const float k_attract = 0.05f; // Attractive force (spring)
+    const float ideal_dist = 15.0f; // Ideal distance between connected nodes
+    const float damping = 0.85f;    // Damping to prevent explosion
+    const int iterations = 5;       // Iterations per frame for "flow"
+
+    // --- Initialization ---
+    if (!initialized || graph.needsLayoutReset) {
+        positions.clear();
+        velocities.clear();
+        for (const auto& node : graph.nodes) {
+            positions[node.index] = { (float)(rand() % CONSOLE_WIDTH), (float)(rand() % CONSOLE_HEIGHT) };
+            velocities[node.index] = { 0.0f, 0.0f };
+        }
+        initialized = true;
+        graph.needsLayoutReset = false;
+    }
+
+    // --- Force Calculation (run multiple iterations for stability) ---
+    for (int i = 0; i < iterations; ++i) {
+        std::map<int, Point2D> forces;
+
+        // 1. Repulsive forces (all pairs)
+        for (const auto& n1 : graph.nodes) {
+            for (const auto& n2 : graph.nodes) {
+                if (n1.index == n2.index) continue;
+
+                float dx = positions[n1.index].x - positions[n2.index].x;
+                float dy = positions[n1.index].y - positions[n2.index].y;
+                float dist_sq = dx * dx + dy * dy;
+                if (dist_sq < 1.0f) dist_sq = 1.0f; // Avoid division by zero
+
+                float force = k_repel / dist_sq;
+                forces[n1.index].x += dx * force;
+                forces[n1.index].y += dy * force;
+            }
+        }
+
+        // 2. Attractive forces (connected nodes)
+        for (const auto& node : graph.nodes) {
+            for (int neighbor_id : node.neighbors) {
+                if (positions.count(neighbor_id) == 0) continue;
+
+                float dx = positions[neighbor_id].x - positions[node.index].x;
+                float dy = positions[neighbor_id].y - positions[node.index].y;
+                float dist = std::sqrt(dx * dx + dy * dy);
+                if (dist < 1.0f) dist = 1.0f;
+
+                float force = k_attract * std::log(dist / ideal_dist);
+                forces[node.index].x += dx * force;
+                forces[node.index].y += dy * force;
+                forces[neighbor_id].x -= dx * force;
+                forces[neighbor_id].y -= dy * force;
+            }
+        }
+
+        // 3. Update velocities and positions
+        for (auto& node : graph.nodes) {
+            velocities[node.index].x = (velocities[node.index].x + forces[node.index].x) * damping;
+            velocities[node.index].y = (velocities[node.index].y + forces[node.index].y) * damping;
+            positions[node.index].x += velocities[node.index].x;
+            positions[node.index].y += velocities[node.index].y;
+
+            // Clamp positions to screen boundaries
+            positions[node.index].x = std::max(0.0f, std::min((float)CONSOLE_WIDTH - 1, positions[node.index].x));
+            positions[node.index].y = std::max(0.0f, std::min((float)CONSOLE_HEIGHT - 1, positions[node.index].y));
+        }
+    }
+
+
+    // --- Rendering ---
+    vector<string> screen(CONSOLE_HEIGHT, string(CONSOLE_WIDTH, ' '));
+
+    // Render edges
+    for (const auto& node : graph.nodes) {
+        for (int neighbor_id : node.neighbors) {
+             if (positions.count(neighbor_id) == 0) continue;
+            int r1 = positions[node.index].y, c1 = positions[node.index].x;
+            int r2 = positions[neighbor_id].y, c2 = positions[neighbor_id].x;
+            // (Bresenham's line algorithm - same as in renderGraph)
+             int dr = abs(r2 - r1), dc = abs(c2 - c1);
+            int sr = (r1 < r2) ? 1 : -1;
+            int sc = (c1 < c2) ? 1 : -1;
+            int err = dr - dc;
+
+            int rr = r1;
+            int cc = c1;
+
+            int maxSteps = std::max(dr, dc) + 1;
+
+            for (int step = 0; step < maxSteps; ++step) {
+                if (rr >= 0 && rr < CONSOLE_HEIGHT && cc >= 0 && cc < CONSOLE_WIDTH && screen[rr][cc] == ' ') {
+                    screen[rr][cc] = '.';
+                }
+                if (rr == r2 && cc == c2) break;
+                int e2 = 2 * err;
+                if (e2 > -dc) { err -= dc; rr += sr; }
+                if (e2 < dr)  { err += dr; cc += sc; }
+            }
+        }
+    }
+
+    // Render nodes
+    for (const auto& node : graph.nodes) {
+        int r = positions[node.index].y;
+        int c = positions[node.index].x;
+        if (r >= 0 && r < CONSOLE_HEIGHT && c >= 0 && c < CONSOLE_WIDTH) {
+             char glyph = (graph.isNodeFocused(node.index)) ? 'O' : 'X';
+            screen[r][c] = glyph;
+        }
+    }
+
+    system("cls");
+    cout << "=== CBT Graph Viewer (Nexus Flow) ===\n";
+    for (const auto& row : screen) {
+        cout << row << "\n";
+    }
+    cout << "[O: focused, X: node, .: edge]" << endl;
+    drawViewerMenu();
+}
+
 void renderMindMap(const Graph& graph) {
     auto dist = graph.computeMultiFocusDistances();
     std::cout << "\n=== CBT Graph Render (Distance-X Map) ===\n";
@@ -344,8 +472,15 @@ void handleKeyPress(Graph& graph, char key) {
         }},
         {'M', [&]() { Config::allowMultiFocus = !Config::allowMultiFocus; }},
         {'[', [&]() { graph.cycleFocus(); }},
-        {'\t', [&]() { graph.cycleFocus(); }}
-
+        {'\t', [&]() { graph.cycleFocus(); }},
+        {'N', [&]() {
+            if (graph.currentViewMode == VM_NEXUS_FLOW) {
+                graph.currentViewMode = VM_PERSPECTIVE;
+            } else {
+                graph.currentViewMode = VM_NEXUS_FLOW;
+                graph.needsLayoutReset = true;
+            }
+        }}
  };
 
     key = std::toupper(key);
@@ -361,8 +496,15 @@ void runEditor(Graph& graph) {
     drawViewerMenu();
 
     while (true) {
-        renderGraph(graph);
-        //renderMindMap(graph);
+        switch (graph.currentViewMode) {
+            case VM_NEXUS_FLOW:
+                renderNexusFlow(graph);
+                break;
+            case VM_PERSPECTIVE:
+            default:
+                renderGraph(graph);
+                break;
+        }
         if (Config::viewerOverlayMode) drawAnalyticsPanelOverlay(graph);
         int key = _getch(); // Use int to handle special key codes
         //key = std::toupper(key);  // Allow both 'a' and 'A' for example
