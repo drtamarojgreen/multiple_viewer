@@ -391,3 +391,7 @@ void Graph::updateSummary() {
     summary.leastConnectedNodes = extractTopIndices(nodeDegrees, 3);
     summary.leastConnectedSubjects = extractTopIndices(subjectDegrees, 3);
 }
+
+bool Graph::isNodeFocused(int index) const {
+    return focusedNodeIndices.count(index) > 0;
+}
