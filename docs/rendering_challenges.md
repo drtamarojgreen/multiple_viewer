@@ -49,3 +49,21 @@ Potential solutions for the future include:
 -   **Prioritized Labels:** Only showing labels for focused nodes or nodes above a certain size/importance threshold, hiding others until the user zooms in.
 
 These documented challenges and solutions provide a clear path for ongoing development of the graph viewer's rendering capabilities.
+
+---
+
+## 4. Alternative Layouts: The Nexus Flow Mode
+
+**Challenge:**
+The default perspective layout, based on a rigid BFS expansion, can sometimes create unnatural or confusing layouts, especially for highly interconnected or non-hierarchical graphs. It also provides a static view, which may not be ideal for understanding the dynamic relationships between nodes.
+
+**Solution:**
+A new experimental view mode, **Nexus Flow**, was introduced to provide a more organic and dynamic visualization of the graph. It can be activated by pressing the 'N' key in the interactive viewer.
+
+-   **Force-Directed Layout:** Unlike the BFS-based layout, Nexus Flow uses a physics-based simulation to position the nodes. The algorithm treats nodes as physical objects that repel each other, while the edges between them act like springs that pull them together. This results in a layout where related nodes naturally cluster together, and the overall structure of the graph becomes more apparent.
+
+-   **Dynamic "Flow":** The layout is not static. Each time the graph is rendered, the simulation runs for a few iterations, causing the nodes to shift and "flow" into a stable position. This creates a sense of a living, dynamic graph.
+
+-   **Focus Highlighting:** Focused nodes are highlighted with a different glyph ('O') in this mode, making them easy to spot within the flowing layout.
+
+This new mode provides an alternative way to explore the graph's topology, and is particularly useful for understanding complex relationships that are not well-represented by a simple tree-like structure.
