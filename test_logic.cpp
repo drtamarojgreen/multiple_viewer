@@ -91,77 +91,72 @@ void testGraphSerialization() {
 }
 
 
-//// Test 1: existing CSV neighbor parsing
-//void testParseNeighbors() {
-//  auto s1 = parseNeighbors("[]");
-//  TEST("parseNeighbors empty", s1.empty());
-//  auto s2 = parseNeighbors("[1,2,3]");
-//  TEST("parseNeighbors size==3", s2.size()==3 && s2.count(2)==1);
-//}
+// Test 1: existing CSV neighbor parsing
+void testParseNeighbors() {
+  auto s1 = parseNeighbors("[]");
+  TEST("parseNeighbors empty", s1.empty());
+  auto s2 = parseNeighbors("[1,2,3]");
+  TEST("parseNeighbors size==3", s2.size()==3 && s2.count(2)==1);
+}
 
-/* // Test 2: adaptive label length by depth & zoom
- * void testAdaptiveLabelLength() {
- *   Graph g; g.zoomLevel = ZoomLevel::Z3;
- *   int base = g.getMaxLabelLength();
- *   int d0 = getAdaptiveLabelLength(0, g.zoomLevel);
- *   int d1 = getAdaptiveLabelLength(1, g.zoomLevel);
- *   int d2 = getAdaptiveLabelLength(2, g.zoomLevel);
- *   TEST("label depth0 > base", d0 > base);
- *   TEST("label depth1 == base", d1 == base);
- *   TEST("label depth2 < base", d2 < base);
- * }
- */
+// Test 2: adaptive label length by depth & zoom
+void testAdaptiveLabelLength() {
+  Graph g; g.zoomLevel = ZoomLevel::Z3;
+  int base = g.getMaxLabelLength();
+  int d0 = getAdaptiveLabelLength(0, g.zoomLevel);
+  int d1 = getAdaptiveLabelLength(1, g.zoomLevel);
+  int d2 = getAdaptiveLabelLength(2, g.zoomLevel);
+  TEST("label depth0 > base", d0 > base);
+  TEST("label depth1 == base", d1 == base);
+  TEST("label depth2 < base", d2 < base);
+}
 
-/* // Test 3: subject-only filtering
- * void testSubjectFiltering() {
- *   Graph g;
- *   g.nodes[0] = GraphNode("A",0,0,1);
- *   g.nodes[1] = GraphNode("B",1,0,2);
- *   g.focusedNodeIndex = 0;
- *   g.subjectFilterOnly = true;
- *   TEST("passesSubjectFilter same",    g.passesSubjectFilter(0));
- *   TEST("rejectsSubjectFilter diff",  !g.passesSubjectFilter(1));
- * }
- */
+// Test 3: subject-only filtering
+void testSubjectFiltering() {
+  Graph g;
+  g.nodes[0] = GraphNode("A",0,0,1);
+  g.nodes[1] = GraphNode("B",1,0,2);
+  g.focusedNodeIndex = 0;
+  g.subjectFilterOnly = true;
+  TEST("passesSubjectFilter same",    g.passesSubjectFilter(0));
+  TEST("rejectsSubjectFilter diff",  !g.passesSubjectFilter(1));
+}
 
-/* // Test 4: focus-only at max zoom
- * void testFocusOnlyView() {
- *   Graph g;
- *   g.focusedNodeIndex = 5;
- *   g.focusOnlyAtMaxZoom = true;
- *   g.zoomLevel = Graph::Z5;
- *   TEST("isFocusOnlyView true", g.isFocusOnlyView());
- *   g.zoomLevel = Graph::Z3;
- *   TEST("isFocusOnlyView false", !g.isFocusOnlyView());
- * }
- */
+// Test 4: focus-only at max zoom
+void testFocusOnlyView() {
+  Graph g;
+  g.focusedNodeIndex = 5;
+  g.focusOnlyAtMaxZoom = true;
+  g.zoomLevel = Graph::Z5;
+  TEST("isFocusOnlyView true", g.isFocusOnlyView());
+  g.zoomLevel = Graph::Z3;
+  TEST("isFocusOnlyView false", !g.isFocusOnlyView());
+}
 
-/* // Test 5: continuous node size calculation
- * void testNodeSizeCalc() {
- *   Graph g;
- *   int s0 = calculateNodeSize(0,Graph::Z2);
- *   int s1 = calculateNodeSize(1,Graph::Z2);
- *   int s2 = calculateNodeSize(2,Graph::Z2);
- *   TEST("nodeSize depth0 > depth1", s0 > s1);
- *   TEST("nodeSize depth1 > depth2", s1 > s2);
- *   TEST("nodeSize >=1", s2 >= 1);
- * }
- */
+// Test 5: continuous node size calculation
+void testNodeSizeCalc() {
+  Graph g;
+  int s0 = calculateNodeSize(0,Graph::Z2);
+  int s1 = calculateNodeSize(1,Graph::Z2);
+  int s2 = calculateNodeSize(2,Graph::Z2);
+  TEST("nodeSize depth0 > depth1", s0 > s1);
+  TEST("nodeSize depth1 > depth2", s1 > s2);
+  TEST("nodeSize >=1", s2 >= 1);
+}
 
-/* // Test 6: book-based structure creation
- * void testBookStructure() {
- *   Graph g;
- *   // two subjects, depths simulated by index % 3
- *   for (int i=0;i<6;i++) {
- *     GraphNode n("N"+std::to_string(i),i,0,i%2);
- *     g.nodes[i]=n;
- *     g.nodePos[i] = {i%3, i%4, i%3};  // z = i%3
- *   }
- *   auto books = createBookStructure(g);
- *   // expect at most 2 subjects * 3 depths = 6 chapters
- *   TEST("bookChapters <=6", books.size()<=6);
- * }
- */
+// Test 6: book-based structure creation
+void testBookStructure() {
+  Graph g;
+  // two subjects, depths simulated by index % 3
+  for (int i=0;i<6;i++) {
+    GraphNode n("N"+std::to_string(i),i,0,i%2);
+    g.nodes[i]=n;
+    g.nodePos[i] = {i%3, i%4, i%3};  // z = i%3
+  }
+  auto books = createBookStructure(g);
+  // expect at most 2 subjects * 3 depths = 6 chapters
+  TEST("bookChapters <=6", books.size()<=6);
+}
 
 // Test 7: proximity depth calculation
 void testProximityDepth() {
@@ -210,60 +205,58 @@ void testZBuffer() {
   TEST("zBuffer occlude", zb[10][10] == 5.0f);
 }
 
-/* // Test 11: adaptive spacing calculation
- * void testAdaptiveSpacing() {
- *   Graph g;
- *   g.computeSummary();
- *   float sp = calculateAdaptiveNodeSpacing(g);
- *   TEST("spacing >=1.0", sp >= 1.0f);
- * }
- */
+// Test 11: adaptive spacing calculation
+void testAdaptiveSpacing() {
+  Graph g;
+  g.computeSummary();
+  float sp = calculateAdaptiveNodeSpacing(g);
+  TEST("spacing >=1.0", sp >= 1.0f);
+}
 
-/* // Test 12: density-based rendering toggles
- * void testDensityStrategy() {
- *   Graph g;
- *   // low density
- *   g.summary.nodeCount = 10; g.summary.edgeCount = 5;
- *   applyDensityStrategy(g);
- *   TEST("low density showLines", g.showLines == true);
- *   // high density
- *   g.summary.nodeCount = 10; g.summary.edgeCount = 45;
- *   applyDensityStrategy(g);
- *   TEST("high density no lines", g.showLines == false);
- * }
- */
+// Test 12: density-based rendering toggles
+void testDensityStrategy() {
+  Graph g;
+  // low density
+  g.summary.nodeCount = 10; g.summary.edgeCount = 5;
+  applyDensityStrategy(g);
+  TEST("low density showLines", g.showLines == true);
+  // high density
+  g.summary.nodeCount = 10; g.summary.edgeCount = 45;
+  applyDensityStrategy(g);
+  TEST("high density no lines", g.showLines == false);
+}
 
-/* // Test 13: computeSummary enhancements (clustering, diameter)
- * void testComputeSummaryEnhancements() {
- *   Graph g;
- *   // create triangle for clustering test
- *   for (int i=0;i<3;i++) {
- *     g.nodes[i] = GraphNode("N",i,0,0);
- *   }
- *   g.nodes[0].neighbors = {1,2};
- *   g.nodes[1].neighbors = {0,2};
- *   g.nodes[2].neighbors = {0,1};
- *   g.computeSummary();
- *   TEST("avgClustering >0", g.summary.avgClusteringCoeff > 0.0f);
- *   TEST("diameter ==1", g.summary.diameter == 1);
- * }
- */
+// Test 13: computeSummary enhancements (clustering, diameter)
+void testComputeSummaryEnhancements() {
+  Graph g;
+  // create triangle for clustering test
+  for (int i=0;i<3;i++) {
+    g.nodes[i] = GraphNode("N",i,0,0);
+  }
+  g.nodes[0].neighbors = {1,2};
+  g.nodes[1].neighbors = {0,2};
+  g.nodes[2].neighbors = {0,1};
+  g.computeSummary();
+  TEST("avgClustering >0", g.summary.avgClusteringCoeff > 0.0f);
+  TEST("diameter ==1", g.summary.diameter == 1);
+}
 
 
 void runAllTests() {
       testNodeCreationAndEdges();
-      //testAdaptiveLabelLength();
-      //testSubjectFiltering();
-      //testFocusOnlyView();
-      //testNodeSizeCalc();
-      //testBookStructure();
+      testParseNeighbors();
+      testAdaptiveLabelLength();
+      testSubjectFiltering();
+      testFocusOnlyView();
+      testNodeSizeCalc();
+      testBookStructure();
       testProximityDepth();
       testGridLayer();
       testVanishingProjection();
       testZBuffer();
-      //testAdaptiveSpacing();
-      //testDensityStrategy();
-      //testComputeSummaryEnhancements();
+      testAdaptiveSpacing();
+      testDensityStrategy();
+      testComputeSummaryEnhancements();
       testFocusManagement();
       testEmptyGraphBehavior();
       testEdgeAddition();
