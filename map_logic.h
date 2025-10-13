@@ -106,6 +106,8 @@ public:
     bool focusOnlyAtMaxZoom;
     bool showLines;         // <-- newly added
 
+    Graph() : subjectFilterOnly(false), focusOnlyAtMaxZoom(false), showLines(true) {}
+
 
     int  getMaxDistance()    const;
     int  getMaxLabelLength() const;
