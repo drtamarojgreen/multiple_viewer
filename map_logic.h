@@ -23,6 +23,8 @@ namespace Config {
     inline int panOffsetY = 0;
     inline float viewerZoom = 1.0f;
     inline int nodePadding = 1;
+    inline bool allowMultiFocus = true;     
+    inline bool quietMode = false;
 
 }
 
@@ -35,6 +37,17 @@ public:
     void flushToTerminal() const {
         for (auto& l : lines) std::cout << l << "\n";
     }
+};
+
+// Different visualization layouts (from viewer_logic.h)
+enum ViewMode {
+    VM_PERSPECTIVE,  // full BFS‐based 3D perspective
+    VM_TABBED,       // show depth tabs (with truncated names)
+    VM_PAGED,        // render one depth “page” at a time
+    VM_BOOK,         // render by subject‐chapter grouping
+    VM_GRID,         // uniform grid layers
+    VM_NEXUS_FLOW,   // force-directed animated layout
+    VM_COUNT
 };
 
 // 3D coordinate for node placement and depth sorting
@@ -116,6 +129,7 @@ public:
 
     void addNode(const GraphNode& node);
     void removeNode(int index);
+    void updateNode(int index, const GraphNode& updatedNode);
     bool nodeExists(int index) const;
     void addEdge(int from, int to);
     void clear();
@@ -138,6 +152,11 @@ public:
     bool isFocusOnlyView() const;
     // 5) Proximity-based depth
     float getProximityDepth(int nodeId) const;
+
+    // --- View Mode State ---
+    ViewMode currentViewMode = VM_PERSPECTIVE;
+    bool needsLayoutReset = true;
+    bool isNodeFocused(int index) const;
 };
 
 

@@ -29,6 +29,134 @@ void drawViewerMenu() {
     std::cout << "==============================\n\n";
 }
 
+void renderNexusFlow(Graph& graph) {
+    // --- Physics and Layout State (static to persist across calls) ---
+    static std::map<int, Point2D> positions;
+    static std::map<int, Point2D> velocities;
+    static bool initialized = false;
+
+    // --- Constants for Force-Directed Layout ---
+    const float k_repel = 2000.0f;  // Repulsive force strength
+    const float k_attract = 0.05f; // Attractive force (spring)
+    const float ideal_dist = 15.0f; // Ideal distance between connected nodes
+    const float damping = 0.85f;    // Damping to prevent explosion
+    const int iterations = 5;       // Iterations per frame for "flow"
+
+    // --- Initialization ---
+    if (!initialized || graph.needsLayoutReset) {
+        positions.clear();
+        velocities.clear();
+        for (const auto& node : graph.nodes) {
+            positions[node.index] = { (float)(rand() % CONSOLE_WIDTH), (float)(rand() % CONSOLE_HEIGHT) };
+            velocities[node.index] = { 0.0f, 0.0f };
+        }
+        initialized = true;
+        graph.needsLayoutReset = false;
+    }
+
+    // --- Force Calculation (run multiple iterations for stability) ---
+    for (int i = 0; i < iterations; ++i) {
+        std::map<int, Point2D> forces;
+
+        // 1. Repulsive forces (all pairs)
+        for (const auto& n1 : graph.nodes) {
+            for (const auto& n2 : graph.nodes) {
+                if (n1.index == n2.index) continue;
+
+                float dx = positions[n1.index].x - positions[n2.index].x;
+                float dy = positions[n1.index].y - positions[n2.index].y;
+                float dist_sq = dx * dx + dy * dy;
+                if (dist_sq < 1.0f) dist_sq = 1.0f; // Avoid division by zero
+
+                float force = k_repel / dist_sq;
+                forces[n1.index].x += dx * force;
+                forces[n1.index].y += dy * force;
+            }
+        }
+
+        // 2. Attractive forces (connected nodes)
+        for (const auto& node : graph.nodes) {
+            for (int neighbor_id : node.neighbors) {
+                if (positions.count(neighbor_id) == 0) continue;
+
+                float dx = positions[neighbor_id].x - positions[node.index].x;
+                float dy = positions[neighbor_id].y - positions[node.index].y;
+                float dist = std::sqrt(dx * dx + dy * dy);
+                if (dist < 1.0f) dist = 1.0f;
+
+                float force = k_attract * std::log(dist / ideal_dist);
+                forces[node.index].x += dx * force;
+                forces[node.index].y += dy * force;
+                forces[neighbor_id].x -= dx * force;
+                forces[neighbor_id].y -= dy * force;
+            }
+        }
+
+        // 3. Update velocities and positions
+        for (auto& node : graph.nodes) {
+            velocities[node.index].x = (velocities[node.index].x + forces[node.index].x) * damping;
+            velocities[node.index].y = (velocities[node.index].y + forces[node.index].y) * damping;
+            positions[node.index].x += velocities[node.index].x;
+            positions[node.index].y += velocities[node.index].y;
+
+            // Clamp positions to screen boundaries
+            positions[node.index].x = std::max(0.0f, std::min((float)CONSOLE_WIDTH - 1, positions[node.index].x));
+            positions[node.index].y = std::max(0.0f, std::min((float)CONSOLE_HEIGHT - 1, positions[node.index].y));
+        }
+    }
+
+
+    // --- Rendering ---
+    vector<string> screen(CONSOLE_HEIGHT, string(CONSOLE_WIDTH, ' '));
+
+    // Render edges
+    for (const auto& node : graph.nodes) {
+        for (int neighbor_id : node.neighbors) {
+             if (positions.count(neighbor_id) == 0) continue;
+            int r1 = positions[node.index].y, c1 = positions[node.index].x;
+            int r2 = positions[neighbor_id].y, c2 = positions[neighbor_id].x;
+            // (Bresenham's line algorithm - same as in renderGraph)
+             int dr = abs(r2 - r1), dc = abs(c2 - c1);
+            int sr = (r1 < r2) ? 1 : -1;
+            int sc = (c1 < c2) ? 1 : -1;
+            int err = dr - dc;
+
+            int rr = r1;
+            int cc = c1;
+
+            int maxSteps = std::max(dr, dc) + 1;
+
+            for (int step = 0; step < maxSteps; ++step) {
+                if (rr >= 0 && rr < CONSOLE_HEIGHT && cc >= 0 && cc < CONSOLE_WIDTH && screen[rr][cc] == ' ') {
+                    screen[rr][cc] = '.';
+                }
+                if (rr == r2 && cc == c2) break;
+                int e2 = 2 * err;
+                if (e2 > -dc) { err -= dc; rr += sr; }
+                if (e2 < dr)  { err += dr; cc += sc; }
+            }
+        }
+    }
+
+    // Render nodes
+    for (const auto& node : graph.nodes) {
+        int r = positions[node.index].y;
+        int c = positions[node.index].x;
+        if (r >= 0 && r < CONSOLE_HEIGHT && c >= 0 && c < CONSOLE_WIDTH) {
+             char glyph = (graph.isNodeFocused(node.index)) ? 'O' : 'X';
+            screen[r][c] = glyph;
+        }
+    }
+
+    system("cls");
+    cout << "=== CBT Graph Viewer (Nexus Flow) ===\n";
+    for (const auto& row : screen) {
+        cout << row << "\n";
+    }
+    cout << "[O: focused, X: node, .: edge]" << endl;
+    drawViewerMenu();
+}
+
 void renderMindMap(const Graph& graph) {
     auto dist = graph.computeMultiFocusDistances();
     std::cout << "\n=== CBT Graph Render (Distance-X Map) ===\n";
@@ -117,15 +245,19 @@ void renderGraph(const Graph& graph) {
             int nz = dz + 1;
             if (nz > maxDist) continue;
 
-            int size = graph.calculateNodeSize(nz);
-            int step = size + Config::nodePadding + 3; // Increased step for more spacing
+            int parent_size = graph.calculateNodeSize(dz);
+            int child_size = graph.calculateNodeSize(nz);
+            int step = (parent_size / 2) + (child_size / 2) + Config::nodePadding + 2;
             int nr = wr + dr * step;
             int nc = wc + dc * step;
 
-            // A simple check to avoid placing on top of another node in the same spot
+            // Bounding box collision check
             bool collision = false;
-            for(const auto& [_, other_pos] : pos) {
-                if (other_pos.x == nr && other_pos.y == nc) {
+            for (const auto& [other_id, other_pos] : pos) {
+                int other_node_size = graph.calculateNodeSize(other_pos.z);
+                // AABB check: if distance between centers is less than half the sum of sizes
+                if (abs(nr - other_pos.x) * 2 < (child_size + other_node_size) &&
+                    abs(nc - other_pos.y) * 2 < (child_size + other_node_size)) {
                     collision = true;
                     break;
                 }
@@ -234,6 +366,7 @@ void panView(Direction dir) {
 }
 
 void promptFocusAdd(Graph& graph) {
+    if (Config::quietMode) return;
     std::cout << "Enter node index to ADD as focus: ";
     int idx; std::cin >> idx;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -241,6 +374,7 @@ void promptFocusAdd(Graph& graph) {
 }
 
 void promptFocusRemove(Graph& graph) {
+    if (Config::quietMode) return;
     std::cout << "Enter focus index to REMOVE: ";
     int idx; std::cin >> idx;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -248,6 +382,7 @@ void promptFocusRemove(Graph& graph) {
 }
 
 void promptSetDistance(Graph& graph) {
+    if (Config::quietMode) return;
     std::cout << "Enter new max render distance: ";
     int d; std::cin >> d;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -331,8 +466,15 @@ void handleKeyPress(Graph& graph, char key) {
         }},
         {'M', [&]() { Config::allowMultiFocus = !Config::allowMultiFocus; }},
         {'[', [&]() { graph.cycleFocus(); }},
-        {'\t', [&]() { graph.cycleFocus(); }}
-
+        {'\t', [&]() { graph.cycleFocus(); }},
+        {'N', [&]() {
+            if (graph.currentViewMode == VM_NEXUS_FLOW) {
+                graph.currentViewMode = VM_PERSPECTIVE;
+            } else {
+                graph.currentViewMode = VM_NEXUS_FLOW;
+                graph.needsLayoutReset = true;
+            }
+        }}
  };
 
     key = std::toupper(key);
@@ -344,12 +486,27 @@ void handleKeyPress(Graph& graph, char key) {
     }
 }
 
-void runEditor(Graph& graph) {
+#include "test_logic.h"
+#include "testsuite2_logic.h"
+
+void runEditor(Graph& graph, bool runTests) {
+    if (runTests) {
+        runAllTests();
+        runAll2Tests();
+        return;
+    }
     drawViewerMenu();
 
     while (true) {
-        renderGraph(graph);
-        //renderMindMap(graph);
+        switch (graph.currentViewMode) {
+            case VM_NEXUS_FLOW:
+                renderNexusFlow(graph);
+                break;
+            case VM_PERSPECTIVE:
+            default:
+                renderGraph(graph);
+                break;
+        }
         if (Config::viewerOverlayMode) drawAnalyticsPanelOverlay(graph);
         int key = std::cin.get(); // Use int to handle special key codes
         //key = std::toupper(key);  // Allow both 'a' and 'A' for example
@@ -360,6 +517,28 @@ void runEditor(Graph& graph) {
             handleKeyPress(graph, static_cast<char>(key));
         }
     }
+}
+
+bool executeGraphCommand(Graph& graph, const std::string& command) {
+    static const std::unordered_map<std::string, std::function<void(Graph&)>> command_handlers = {
+        {"pan-up", [](Graph& g){ g.pan(0, -1); }},
+        {"pan-down", [](Graph& g){ g.pan(0, 1); }},
+        {"pan-left", [](Graph& g){ g.pan(-1, 0); }},
+        {"pan-right", [](Graph& g){ g.pan(1, 0); }},
+        {"zoom-in", [](Graph& g){ g.zoomIn(); }},
+        {"zoom-out", [](Graph& g){ g.zoomOut(); }},
+        {"cycle-focus", [](Graph& g){ g.cycleFocus(); }},
+    };
+
+    auto it = command_handlers.find(command);
+    if (it != command_handlers.end()) {
+        it->second(graph);
+        std::cout << "Executed command: " << command << std::endl;
+        return true;
+    }
+
+    std::cerr << "Error: Unknown internal command '" << command << "'" << std::endl;
+    return false;
 }
 
 
@@ -385,10 +564,14 @@ bool Graph::isFocusOnlyView() const {
 
 // continuous zoom sizing
 int Graph::calculateNodeSize(int depth) const {
-    // Turn zoomLevel Z1-Z5 (internally 0-4) into a size from 1-5.
-    // This ensures node size is affected by zoom but capped at 5x5.
-    // The depth parameter is currently ignored for a simpler sizing model.
-    return static_cast<int>(zoomLevel) + 1;
+    // Base size is determined by the global zoom level.
+    int base_size = static_cast<int>(zoomLevel) + 1;
+
+    // Node size decreases with depth to create a perspective effect.
+    // The size is clamped to a minimum of 1.
+    int size = std::max(1, base_size - depth);
+
+    return size;
 }
 
 // proximity depth

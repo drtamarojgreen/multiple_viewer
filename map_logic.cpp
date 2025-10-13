@@ -14,10 +14,14 @@ void Graph::removeNode(int index) {
 
     // Remove this node from neighbors of others
     for (auto& [otherIndex, otherNode] : nodeMap) {
+        auto before = otherNode.neighbors.size();
         otherNode.neighbors.erase(
             std::remove(otherNode.neighbors.begin(), otherNode.neighbors.end(), index),
             otherNode.neighbors.end()
         );
+        if (otherNode.neighbors.size() != before) {
+            updateNode(otherIndex, otherNode);
+        }
     }
 
     // Remove from nodeMap and nodes vector
@@ -35,10 +39,25 @@ bool Graph::nodeExists(int index) const {
     return nodeMap.find(index) != nodeMap.end();
 }
 
+// Modular function to update a node in both nodes vector and nodeMap
+void Graph::updateNode(int index, const GraphNode& updatedNode) {
+    // Update in nodeMap
+    nodeMap[index] = updatedNode;
+
+    // Update in nodes vector
+    auto it = std::find_if(nodes.begin(), nodes.end(),
+        [index](const GraphNode& n) { return n.index == index; });
+    if (it != nodes.end()) {
+        *it = updatedNode;
+    }
+}
+
 void Graph::addEdge(int from, int to) {
     if (!nodeExists(from) || !nodeExists(to)) return;
     nodeMap[from].neighbors.push_back(to);
-    nodeMap[to].neighbors.push_back(from);  // undirected
+    nodeMap[to].neighbors.push_back(from);
+    updateNode(from, nodeMap[from]);
+    updateNode(to, nodeMap[to]);
 }
 
 void Graph::clear() {
@@ -168,6 +187,7 @@ int Graph::getMaxDistance() const {
 
 // Wait for key
 void Graph::pause() const {
+    if (Config::quietMode) return;
     std::cout<<"Press any key to continue...";
     std::cin.get();
     std::cout<<"\n";
@@ -370,4 +390,8 @@ void Graph::updateSummary() {
     std::sort(subjectDegrees.begin(), subjectDegrees.end(), byLow);
     summary.leastConnectedNodes = extractTopIndices(nodeDegrees, 3);
     summary.leastConnectedSubjects = extractTopIndices(subjectDegrees, 3);
+}
+
+bool Graph::isNodeFocused(int index) const {
+    return focusedNodeIndices.count(index) > 0;
 }
