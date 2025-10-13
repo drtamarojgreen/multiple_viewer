@@ -13,8 +13,8 @@ static int testsFailed = 0;
 static std::vector<std::string> failedTests;
 
 #define TEST(name, expr) do { \
-    bool ok = (expr); \
-    if (ok) { \
+    bool test_result = (expr); \
+    if (test_result) { \
         ++testsPassed; \
         std::cout << "[PASS] " << name << "\n"; \
     } else { \

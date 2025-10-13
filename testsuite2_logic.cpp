@@ -10,6 +10,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cstdio> // For remove()
+#include <limits>
 
 
 // Helper function to create a temporary file for testing
@@ -556,7 +557,7 @@ void testEdgeCases(TestRunner& runner) {
     GraphNode extremeNode;
     extremeNode.index = 2147483647; // MAX_INT
     extremeNode.label = "MaxInt";
-    extremeNode.weight = 1.0e38; // large float
+    extremeNode.weight = std::numeric_limits<int>::max();
     extremeGraph.addNode(extremeNode);
     runner.runTest("Add Node with Extreme Values", extremeGraph.nodeExists(2147483647), "Should handle max int index");
 
