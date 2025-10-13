@@ -156,12 +156,12 @@ std::vector<int> extractTopIndices(const std::vector<std::pair<int, int>>& list,
     std::vector<int> result;
     for (int i = 0; i < std::min(count, (int)list.size()); ++i) {
         result.push_back(list[i].first);
-      
     }
+    return result;
 }
 
 // Encapsulates the original interactive session logic
-void runInteractiveSession() {
+void runInteractiveSession(const CmdLineParser& parser) {
     //runAllTests();
     //runAll2Tests();
     if (!Config::quietMode) {
@@ -183,7 +183,9 @@ void runInteractiveSession() {
     if (!loadGraphFromCSV(graph, inputFile)) {
         std::cout << "Starting with empty graph.\n";
     }
-    return result;
+
+    // Run viewer/editor session
+    runEditor(graph, parser.hasOption("test"));
 }
 
 void Graph::addFocus(int idx) {
@@ -197,8 +199,6 @@ void Graph::addFocus(int idx) {
         focusedNodeIndex = idx;
     }
 }
-// Run viewer/editor session
-runEditor(graph, parser.hasOption("test"));
 
 void Graph::removeFocus(int idx) {
     focusedNodeIndices.erase(idx);
@@ -432,6 +432,22 @@ void Graph::updateSummary() {
 
 bool Graph::isNodeFocused(int index) const {
     return focusedNodeIndices.count(index) > 0;
+}
+
+int runApplication(const CmdLineParser& parser) {
+    if (parser.hasOption("test")) {
+        runAllTests();
+        runAll2Tests();
+        return 0;
+    }
+
+    if (parser.hasOption("help")) {
+        std::cout << "Usage: viewer [--load <file.csv>] [--test] [--help]\n";
+        return 0;
+    }
+
+    runInteractiveSession(parser);
+    return 0;
 }
 
 int main(int argc, char* argv[]) {

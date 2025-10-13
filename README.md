@@ -54,6 +54,20 @@ The CBT Graph Viewer is a console-based graph visualization and exploration tool
 - Export snapshot to file with layout preview
 - Custom glyph styling for weighted or highlighted nodes
 
+## Build and Test
+
+To build the application, run the following command:
+
+```bash
+g++ -std=c++17 *.cpp -o main
+```
+
+To run the built-in test suite, execute the compiled application with the `--test` flag:
+
+```bash
+./main --test
+```
+
 ## Usage
 
 Compile and run the application in a terminal. Use interactive hotkeys to explore graph data, manage focus, and reveal structural analytics.

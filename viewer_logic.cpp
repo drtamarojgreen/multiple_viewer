@@ -47,8 +47,8 @@ void renderNexusFlow(Graph& graph) {
         positions.clear();
         velocities.clear();
         for (const auto& node : graph.nodes) {
-            positions[node.index] = { (float)(rand() % CONSOLE_WIDTH), (float)(rand() % CONSOLE_HEIGHT) };
-            velocities[node.index] = { 0.0f, 0.0f };
+            positions[node.index] = { static_cast<float>(rand() % CONSOLE_WIDTH), static_cast<float>(rand() % CONSOLE_HEIGHT) };
+            velocities[node.index] = { 0, 0 };
         }
         initialized = true;
         graph.needsLayoutReset = false;
@@ -100,8 +100,8 @@ void renderNexusFlow(Graph& graph) {
             positions[node.index].y += velocities[node.index].y;
 
             // Clamp positions to screen boundaries
-            positions[node.index].x = std::max(0.0f, std::min((float)CONSOLE_WIDTH - 1, positions[node.index].x));
-            positions[node.index].y = std::max(0.0f, std::min((float)CONSOLE_HEIGHT - 1, positions[node.index].y));
+            positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(CONSOLE_WIDTH - 1), positions[node.index].x));
+            positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(CONSOLE_HEIGHT - 1), positions[node.index].y));
         }
     }
 
@@ -393,7 +393,7 @@ void handleKeyPress(Graph& graph, char key) {
     static const std::unordered_map<char, std::function<void()>> handlers = {
         {'A', [&]() {
             int newIndex = int(graph.nodes.size());
-            GraphNode n{"New", newIndex, {}, 1, newIndex - 1};
+            GraphNode n("New", newIndex, {}, 1, newIndex - 1);
             graph.addNode(n);
         }},
         {'R', [&]() {

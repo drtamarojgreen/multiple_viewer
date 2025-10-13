@@ -24,7 +24,6 @@ namespace Config {
     inline float viewerZoom = 1.0f;
     inline int nodePadding = 1;
     inline bool quietMode = false;
-    inline bool allowMultiFocus = true; 
 }
 
 // === RenderBuffer (formerly render_buffer.h) ===
@@ -66,6 +65,9 @@ struct GraphNode {
     std::vector<int> neighbors;
     int weight = 1;
     int subjectIndex = -1;  
+
+    GraphNode(std::string l = "", int i = -1, const std::vector<int>& n = {}, int w = 1, int s = -1)
+        : label(l), index(i), neighbors(n), weight(w), subjectIndex(s) {}
 };
 
 struct GraphSummary {
@@ -74,6 +76,8 @@ struct GraphSummary {
     float averageDegree = 0.0f;
     float maximumDegree = 0.0f;
     float density = 0.0f;
+    double avgClusteringCoeff = 0.0;
+    int diameter = 0;
     std::vector<int> components;
 
     bool isConnected = false;
@@ -203,6 +207,9 @@ void  applyDensityStrategy(Graph& graph);
 double calculateClusteringCoefficient(const Graph& graph);
 int    calculateGraphDiameter(const Graph& graph);
 int    calculateTotalEdges(const Graph& graph);
+
+int getAdaptiveLabelLength(int depth, Graph::ZoomLevel zoom);
+int calculateNodeSize(int depth, Graph::ZoomLevel zoom);
 
 #endif // MAP_LOGIC_H
 
