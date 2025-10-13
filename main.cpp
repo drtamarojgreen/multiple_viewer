@@ -6,6 +6,7 @@
 #include "file_logic.h" // Explicitly include for file operations
 #include <string>
 #include <vector>
+#include "cmd_line_parser.h"
 
 #include <conio.h>
 
@@ -39,21 +40,28 @@ std::vector<CliCommand> parseCliArgs(const std::vector<std::string>& args) {
 void runInteractiveSession() {
     //runAllTests();
     //runAll2Tests();
-    std::cout<<"Press any key to continue...";
-    _getch();
+    if (!Config::quietMode) {
+        std::cout<<"Press any key to continue...";
+        _getch();
+    }
     std::cout<<"\n";
     Graph graph;
 
     std::cout << "=== CBT Graph Editor ===\n";
-    std::cout << "Loading graph from 'graph_input.csv'...\n";
+    std::string inputFile = "graph_input.csv";
+    if (parser.hasOption("load")) {
+        inputFile = parser.getOption("load");
+    }
+
+    std::cout << "Loading graph from '" << inputFile << "'...\n";
 
     // Initial load 
-    if (!loadGraphFromCSV(graph, "graph_input.csv")) {
+    if (!loadGraphFromCSV(graph, inputFile)) {
         std::cout << "Starting with empty graph.\n";
     }
 
     // Run viewer/editor session
-    runEditor(graph);
+    runEditor(graph, parser.hasOption("test"));
 
     std::cout << "Session complete. Saving to 'graph_output.csv'...\n";
     saveGraphToCSV(graph, "graph_output.csv");
@@ -149,4 +157,9 @@ int main(int argc, char* argv[]) {
     std::cout << "CLI execution finished." << std::endl;
 
     return 0;
+}
+
+int main(int argc, char* argv[]) {
+    CmdLineParser parser(argc, argv);
+    return runApplication(parser);
 }

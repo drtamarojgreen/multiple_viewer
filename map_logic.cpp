@@ -188,6 +188,7 @@ int Graph::getMaxDistance() const {
 
 // Wait for key
 void Graph::pause() const {
+    if (Config::quietMode) return;
     std::cout<<"Press any key to continue...";
     _getch();
     std::cout<<"\n";

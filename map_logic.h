@@ -22,7 +22,9 @@ namespace Config {
     inline int panOffsetY = 0;
     inline float viewerZoom = 1.0f;
     inline int nodePadding = 1;
-    inline bool allowMultiFocus = true; 
+    inline bool allowMultiFocus = true;     
+    inline bool quietMode = false;
+
 }
 
 // === RenderBuffer (formerly render_buffer.h) ===
