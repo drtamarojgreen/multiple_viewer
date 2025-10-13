@@ -12,14 +12,7 @@ enum DisplayMode {
 };
 
 // Different visualization layouts
-enum ViewMode {
-    VM_PERSPECTIVE,  // full BFS‐based 3D perspective
-    VM_TABBED,       // show depth tabs (with truncated names)
-    VM_PAGED,        // render one depth “page” at a time
-    VM_BOOK,         // render by subject‐chapter grouping
-    VM_GRID,         // uniform grid layers
-    VM_COUNT
-};
+// Moved to map_logic.h to avoid circular dependencies
 
 // Directional Panning Enum
 enum class Direction { UP, DOWN, LEFT, RIGHT };
@@ -41,6 +34,7 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename);      // parses
 // Viewer Engine (optional)
 void runEditor(Graph& graph, bool runTests = false);                     // main viewer loop with menu+analytics
 void renderGraph(const Graph& graph);                   // renders visual graph content
+void renderNexusFlow(Graph& graph);               // renders force-directed layout
 
 void promptFocusAdd(Graph& graph);
 void promptFocusRemove(Graph& graph);
@@ -49,5 +43,9 @@ void promptSetDistance(Graph& graph);
 std::vector<BookChapter> createBookStructure(const Graph& g);
 int getGridLayer(int nodeIndex, int layerCount);
 void renderNodePage(const Graph& graph, int nodeId);
+
+// New function for executing commands from the CLI
+bool executeGraphCommand(Graph& graph, const std::string& command);
+
 #endif
 

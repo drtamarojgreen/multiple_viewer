@@ -9,6 +9,15 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cstdio> // For remove()
+
+
+// Helper function to create a temporary file for testing
+void createTestFile(const std::string& filename, const std::string& content) {
+    std::ofstream outFile(filename);
+    outFile << content;
+    outFile.close();
+}
 
 
 // Test Runner Implementation
@@ -530,6 +539,29 @@ void testEdgeCases(TestRunner& runner) {
     runner.runTest("Zero Zoom Config", Config::viewerZoom == 0.0f, "Should handle zero zoom configuration");
     
     Config::viewerZoom = 1.0f; // Reset to normal
+
+    // Test loading malformed CSV files
+    Graph malformedGraph;
+    createTestFile("malformed.csv", "index,label,weight,neighbors\n1,A,10,[2\n");
+    runner.runTest("Load Malformed CSV (Bracket)", !loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with syntax error");
+
+    createTestFile("malformed.csv", "index,label,weight,neighbors\n1,A,ten,[2]\n");
+    runner.runTest("Load Malformed CSV (Value)", !loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with value error");
+
+    createTestFile("malformed.csv", "index,label,weight\n1,A,10\n");
+    runner.runTest("Load Malformed CSV (Column)", !loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with missing column");
+
+    // Test with extreme values
+    Graph extremeGraph;
+    GraphNode extremeNode;
+    extremeNode.index = 2147483647; // MAX_INT
+    extremeNode.label = "MaxInt";
+    extremeNode.weight = 1.0e38; // large float
+    extremeGraph.addNode(extremeNode);
+    runner.runTest("Add Node with Extreme Values", extremeGraph.nodeExists(2147483647), "Should handle max int index");
+
+    // Clean up test file
+    remove("malformed.csv");
 }
 
 // Main test runner
