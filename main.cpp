@@ -2,6 +2,15 @@
 #include <queue>
 #include <algorithm>
 #include <chrono>
+#include "viewer_logic.h"
+#include "search_logic.h"
+#include <iostream>
+#include "test_logic.h"
+#include "testsuite2_logic.h"
+#include "file_logic.h" // Explicitly include for file operations
+#include <string>
+#include <vector>
+#include "cmd_line_parser.h"
 #include <conio.h>
 
 void Graph::addNode(const GraphNode& node) {
@@ -147,6 +156,32 @@ std::vector<int> extractTopIndices(const std::vector<std::pair<int, int>>& list,
     std::vector<int> result;
     for (int i = 0; i < std::min(count, (int)list.size()); ++i) {
         result.push_back(list[i].first);
+      
+    }
+}
+
+// Encapsulates the original interactive session logic
+void runInteractiveSession() {
+    //runAllTests();
+    //runAll2Tests();
+    if (!Config::quietMode) {
+        std::cout<<"Press any key to continue...";
+        _getch();
+    }
+    std::cout<<"\n";
+    Graph graph;
+
+    std::cout << "=== CBT Graph Editor ===\n";
+    std::string inputFile = "graph_input.csv";
+    if (parser.hasOption("load")) {
+        inputFile = parser.getOption("load");
+    }
+
+    std::cout << "Loading graph from '" << inputFile << "'...\n";
+
+    // Initial load 
+    if (!loadGraphFromCSV(graph, inputFile)) {
+        std::cout << "Starting with empty graph.\n";
     }
     return result;
 }
@@ -162,6 +197,8 @@ void Graph::addFocus(int idx) {
         focusedNodeIndex = idx;
     }
 }
+// Run viewer/editor session
+runEditor(graph, parser.hasOption("test"));
 
 void Graph::removeFocus(int idx) {
     focusedNodeIndices.erase(idx);
@@ -395,4 +432,9 @@ void Graph::updateSummary() {
 
 bool Graph::isNodeFocused(int index) const {
     return focusedNodeIndices.count(index) > 0;
+}
+
+int main(int argc, char* argv[]) {
+    CmdLineParser parser(argc, argv);
+    return runApplication(parser);
 }
