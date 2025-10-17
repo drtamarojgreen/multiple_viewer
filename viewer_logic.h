@@ -35,6 +35,7 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename);      // parses
 void runEditor(Graph& graph, bool runTests = false);                     // main viewer loop with menu+analytics
 void renderGraph(const Graph& graph);                   // renders visual graph content
 void renderNexusFlow(Graph& graph);               // renders force-directed layout
+void renderBookView(Graph& graph);                // renders book view layout
 
 void promptFocusAdd(Graph& graph);
 void promptFocusRemove(Graph& graph);

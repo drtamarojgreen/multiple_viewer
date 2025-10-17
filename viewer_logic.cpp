@@ -23,7 +23,7 @@ using namespace std;
 void drawViewerMenu() {
     std::cout << "\n=== CBT Graph Viewer Menu ===\n";
     std::cout << "[↑↓←→] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist  [/] Search\n";
-    std::cout << "[TAB] Cycle Focus [B] Book View [E] Page View [V] Page Cycle [Z] Zoom In   [X] Zoom Out\n";
+    std::cout << "[TAB] Cycle Focus [B] Book View [N] Next View [E] Page View [V] Page Cycle [Z] Zoom In   [X] Zoom Out\n";
     std::cout << "[M] Multi Foci Toggle\n";
     std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [L] Load  [ESC] Exit\n";
     std::cout << "==============================\n\n";
@@ -47,7 +47,7 @@ void renderNexusFlow(Graph& graph) {
         positions.clear();
         velocities.clear();
         for (const auto& node : graph.nodes) {
-            positions[node.index] = { static_cast<float>(rand() % static_cast<int>(CONSOLE_WIDTH)), static_cast<float>(rand() % static_cast<int>(CONSOLE_HEIGHT)) };
+            positions[node.index] = { static_cast<float>(rand() % CONSOLE_WIDTH), static_cast<float>(rand() % CONSOLE_HEIGHT) };
             velocities[node.index] = { 0, 0 };
         }
         initialized = true;
@@ -100,8 +100,8 @@ void renderNexusFlow(Graph& graph) {
             positions[node.index].y += velocities[node.index].y;
 
             // Clamp positions to screen boundaries
-            positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(CONSOLE_WIDTH - 1), static_cast<float>(positions[node.index].x)));
-            positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(CONSOLE_HEIGHT - 1), static_cast<float>(positions[node.index].y)));
+            positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(CONSOLE_WIDTH - 1), positions[node.index].x));
+            positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(CONSOLE_HEIGHT - 1), positions[node.index].y));
         }
     }
 
@@ -148,7 +148,7 @@ void renderNexusFlow(Graph& graph) {
         }
     }
 
-    cout << "\033[2J\033[H"; // Clear screen and move cursor to home
+    system("cls");
     cout << "=== CBT Graph Viewer (Nexus Flow) ===\n";
     for (const auto& row : screen) {
         cout << row << "\n";
@@ -347,7 +347,7 @@ void renderGraph(const Graph& graph) {
         }
     }
 
-    cout << "\033[2J\033[H"; // Clear screen and move cursor to home
+    system("cls");
     cout << "=== CBT Graph Viewer (Full Layout) ===\n";
     for (const auto& row : screen) {
         cout << row << "\n";
@@ -442,15 +442,7 @@ void handleKeyPress(Graph& graph, char key) {
         {'J', [&]() { graph.pan(-1, 0); }}, // Left
         {'L', [&]() { graph.pan(1, 0); }},  // Right
         {'B', [&]() {
-            std::cout << "\n=== CBT Book View ===\n";
-            auto chapters = createBookStructure(graph);
-            for (const auto& ch : chapters) {
-                std::cout << "\n-- " << ch.chapterTitle << " (Depth " << ch.chapterDepth << ") --\n";
-                for (int nodeId : ch.nodeIds) {
-                    std::cout << "[" << graph.nodeMap.at(nodeId).label << "]\n";
-                }
-            }
-            graph.pause();
+            graph.currentViewMode = VM_BOOK_VIEW;
         }},
         {'E', [&]() {
             std::cout << "Enter node index to view page: ";
@@ -468,12 +460,14 @@ void handleKeyPress(Graph& graph, char key) {
         {'[', [&]() { graph.cycleFocus(); }},
         {'\t', [&]() { graph.cycleFocus(); }},
         {'N', [&]() {
-            if (graph.currentViewMode == VM_NEXUS_FLOW) {
-                graph.currentViewMode = VM_PERSPECTIVE;
-            } else {
-                graph.currentViewMode = VM_NEXUS_FLOW;
-                graph.needsLayoutReset = true;
+            int current = static_cast<int>(graph.currentViewMode);
+            current = (current + 1) % (static_cast<int>(VM_COUNT));
+            if (static_cast<ViewMode>(current) == VM_BOOK_VIEW) {
+                current++;
             }
+            current = current % (static_cast<int>(VM_COUNT));
+            graph.currentViewMode = static_cast<ViewMode>(current);
+            graph.needsLayoutReset = true;
         }}
  };
 
@@ -486,13 +480,31 @@ void handleKeyPress(Graph& graph, char key) {
     }
 }
 
+void renderBookView(Graph& graph) {
+    cout << "\033[2J\033[H"; // Clear screen
+    cout << "=== CBT Graph Viewer (Book View) ===\n";
+
+    auto chapters = createBookStructure(graph);
+    int row = 2; // Start rendering from the second row
+
+    for (const auto& ch : chapters) {
+        if (row >= CONSOLE_HEIGHT - 1) break;
+        cout << "\n-- " << ch.chapterTitle << " (Depth " << ch.chapterDepth << ") --\n";
+        row++;
+
+        for (int nodeId : ch.nodeIds) {
+            if (row >= CONSOLE_HEIGHT - 1) break;
+            bool isFocused = graph.isNodeFocused(nodeId);
+            cout << (isFocused ? " > " : "   ") << "[" << graph.nodeMap.at(nodeId).label << "]\n";
+            row++;
+        }
+    }
+
+    drawViewerMenu();
+}
+
 #include "test_logic.h"
 #include "testsuite2_logic.h"
-
-#ifndef _WIN32
-#include <termios.h>
-#include <unistd.h>
-#endif
 
 void runEditor(Graph& graph, bool runTests) {
     if (runTests) {
@@ -500,15 +512,6 @@ void runEditor(Graph& graph, bool runTests) {
         runAll2Tests();
         return;
     }
-
-#ifndef _WIN32
-    struct termios oldt, newt;
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-#endif
-
     drawViewerMenu();
 
     while (true) {
@@ -516,40 +519,24 @@ void runEditor(Graph& graph, bool runTests) {
             case VM_NEXUS_FLOW:
                 renderNexusFlow(graph);
                 break;
+            case VM_BOOK_VIEW:
+                renderBookView(graph);
+                break;
             case VM_PERSPECTIVE:
             default:
                 renderGraph(graph);
                 break;
         }
         if (Config::viewerOverlayMode) drawAnalyticsPanelOverlay(graph);
-
-        int key = std::cin.get();
-
-        if (key == 27) { // ESC or arrow key sequence
-#ifndef _WIN32
-            // Handle arrow keys on Linux (e.g., ESC [ A)
-            if (std::cin.peek() == '[') {
-                std::cin.get(); // consume '['
-                switch (std::cin.get()) {
-                    case 'A': graph.pan(0, -1); break; // Up
-                    case 'B': graph.pan(0, 1);  break; // Down
-                    case 'C': graph.pan(1, 0);  break; // Right
-                    case 'D': graph.pan(-1, 0); break; // Left
-                }
-                continue; // Continue processing input
-            }
-#endif
-            // If it's just ESC, exit the loop
+        int key = std::cin.get(); // Use int to handle special key codes
+        //key = std::toupper(key);  // Allow both 'a' and 'A' for example
+        if (key == 27) { // ESC key always exits
+            std::cout << "[Viewer] Exiting viewer mode\n";
             break;
         } else {
             handleKeyPress(graph, static_cast<char>(key));
         }
     }
-
-#ifndef _WIN32
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-#endif
-    std::cout << "\n[Viewer] Exiting viewer mode\n";
 }
 
 bool executeGraphCommand(Graph& graph, const std::string& command) {
