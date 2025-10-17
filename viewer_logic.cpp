@@ -47,7 +47,7 @@ void renderNexusFlow(Graph& graph) {
         positions.clear();
         velocities.clear();
         for (const auto& node : graph.nodes) {
-            positions[node.index] = { static_cast<float>(rand() % CONSOLE_WIDTH), static_cast<float>(rand() % CONSOLE_HEIGHT) };
+            positions[node.index] = { static_cast<float>(rand() % static_cast<int>(CONSOLE_WIDTH)), static_cast<float>(rand() % static_cast<int>(CONSOLE_HEIGHT)) };
             velocities[node.index] = { 0, 0 };
         }
         initialized = true;
