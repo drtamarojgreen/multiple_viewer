@@ -42,7 +42,7 @@ enum ViewMode {
     VM_PERSPECTIVE,  // full BFS‐based 3D perspective
     VM_TABBED,       // show depth tabs (with truncated names)
     VM_PAGED,        // render one depth “page” at a time
-    VM_BOOK,         // render by subject‐chapter grouping
+    VM_BOOK_VIEW,         // render by subject‐chapter grouping
     VM_GRID,         // uniform grid layers
     VM_NEXUS_FLOW,   // force-directed animated layout
     VM_COUNT
