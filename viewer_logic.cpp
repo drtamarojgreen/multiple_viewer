@@ -100,8 +100,8 @@ void renderNexusFlow(Graph& graph) {
             positions[node.index].y += velocities[node.index].y;
 
             // Clamp positions to screen boundaries
-            positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(CONSOLE_WIDTH - 1), positions[node.index].x));
-            positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(CONSOLE_HEIGHT - 1), positions[node.index].y));
+            positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(CONSOLE_WIDTH - 1), static_cast<float>(positions[node.index].x)));
+            positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(CONSOLE_HEIGHT - 1), static_cast<float>(positions[node.index].y)));
         }
     }
 
