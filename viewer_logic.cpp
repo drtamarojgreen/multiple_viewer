@@ -47,7 +47,7 @@ void renderNexusFlow(Graph& graph) {
         positions.clear();
         velocities.clear();
         for (const auto& node : graph.nodes) {
-            positions[node.index] = { static_cast<float>(rand() % CONSOLE_WIDTH), static_cast<float>(rand() % CONSOLE_HEIGHT) };
+            positions[node.index] = { static_cast<float>(rand() % static_cast<int>(CONSOLE_WIDTH)), static_cast<float>(rand() % static_cast<int>(CONSOLE_HEIGHT)) };
             velocities[node.index] = { 0, 0 };
         }
         initialized = true;
@@ -100,8 +100,8 @@ void renderNexusFlow(Graph& graph) {
             positions[node.index].y += velocities[node.index].y;
 
             // Clamp positions to screen boundaries
-            positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(CONSOLE_WIDTH - 1), positions[node.index].x));
-            positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(CONSOLE_HEIGHT - 1), positions[node.index].y));
+            positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(CONSOLE_WIDTH - 1), static_cast<float>(positions[node.index].x)));
+            positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(CONSOLE_HEIGHT - 1), static_cast<float>(positions[node.index].y)));
         }
     }
 
@@ -148,7 +148,7 @@ void renderNexusFlow(Graph& graph) {
         }
     }
 
-    system("cls");
+    cout << "\033[2J\033[H"; // Clear screen and move cursor to home
     cout << "=== CBT Graph Viewer (Nexus Flow) ===\n";
     for (const auto& row : screen) {
         cout << row << "\n";
@@ -347,7 +347,7 @@ void renderGraph(const Graph& graph) {
         }
     }
 
-    system("cls");
+    cout << "\033[2J\033[H"; // Clear screen and move cursor to home
     cout << "=== CBT Graph Viewer (Full Layout) ===\n";
     for (const auto& row : screen) {
         cout << row << "\n";
@@ -489,12 +489,26 @@ void handleKeyPress(Graph& graph, char key) {
 #include "test_logic.h"
 #include "testsuite2_logic.h"
 
+#ifndef _WIN32
+#include <termios.h>
+#include <unistd.h>
+#endif
+
 void runEditor(Graph& graph, bool runTests) {
     if (runTests) {
         runAllTests();
         runAll2Tests();
         return;
     }
+
+#ifndef _WIN32
+    struct termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+#endif
+
     drawViewerMenu();
 
     while (true) {
@@ -508,15 +522,34 @@ void runEditor(Graph& graph, bool runTests) {
                 break;
         }
         if (Config::viewerOverlayMode) drawAnalyticsPanelOverlay(graph);
-        int key = std::cin.get(); // Use int to handle special key codes
-        //key = std::toupper(key);  // Allow both 'a' and 'A' for example
-        if (key == 27) { // ESC key always exits
-            std::cout << "[Viewer] Exiting viewer mode\n";
+
+        int key = std::cin.get();
+
+        if (key == 27) { // ESC or arrow key sequence
+#ifndef _WIN32
+            // Handle arrow keys on Linux (e.g., ESC [ A)
+            if (std::cin.peek() == '[') {
+                std::cin.get(); // consume '['
+                switch (std::cin.get()) {
+                    case 'A': graph.pan(0, -1); break; // Up
+                    case 'B': graph.pan(0, 1);  break; // Down
+                    case 'C': graph.pan(1, 0);  break; // Right
+                    case 'D': graph.pan(-1, 0); break; // Left
+                }
+                continue; // Continue processing input
+            }
+#endif
+            // If it's just ESC, exit the loop
             break;
         } else {
             handleKeyPress(graph, static_cast<char>(key));
         }
     }
+
+#ifndef _WIN32
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+#endif
+    std::cout << "\n[Viewer] Exiting viewer mode\n";
 }
 
 bool executeGraphCommand(Graph& graph, const std::string& command) {
