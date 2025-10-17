@@ -37,8 +37,9 @@ The CBT Graph Viewer is a console-based graph visualization and exploration tool
 
 ## Display Configuration
 
-- Cross-platform rendering using ANSI escape codes for screen clearing.
+- Optimized for PowerShell or external terminals supporting `system("cls")`
 - 80x25 console dimensions assumed by default
+- Supports ANSI-based soft clearing for alternate terminals
 
 ## Development Status
 
@@ -55,9 +56,7 @@ The CBT Graph Viewer is a console-based graph visualization and exploration tool
 
 ## Build and Test
 
-### Linux
-
-To build the application on Linux, run the following command in your terminal:
+To build the application, run the following command:
 
 ```bash
 g++ -std=c++17 *.cpp -o main
@@ -67,22 +66,6 @@ To run the built-in test suite, execute the compiled application with the `--tes
 
 ```bash
 ./main --test
-```
-
-### Windows
-
-To build the application on Windows, you will need a C++ compiler that supports C++17. We recommend using `g++` from the MinGW-w64 project.
-
-Once you have `g++` installed and available in your system's PATH, you can build the application by running the following command in your terminal (like Command Prompt or PowerShell):
-
-```bash
-g++ -std=c++17 *.cpp -o main.exe
-```
-
-To run the built-in test suite, execute the compiled application with the `--test` flag:
-
-```bash
-./main.exe --test
 ```
 
 ## Usage
