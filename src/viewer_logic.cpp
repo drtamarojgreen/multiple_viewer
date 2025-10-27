@@ -505,6 +505,9 @@ void renderBookView(Graph& graph) {
 
 #include "test_logic.h"
 #include "testsuite2_logic.h"
+#include "console_logic.h"
+#include <thread>
+#include <chrono>
 
 void runEditor(Graph& graph, bool runTests) {
     if (runTests) {
@@ -512,6 +515,8 @@ void runEditor(Graph& graph, bool runTests) {
         runAll2Tests();
         return;
     }
+
+    init_terminal();
     drawViewerMenu();
 
     while (true) {
@@ -528,15 +533,32 @@ void runEditor(Graph& graph, bool runTests) {
                 break;
         }
         if (Config::viewerOverlayMode) drawAnalyticsPanelOverlay(graph);
-        int key = std::cin.get(); // Use int to handle special key codes
-        //key = std::toupper(key);  // Allow both 'a' and 'A' for example
-        if (key == 27) { // ESC key always exits
-            std::cout << "[Viewer] Exiting viewer mode\n";
-            break;
-        } else {
-            handleKeyPress(graph, static_cast<char>(key));
+
+        int key = get_char_non_blocking();
+
+        if (key != -1) {
+            if (key == 27) { // ESC key
+                int next_key = get_char_non_blocking();
+                if (next_key == -1) { // A single ESC press
+                    std::cout << "[Viewer] Exiting viewer mode\n";
+                    break;
+                }
+                if (next_key == '[') {
+                    int arrow_key = get_char_non_blocking();
+                    switch (arrow_key) {
+                        case 'A': graph.pan(0, -1); break; // Up
+                        case 'B': graph.pan(0, 1); break;  // Down
+                        case 'C': graph.pan(1, 0); break;  // Right
+                        case 'D': graph.pan(-1, 0); break; // Left
+                    }
+                }
+            } else {
+                handleKeyPress(graph, static_cast<char>(key));
+            }
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS
     }
+    restore_terminal();
 }
 
 bool executeGraphCommand(Graph& graph, const std::string& command) {
