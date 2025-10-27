@@ -1,6 +1,7 @@
 #ifndef VIEWER_LOGIC_H
 #define VIEWER_LOGIC_H
 #include "map_logic.h"
+#include "console_logic.h"
 
 // How to draw each node block
 enum DisplayMode {
