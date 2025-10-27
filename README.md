@@ -60,7 +60,7 @@ The CBT Graph Viewer is a console-based graph visualization and exploration tool
 To build the application, run the following command:
 
 ```bash
-g++ -std=c++17 *.cpp -o main
+g++ -std=c++17 src/*.cpp -o main
 ```
 
 To run the built-in test suite, execute the compiled application with the `--test` flag:
