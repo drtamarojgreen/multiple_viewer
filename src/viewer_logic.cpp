@@ -1,4 +1,7 @@
 #include "viewer_logic.h"
+#include <cstdio>
+#include <cstdlib>
+#include <functional>
 #include "file_logic.h"
 #include "map_logic.h"
 #include "search_logic.h"
@@ -14,11 +17,28 @@
 #include <cmath>
 #include <limits>
 #include <unordered_map>
-#include <functional>
 #include <cctype>
 #include <climits>
 
 using namespace std;
+
+namespace {
+    std::function<void()> clearScreenFunc;
+}
+
+void initClearScreen() {
+#ifdef _WIN32
+    clearScreenFunc = [](){ system("cls"); };
+#else
+    clearScreenFunc = [](){ system("clear"); };
+#endif
+}
+
+void clearScreen() {
+    if (clearScreenFunc) {
+        clearScreenFunc();
+    }
+}
 
 void drawViewerMenu() {
     std::cout << "\n=== CBT Graph Viewer Menu ===\n";
@@ -148,7 +168,7 @@ void renderNexusFlow(Graph& graph) {
         }
     }
 
-    system("cls");
+    clearScreen();
     cout << "=== CBT Graph Viewer (Nexus Flow) ===\n";
     for (const auto& row : screen) {
         cout << row << "\n";
@@ -347,7 +367,7 @@ void renderGraph(const Graph& graph) {
         }
     }
 
-    system("cls");
+    clearScreen();
     cout << "=== CBT Graph Viewer (Full Layout) ===\n";
     for (const auto& row : screen) {
         cout << row << "\n";
@@ -481,7 +501,7 @@ void handleKeyPress(Graph& graph, char key) {
 }
 
 void renderBookView(Graph& graph) {
-    cout << "\033[2J\033[H"; // Clear screen
+    clearScreen();
     cout << "=== CBT Graph Viewer (Book View) ===\n";
 
     auto chapters = createBookStructure(graph);
@@ -517,6 +537,7 @@ void runEditor(Graph& graph, bool runTests) {
     }
 
     init_terminal();
+    initClearScreen();
     drawViewerMenu();
 
     while (true) {
