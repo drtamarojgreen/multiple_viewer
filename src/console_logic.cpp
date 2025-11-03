@@ -1,4 +1,5 @@
 #include "console_logic.h"
+#include <cstdio>
 
 #ifdef _WIN32
 #include <conio.h>
