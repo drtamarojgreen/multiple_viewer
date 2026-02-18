@@ -33,7 +33,7 @@ The CBT Graph Viewer is a console-based graph visualization and exploration tool
 
 - **Data Operations**
   - `[S]` saves graph as CSV
-  - `[L]` loads graph from CSV
+  - `[U]` loads graph from CSV
   - Adds new nodes with `[A]` and removes with `[R]`
 
 ## Display Configuration

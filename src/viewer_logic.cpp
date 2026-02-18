@@ -42,19 +42,14 @@ void clearScreen() {
 
 void drawViewerMenu() {
     std::cout << "\n=== CBT Graph Viewer Menu ===\n";
-    std::cout << "[↑↓←→] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist  [/] Search\n";
+    std::cout << "[↑↓←→/IJKL] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist  [/] Search\n";
     std::cout << "[TAB] Cycle Focus [B] Book View [N] Next View [E] Page View [V] Page Cycle [Z] Zoom In   [X] Zoom Out\n";
     std::cout << "[M] Multi Foci Toggle\n";
-    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [L] Load  [ESC] Exit\n";
+    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [U] Load  [ESC] Exit\n";
     std::cout << "==============================\n\n";
 }
 
-void renderNexusFlow(Graph& graph) {
-    // --- Physics and Layout State (static to persist across calls) ---
-    static std::map<int, Point2D> positions;
-    static std::map<int, Point2D> velocities;
-    static bool initialized = false;
-
+void renderNexusFlow(Graph& graph, NexusPhysicsState& physics) {
     // --- Constants for Force-Directed Layout ---
     const float k_repel = 2000.0f;  // Repulsive force strength
     const float k_attract = 0.05f; // Attractive force (spring)
@@ -63,14 +58,16 @@ void renderNexusFlow(Graph& graph) {
     const int iterations = 5;       // Iterations per frame for "flow"
 
     // --- Initialization ---
-    if (!initialized || graph.needsLayoutReset) {
-        positions.clear();
-        velocities.clear();
+    if (!physics.initialized || graph.needsLayoutReset) {
+        physics.positions.clear();
+        physics.velocities.clear();
         for (const auto& node : graph.nodes) {
-            positions[node.index] = { static_cast<float>(rand() % CONSOLE_WIDTH), static_cast<float>(rand() % CONSOLE_HEIGHT) };
-            velocities[node.index] = { 0, 0 };
+            // x = Column, y = Row
+            physics.positions[node.index] = { static_cast<float>(rand() % DEFAULT_CONSOLE_WIDTH),
+                                      static_cast<float>(rand() % DEFAULT_CONSOLE_HEIGHT) };
+            physics.velocities[node.index] = { 0.0f, 0.0f };
         }
-        initialized = true;
+        physics.initialized = true;
         graph.needsLayoutReset = false;
     }
 
@@ -83,8 +80,8 @@ void renderNexusFlow(Graph& graph) {
             for (const auto& n2 : graph.nodes) {
                 if (n1.index == n2.index) continue;
 
-                float dx = positions[n1.index].x - positions[n2.index].x;
-                float dy = positions[n1.index].y - positions[n2.index].y;
+                float dx = physics.positions[n1.index].x - physics.positions[n2.index].x;
+                float dy = physics.positions[n1.index].y - physics.positions[n2.index].y;
                 float dist_sq = dx * dx + dy * dy;
                 if (dist_sq < 1.0f) dist_sq = 1.0f; // Avoid division by zero
 
@@ -97,10 +94,10 @@ void renderNexusFlow(Graph& graph) {
         // 2. Attractive forces (connected nodes)
         for (const auto& node : graph.nodes) {
             for (int neighbor_id : node.neighbors) {
-                if (positions.count(neighbor_id) == 0) continue;
+                if (physics.positions.count(neighbor_id) == 0) continue;
 
-                float dx = positions[neighbor_id].x - positions[node.index].x;
-                float dy = positions[neighbor_id].y - positions[node.index].y;
+                float dx = physics.positions[neighbor_id].x - physics.positions[node.index].x;
+                float dy = physics.positions[neighbor_id].y - physics.positions[node.index].y;
                 float dist = std::sqrt(dx * dx + dy * dy);
                 if (dist < 1.0f) dist = 1.0f;
 
@@ -114,27 +111,27 @@ void renderNexusFlow(Graph& graph) {
 
         // 3. Update velocities and positions
         for (auto& node : graph.nodes) {
-            velocities[node.index].x = (velocities[node.index].x + forces[node.index].x) * damping;
-            velocities[node.index].y = (velocities[node.index].y + forces[node.index].y) * damping;
-            positions[node.index].x += velocities[node.index].x;
-            positions[node.index].y += velocities[node.index].y;
+            physics.velocities[node.index].x = (physics.velocities[node.index].x + forces[node.index].x) * damping;
+            physics.velocities[node.index].y = (physics.velocities[node.index].y + forces[node.index].y) * damping;
+            physics.positions[node.index].x += physics.velocities[node.index].x;
+            physics.positions[node.index].y += physics.velocities[node.index].y;
 
-            // Clamp positions to screen boundaries
-            positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(positions[node.index].x), static_cast<float>(CONSOLE_WIDTH - 1)));
-            positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(positions[node.index].y), static_cast<float>(CONSOLE_HEIGHT - 1)));
+            // Clamp positions to screen boundaries (use default for NexusFlow for now as it's static)
+            physics.positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(physics.positions[node.index].x), static_cast<float>(DEFAULT_CONSOLE_WIDTH - 1)));
+            physics.positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(physics.positions[node.index].y), static_cast<float>(DEFAULT_CONSOLE_HEIGHT - 1)));
         }
     }
 
 
     // --- Rendering ---
-    vector<string> screen(CONSOLE_HEIGHT, string(CONSOLE_WIDTH, ' '));
+    vector<string> screen(DEFAULT_CONSOLE_HEIGHT, string(DEFAULT_CONSOLE_WIDTH, ' '));
 
     // Render edges
     for (const auto& node : graph.nodes) {
         for (int neighbor_id : node.neighbors) {
-             if (positions.count(neighbor_id) == 0) continue;
-            int r1 = positions[node.index].y, c1 = positions[node.index].x;
-            int r2 = positions[neighbor_id].y, c2 = positions[neighbor_id].x;
+             if (physics.positions.count(neighbor_id) == 0) continue;
+            int r1 = physics.positions[node.index].y, c1 = physics.positions[node.index].x;
+            int r2 = physics.positions[neighbor_id].y, c2 = physics.positions[neighbor_id].x;
             // (Bresenham's line algorithm - same as in renderGraph)
              int dr = abs(r2 - r1), dc = abs(c2 - c1);
             int sr = (r1 < r2) ? 1 : -1;
@@ -147,7 +144,7 @@ void renderNexusFlow(Graph& graph) {
             int maxSteps = std::max(dr, dc) + 1;
 
             for (int step = 0; step < maxSteps; ++step) {
-                if (rr >= 0 && rr < CONSOLE_HEIGHT && cc >= 0 && cc < CONSOLE_WIDTH && screen[rr][cc] == ' ') {
+                if (rr >= 0 && rr < DEFAULT_CONSOLE_HEIGHT && cc >= 0 && cc < DEFAULT_CONSOLE_WIDTH && screen[rr][cc] == ' ') {
                     screen[rr][cc] = '.';
                 }
                 if (rr == r2 && cc == c2) break;
@@ -160,9 +157,9 @@ void renderNexusFlow(Graph& graph) {
 
     // Render nodes
     for (const auto& node : graph.nodes) {
-        int r = positions[node.index].y;
-        int c = positions[node.index].x;
-        if (r >= 0 && r < CONSOLE_HEIGHT && c >= 0 && c < CONSOLE_WIDTH) {
+        int r = physics.positions[node.index].y;
+        int c = physics.positions[node.index].x;
+        if (r >= 0 && r < DEFAULT_CONSOLE_HEIGHT && c >= 0 && c < DEFAULT_CONSOLE_WIDTH) {
              char glyph = (graph.isNodeFocused(node.index)) ? 'O' : 'X';
             screen[r][c] = glyph;
         }
@@ -196,8 +193,8 @@ void renderMindMap(const Graph& graph) {
     std::cout << "\n";
 }
 
-void renderGraph(const Graph& graph) {
-    std::cout << "[DBG] panX=" << graph.panX << "  panY=" << graph.panY << "\n";
+void renderGraph(const Graph& graph, const ViewContext& view) {
+    std::cout << "[DBG] panX=" << view.panX << "  panY=" << view.panY << "\n";
     std::cout << "\n=== CBT Graph Render (Full Layout) ===\n";
 
     map<int, Coord3> pos;
@@ -215,23 +212,23 @@ void renderGraph(const Graph& graph) {
         }
 
         if (graph.nodeExists(focus)) {
-            int baseRow = (CONSOLE_HEIGHT - 1) / 2;
-            int baseCol = (CONSOLE_WIDTH - 1) / 2;
-            pos[focus] = { baseRow, baseCol, 0 };
-            q.push({ focus, baseRow, baseCol });
+            float baseRow = (view.height - 1) / 2.0f;
+            float baseCol = (view.width - 1) / 2.0f;
+            pos[focus] = { baseRow, baseCol, 0.0f };
+            q.push({ focus, static_cast<int>(baseRow), static_cast<int>(baseCol) });
         }
     } else {
         // Multi-focus: Distribute the focused nodes horizontally across the screen.
         const auto& focused_nodes = graph.focusedNodeIndices;
         int num_focused = focused_nodes.size();
-        int spacing = CONSOLE_WIDTH / (num_focused + 1); // e.g., 3 nodes -> space at 20, 40, 60
+        int spacing = view.width / (num_focused + 1); // e.g., 3 nodes -> space at 20, 40, 60
         int i = 1;
         for (int focus_id : focused_nodes) {
             if (graph.nodeExists(focus_id)) {
-                int row = CONSOLE_HEIGHT / 2;
-                int col = i * spacing;
-                pos[focus_id] = { row, col, 0 };
-                q.push({ focus_id, row, col });
+                float row = view.height / 2.0f;
+                float col = static_cast<float>(i * spacing);
+                pos[focus_id] = { row, col, 0.0f };
+                q.push({ focus_id, static_cast<int>(row), static_cast<int>(col) });
                 i++;
             }
         }
@@ -242,8 +239,8 @@ void renderGraph(const Graph& graph) {
         return;
     }
 
-    //int maxDist = graph.getMaxDistance();
-    int maxDist = graph.getMaxRenderDistance();
+    //int maxDist = graph.getMaxDistance(view.zoomLevel);
+    int maxDist = view.maxRenderDistance;
 
     while (!q.empty()) {
         auto [u, wr, wc] = q.front(); q.pop();
@@ -265,8 +262,8 @@ void renderGraph(const Graph& graph) {
             int nz = dz + 1;
             if (nz > maxDist) continue;
 
-            int parent_size = graph.calculateNodeSize(dz);
-            int child_size = graph.calculateNodeSize(nz);
+            int parent_size = graph.calculateNodeSize(dz, view.zoomLevel);
+            int child_size = graph.calculateNodeSize(nz, view.zoomLevel);
             int step = (parent_size / 2) + (child_size / 2) + Config::nodePadding + 2;
             int nr = wr + dr * step;
             int nc = wc + dc * step;
@@ -274,7 +271,7 @@ void renderGraph(const Graph& graph) {
             // Bounding box collision check
             bool collision = false;
             for (const auto& [other_id, other_pos] : pos) {
-                int other_node_size = graph.calculateNodeSize(other_pos.z);
+                int other_node_size = graph.calculateNodeSize(other_pos.z, view.zoomLevel);
                 // AABB check: if distance between centers is less than half the sum of sizes
                 if (abs(nr - other_pos.x) * 2 < (child_size + other_node_size) &&
                     abs(nc - other_pos.y) * 2 < (child_size + other_node_size)) {
@@ -284,28 +281,28 @@ void renderGraph(const Graph& graph) {
             }
             if (collision) continue;
 
-            pos[v] = { nr, nc, nz };
+            pos[v] = { static_cast<float>(nr), static_cast<float>(nc), static_cast<float>(nz) };
             q.push({ v, nr, nc });
         }
     }
 
-    vector<string> screen(CONSOLE_HEIGHT, string(CONSOLE_WIDTH, ' '));
-    vector<vector<float>> zbuf(CONSOLE_HEIGHT, vector<float>(CONSOLE_WIDTH, numeric_limits<float>::infinity()));
+    vector<string> screen(view.height, string(view.width, ' '));
+    vector<vector<float>> zbuf(view.height, vector<float>(view.width, numeric_limits<float>::infinity()));
 
     for (const auto& [nid, coord] : pos) {
         const auto& node = graph.nodeMap.at(nid);
-        int d = coord.z;
-        int wr = coord.x, wc = coord.y;
-        int size = graph.calculateNodeSize(d);
+        int d = static_cast<int>(coord.z);
+        int wr = static_cast<int>(coord.x), wc = static_cast<int>(coord.y);
+        int size = graph.calculateNodeSize(d, view.zoomLevel);
         char glyph = (node.subjectIndex % 4 == 0 ? '@' :
                     node.subjectIndex % 4 == 1 ? '#' :
                     node.subjectIndex % 4 == 2 ? 'O' : 'X');
 
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
-                int r = wr + i - size / 2 + graph.panY;
-                int c = wc + j - size / 2 + graph.panX;
-                if (r < 0 || r >= CONSOLE_HEIGHT || c < 0 || c >= CONSOLE_WIDTH) continue;
+                int r = wr + i - size / 2 + view.panY;
+                int c = wc + j - size / 2 + view.panX;
+                if (r < 0 || r >= view.height || c < 0 || c >= view.width) continue;
                 float depthVal = static_cast<float>(d);
                 if (depthVal < zbuf[r][c]) {
                     screen[r][c] = glyph;
@@ -315,22 +312,22 @@ void renderGraph(const Graph& graph) {
         }
 
         // After drawing the block:
-        int labelRow = wr + size / 2 + graph.panY + 1;
-        int labelCol = wc + size / 2 + graph.panX + 1;
-/*         if (labelRow < CONSOLE_HEIGHT && labelCol < CONSOLE_WIDTH) {
+        int labelRow = wr + size / 2 + view.panY + 1;
+        int labelCol = wc + size / 2 + view.panX + 1;
+/*         if (labelRow < view.height && labelCol < view.width) {
             const std::string& lbl = node.label;
             for (int i = 0; i < lbl.size(); ++i) {
-                if (labelCol + i < CONSOLE_WIDTH)
+                if (labelCol + i < view.width)
                     screen[labelRow][labelCol + i] = lbl[i];
             }
         } */
         // Only enter if row is within [0, H)
-        if (labelRow >= 0 && labelRow < CONSOLE_HEIGHT) {
+        if (labelRow >= 0 && labelRow < view.height) {
             const std::string& lbl = node.label;
             for (int i = 0; i < (int)lbl.size(); ++i) {
                 int col = labelCol + i;
                 // Guard both sides of the column index
-                if (col >= 0 && col < CONSOLE_WIDTH) {
+                if (col >= 0 && col < view.width) {
                 screen[labelRow][col] = lbl[i];
                 }
             }
@@ -342,8 +339,8 @@ void renderGraph(const Graph& graph) {
             if (!pos.count(v)) continue;
 
             // Apply pan offset to the start and end points of the edge
-            int r1 = coord.x + graph.panY, c1 = coord.y + graph.panX;
-            int r2 = pos[v].x + graph.panY, c2 = pos[v].y + graph.panX;
+            int r1 = static_cast<int>(coord.x) + view.panY, c1 = static_cast<int>(coord.y) + view.panX;
+            int r2 = static_cast<int>(pos[v].x) + view.panY, c2 = static_cast<int>(pos[v].y) + view.panX;
 
             int dr = abs(r2 - r1), dc = abs(c2 - c1);
             int sr = (r1 < r2) ? 1 : -1;
@@ -356,7 +353,7 @@ void renderGraph(const Graph& graph) {
             int maxSteps = std::max(dr, dc) + 1; // prevent infinite loop
 
             for (int step = 0; step < maxSteps; ++step) {
-                if (rr >= 0 && rr < CONSOLE_HEIGHT && cc >= 0 && cc < CONSOLE_WIDTH && screen[rr][cc] == ' ') {
+                if (rr >= 0 && rr < view.height && cc >= 0 && cc < view.width && screen[rr][cc] == ' ') {
                     screen[rr][cc] = '.';
                 }
                 if (rr == r2 && cc == c2) break;
@@ -401,15 +398,15 @@ void promptFocusRemove(Graph& graph) {
     graph.removeFocus(idx);
 }
 
-void promptSetDistance(Graph& graph) {
+void promptSetDistance(ViewContext& view) {
     if (Config::quietMode) return;
     std::cout << "Enter new max render distance: ";
     int d; std::cin >> d;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    graph.setMaxRenderDistance(d);
+    view.maxRenderDistance = d;
 }
 
-void handleKeyPress(Graph& graph, char key) {
+void handleKeyPress(Graph& graph, ViewContext& view, char key) {
     static const std::unordered_map<char, std::function<void()>> handlers = {
         {'A', [&]() {
             int newIndex = int(graph.nodes.size());
@@ -421,13 +418,13 @@ void handleKeyPress(Graph& graph, char key) {
                 graph.removeNode(graph.nodes.back().index);
         }},
         {'S', [&]() { saveGraphToCSV(graph, "graph_output.csv"); }},
-        {'L', [&]() { loadGraphFromCSV(graph, "graph_input.csv"); }},
+        {'U', [&]() { loadGraphFromCSV(graph, "graph_input.csv"); }},
         {'G', [&]() { Config::viewerOverlayMode = !Config::viewerOverlayMode; }},
         {'D', [&]() { Config::autoScaleDepth = !Config::autoScaleDepth; }},
         {'W', [&]() { Config::showTopicWeights = !Config::showTopicWeights; }},
         {'F', [&]() { promptFocusAdd(graph); }},
         {'O', [&]() { promptFocusRemove(graph); }},
-        {'T', [&]() { promptSetDistance(graph); }},
+        {'T', [&]() { promptSetDistance(view); }},
         {'/', [&]() {
             std::cout << "Enter search keyword: ";
             std::string keyword;
@@ -455,14 +452,14 @@ void handleKeyPress(Graph& graph, char key) {
 
             graph.pause();
         }},
-        {'Z', [&]() { graph.zoomIn(); }},
-        {'X', [&]() { graph.zoomOut(); }},
-        {'I', [&]() { graph.pan(0, -1); }}, // Up
-        {'K', [&]() { graph.pan(0, 1); }},  // Down
-        {'J', [&]() { graph.pan(-1, 0); }}, // Left
-        {'L', [&]() { graph.pan(1, 0); }},  // Right
+        {'Z', [&]() { view.zoomIn(); }},
+        {'X', [&]() { view.zoomOut(); }},
+        {'I', [&]() { view.pan(0, -1); }}, // Up
+        {'K', [&]() { view.pan(0, 1); }},  // Down
+        {'J', [&]() { view.pan(-1, 0); }}, // Left
+        {'L', [&]() { view.pan(1, 0); }},  // Right
         {'B', [&]() {
-            graph.currentViewMode = VM_BOOK_VIEW;
+            view.currentViewMode = VM_BOOK_VIEW;
         }},
         {'E', [&]() {
             std::cout << "Enter node index to view page: ";
@@ -480,13 +477,13 @@ void handleKeyPress(Graph& graph, char key) {
         {'[', [&]() { graph.cycleFocus(); }},
         {'\t', [&]() { graph.cycleFocus(); }},
         {'N', [&]() {
-            int current = static_cast<int>(graph.currentViewMode);
+            int current = static_cast<int>(view.currentViewMode);
             current = (current + 1) % (static_cast<int>(VM_COUNT));
             if (static_cast<ViewMode>(current) == VM_BOOK_VIEW) {
                 current++;
             }
             current = current % (static_cast<int>(VM_COUNT));
-            graph.currentViewMode = static_cast<ViewMode>(current);
+            view.currentViewMode = static_cast<ViewMode>(current);
             graph.needsLayoutReset = true;
         }}
  };
@@ -500,20 +497,20 @@ void handleKeyPress(Graph& graph, char key) {
     }
 }
 
-void renderBookView(Graph& graph) {
+void renderBookView(Graph& graph, const ViewContext& view) {
     clearScreen();
     cout << "=== CBT Graph Viewer (Book View) ===\n";
 
-    auto chapters = createBookStructure(graph);
+    auto chapters = createBookStructure(graph, view);
     int row = 2; // Start rendering from the second row
 
     for (const auto& ch : chapters) {
-        if (row >= CONSOLE_HEIGHT - 1) break;
+        if (row >= view.height - 1) break;
         cout << "\n-- " << ch.chapterTitle << " (Depth " << ch.chapterDepth << ") --\n";
         row++;
 
         for (int nodeId : ch.nodeIds) {
-            if (row >= CONSOLE_HEIGHT - 1) break;
+            if (row >= view.height - 1) break;
             bool isFocused = graph.isNodeFocused(nodeId);
             cout << (isFocused ? " > " : "   ") << "[" << graph.nodeMap.at(nodeId).label << "]\n";
             row++;
@@ -525,6 +522,7 @@ void renderBookView(Graph& graph) {
 
 #include "test_logic.h"
 #include "testsuite2_logic.h"
+#include "testsuite3_logic.h"
 #include "console_logic.h"
 #include <thread>
 #include <chrono>
@@ -533,6 +531,7 @@ void runEditor(Graph& graph, bool runTests) {
     if (runTests) {
         runAllTests();
         runAll2Tests();
+        runAll3Tests();
         return;
     }
 
@@ -540,17 +539,20 @@ void runEditor(Graph& graph, bool runTests) {
     initClearScreen();
     drawViewerMenu();
 
+    NexusPhysicsState nexusPhysics;
+    ViewContext view;
+
     while (true) {
-        switch (graph.currentViewMode) {
+        switch (view.currentViewMode) {
             case VM_NEXUS_FLOW:
-                renderNexusFlow(graph);
+                renderNexusFlow(graph, nexusPhysics);
                 break;
             case VM_BOOK_VIEW:
-                renderBookView(graph);
+                renderBookView(graph, view);
                 break;
             case VM_PERSPECTIVE:
             default:
-                renderGraph(graph);
+                renderGraph(graph, view);
                 break;
         }
         if (Config::viewerOverlayMode) drawAnalyticsPanelOverlay(graph);
@@ -567,14 +569,14 @@ void runEditor(Graph& graph, bool runTests) {
                 if (next_key == '[') {
                     int arrow_key = get_char_non_blocking();
                     switch (arrow_key) {
-                        case 'A': graph.pan(0, -1); break; // Up
-                        case 'B': graph.pan(0, 1); break;  // Down
-                        case 'C': graph.pan(1, 0); break;  // Right
-                        case 'D': graph.pan(-1, 0); break; // Left
+                        case 'A': view.pan(0, -1); break; // Up
+                        case 'B': view.pan(0, 1); break;  // Down
+                        case 'C': view.pan(1, 0); break;  // Right
+                        case 'D': view.pan(-1, 0); break; // Left
                     }
                 }
             } else {
-                handleKeyPress(graph, static_cast<char>(key));
+                handleKeyPress(graph, view, static_cast<char>(key));
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS
@@ -582,20 +584,20 @@ void runEditor(Graph& graph, bool runTests) {
     restore_terminal();
 }
 
-bool executeGraphCommand(Graph& graph, const std::string& command) {
-    static const std::unordered_map<std::string, std::function<void(Graph&)>> command_handlers = {
-        {"pan-up", [](Graph& g){ g.pan(0, -1); }},
-        {"pan-down", [](Graph& g){ g.pan(0, 1); }},
-        {"pan-left", [](Graph& g){ g.pan(-1, 0); }},
-        {"pan-right", [](Graph& g){ g.pan(1, 0); }},
-        {"zoom-in", [](Graph& g){ g.zoomIn(); }},
-        {"zoom-out", [](Graph& g){ g.zoomOut(); }},
-        {"cycle-focus", [](Graph& g){ g.cycleFocus(); }},
+bool executeGraphCommand(Graph& graph, ViewContext& view, const std::string& command) {
+    static const std::unordered_map<std::string, std::function<void(Graph&, ViewContext&)>> command_handlers = {
+        {"pan-up", [](Graph& g, ViewContext& v){ v.pan(0, -1); }},
+        {"pan-down", [](Graph& g, ViewContext& v){ v.pan(0, 1); }},
+        {"pan-left", [](Graph& g, ViewContext& v){ v.pan(-1, 0); }},
+        {"pan-right", [](Graph& g, ViewContext& v){ v.pan(1, 0); }},
+        {"zoom-in", [](Graph& g, ViewContext& v){ v.zoomIn(); }},
+        {"zoom-out", [](Graph& g, ViewContext& v){ v.zoomOut(); }},
+        {"cycle-focus", [](Graph& g, ViewContext& v){ g.cycleFocus(); }},
     };
 
     auto it = command_handlers.find(command);
     if (it != command_handlers.end()) {
-        it->second(graph);
+        it->second(graph, view);
         std::cout << "Executed command: " << command << std::endl;
         return true;
     }
@@ -604,13 +606,6 @@ bool executeGraphCommand(Graph& graph, const std::string& command) {
     return false;
 }
 
-
-// Adaptive label length
-int Graph::getAdaptiveLabelLength(int depth) const {
-    int base = getMaxLabelLength();
-    float factor = (depth==0 ? 1.5f : (depth==1 ? 1.0f : 0.5f));
-    return std::max(3, int(base * factor));
-}
 
 // subject filter
 bool Graph::passesSubjectFilter(int nodeId) const {
@@ -621,27 +616,15 @@ bool Graph::passesSubjectFilter(int nodeId) const {
 }
 
 // focus-only mode
-bool Graph::isFocusOnlyView() const {
-    return focusOnlyAtMaxZoom && zoomLevel == ZoomLevel::Z5;
-}
-
-// continuous zoom sizing
-int Graph::calculateNodeSize(int depth) const {
-    // Base size is determined by the global zoom level.
-    int base_size = static_cast<int>(zoomLevel) + 1;
-
-    // Node size decreases with depth to create a perspective effect.
-    // The size is clamped to a minimum of 1.
-    int size = std::max(1, base_size - depth);
-
-    return size;
+bool Graph::isFocusOnlyView(ZoomLevel zoom) const {
+    return focusOnlyAtMaxZoom && zoom == ZoomLevel::Z5;
 }
 
 // proximity depth
-float Graph::getProximityDepth(int nodeId) const {
+float Graph::getProximityDepth(int nodeId, int width, int height) const {
     auto it = nodePos.find(nodeId);
     if (it == nodePos.end()) return 1.0f;
-    float cx = 80.0f / 2.0f, cy = 25.0f / 2.0f;
+    float cx = width / 2.0f, cy = height / 2.0f;
     float dx = it->second.y - cx;
     float dy = it->second.x - cy;
     float dist = std::sqrt(dx*dx + dy*dy);
@@ -651,11 +634,11 @@ float Graph::getProximityDepth(int nodeId) const {
 // Free helpers
 
 // Book-based grouping
-std::vector<BookChapter> createBookStructure(const Graph& g) {
+std::vector<BookChapter> createBookStructure(const Graph& g, const ViewContext& view) {
     std::map<std::string,BookChapter> chMap;
     for (const auto& node : g.nodes) {
         int depth = (g.nodePos.count(node.index)
-                   ? g.nodePos.at(node.index).z : 0);
+                   ? static_cast<int>(g.nodePos.at(node.index).z) : 0);
 
         std::string key = std::to_string(node.subjectIndex) + "_" + std::to_string(depth);
         auto& ch = chMap[key];
@@ -700,8 +683,8 @@ void updateZBuffer(std::vector<std::vector<float>>& zbuf,
     int half = size/2;
     for (int dy=-half; dy<=half; ++dy) {
         for (int dx=-half; dx<=half; ++dx) {
-            int r = center.y + dy;
-            int c = center.x + dx;
+            int r = static_cast<int>(center.y) + dy;
+            int c = static_cast<int>(center.x) + dx;
             if (r>=0 && r< (int)zbuf.size() &&
                 c>=0 && c< (int)zbuf[0].size())
             {

@@ -55,7 +55,8 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
         size_t q2 = (q1 == std::string::npos) ? std::string::npos : line.find('"', q1 + 1);
         if (q1 == std::string::npos || q2 == std::string::npos) {
             std::cerr << "[ERROR] Line " << lineNo << ": missing quoted label\n";
-            continue;
+            in.close();
+            return false;
         }
         std::string label = line.substr(q1 + 1, q2 - q1 - 1);
 
@@ -96,22 +97,19 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
             std::cerr << "[ERROR] Line " << lineNo
                       << ": expected 5 fields (\"topicName\",index,[neighbors],weight,subjectIndex), got "
                       << fields.size() << "\n";
-            continue;
+            in.close();
+            return false;
         }
         GraphNode node;
         node.label = label;
         try {
-            //node.index        = std::stoi(fields[0]);
             std::string nbrList = fields[2];
-            if (nbrList.size() >= 2 && nbrList.front() == '[' && nbrList.back() == ']') {
-                nbrList = nbrList.substr(1, nbrList.size() - 2);
+            if (!(nbrList.size() >= 2 && nbrList.front() == '[' && nbrList.back() == ']')) {
+                std::cerr << "[WARN] Line " << lineNo << ": neighbor list missing brackets: '" << fields[2] << "'\n";
             } else {
-                std::cerr << "[WARN] Line " << lineNo << ": neighbor list missing brackets: '" << fields[1] << "'\n";
+                nbrList = nbrList.substr(1, nbrList.size() - 2);
             }
-            if (fields.size() != 5) {
-                std::cerr << "[ERROR] Line " << lineNo << ": expected 5 fields, got " << fields.size() << "\n";
-                continue;
-            }
+
             std::vector<std::string> nbrStrs;
             std::stringstream ns(nbrList);
             std::string part;
@@ -119,27 +117,38 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
                 if (!part.empty()) nbrStrs.push_back(part);
             }
             neighborTokens.push_back(std::move(nbrStrs));
+
             node.index        = std::stoi(fields[1]);
-            std::set<int> neighborSet = parseNeighbors(fields[2]);
-            node.neighbors    = std::vector<int>(neighborSet.begin(), neighborSet.end());
+            node.neighbors    = {}; // Will be populated in second pass
             node.weight       = std::stoi(fields[3]);
             node.subjectIndex = std::stoi(fields[4]);
         } catch (const std::exception& e) {
             std::cerr << "[ERROR] Line " << lineNo << ": parsing failed: " << e.what() << "\n";
-            continue;
+            in.close();
+            return false;
         }
         graph.addNode(node);
     }
 
-
-    // Second pass: convert neighbor tokens to ints and add edges
+    // Second pass: convert neighbor tokens to ints and add edges symmetrically
     for (size_t i = 0; i < graph.nodes.size(); ++i) {
         int from = graph.nodes[i].index;
         for (const auto& tok : neighborTokens[i]) {
             try {
                 int to = std::stoi(tok);
-                graph.addEdge(from, to);
-            } catch (const std::exception& e) {
+                // To avoid duplicate edges in undirected graph loading,
+                // only add if from < to OR if the other node hasn't been added yet
+                if (graph.nodeExists(to)) {
+                    bool alreadyExists = false;
+                    for (int nbr : graph.nodeMap[from].neighbors) {
+                        if (nbr == to) { alreadyExists = true; break; }
+                    }
+                    if (!alreadyExists) {
+                        graph.addEdge(from, to);
+                    }
+                }
+            } catch (...) {
+                std::cerr << "[WARN] Failed to parse neighbor token: '" << tok << "' for node " << from << "\n";
             }
         }
     }

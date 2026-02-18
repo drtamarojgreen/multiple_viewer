@@ -54,10 +54,19 @@ void Graph::updateNode(int index, const GraphNode& updatedNode) {
 
 void Graph::addEdge(int from, int to) {
     if (!nodeExists(from) || !nodeExists(to)) return;
-    nodeMap[from].neighbors.push_back(to);
-    nodeMap[to].neighbors.push_back(from);
-    updateNode(from, nodeMap[from]);
-    updateNode(to, nodeMap[to]);
+
+    // Check if edge already exists to avoid duplicates
+    auto& n1 = nodeMap[from].neighbors;
+    if (std::find(n1.begin(), n1.end(), to) == n1.end()) {
+        n1.push_back(to);
+        updateNode(from, nodeMap[from]);
+    }
+
+    auto& n2 = nodeMap[to].neighbors;
+    if (std::find(n2.begin(), n2.end(), from) == n2.end()) {
+        n2.push_back(from);
+        updateNode(to, nodeMap[to]);
+    }
 }
 
 void Graph::clear() {
@@ -65,6 +74,7 @@ void Graph::clear() {
     nodeMap.clear();
     focusedNodeIndices.clear();
     summary = GraphSummary{};
+    needsLayoutReset = true;
 }
 
 // BFS Shortest Path
@@ -110,13 +120,12 @@ bool Graph::isConnected() const {
 }
 
 // Cull off-screen blocks
-bool Graph::isInViewport(int worldX, int worldY, int blockSize) const {
-    const int H = 25, W = 80;
+bool Graph::isInViewport(int worldX, int worldY, int blockSize, const ViewContext& view) const {
     int half = blockSize / 2;
-    int r0 = worldX - half + panY, r1 = worldX + half + panY;
-    int c0 = worldY - half + panX, c1 = worldY + half + panX;
-    if (r1 < 0 || r0 >= H) return false;
-    if (c1 < 0 || c0 >= W) return false;
+    int r0 = worldX - half + view.panY, r1 = worldX + half + view.panY;
+    int c0 = worldY - half + view.panX, c1 = worldY + half + view.panX;
+    if (r1 < 0 || r0 >= view.height) return false;
+    if (c1 < 0 || c0 >= view.width) return false;
     return true;
 }
 
@@ -170,14 +179,10 @@ void Graph::clearFocuses() {
     focusedNodeIndices.clear();
 }
 
-void Graph::setMaxRenderDistance(int d) {
-    maxRenderDistance = d;
-}
-
 // BFS depth limit
-int Graph::getMaxDistance() const {
+int Graph::getMaxDistance(ZoomLevel zoom) const {
     static int baseMax[6] = {0, 2, 4, 8, 10, 20};
-    int d = baseMax[static_cast<int>(zoomLevel)];
+    int d = baseMax[static_cast<int>(zoom)];
     if (summary.totalNodes > 500) {
         int adjust = static_cast<int>(summary.averageDegree / 2.0);
         d = std::max(1, d - adjust);
@@ -237,17 +242,17 @@ void Graph::cycleFocus() {
     }
 }
 
-void Graph::zoomIn() {
+void ViewContext::zoomIn() {
     if (zoomLevel < ZoomLevel::Z5)
         zoomLevel = static_cast<ZoomLevel>(static_cast<int>(zoomLevel) + 1);
 }
 
-void Graph::zoomOut() {
+void ViewContext::zoomOut() {
     if (zoomLevel > ZoomLevel::Z1)
         zoomLevel = static_cast<ZoomLevel>(static_cast<int>(zoomLevel) - 1);
 }
 
-void Graph::pan(int dx, int dy) {
+void ViewContext::pan(int dx, int dy) {
     panX += dx;
     panY += dy;
 }
@@ -280,18 +285,13 @@ VanishingPoint calculateVanishingPoint(int screenW, int screenH) {
     return vp;
 }
 
-// no‐arg vanishing point
-VanishingPoint calculateVanishingPoint() {
-    return calculateVanishingPoint(CONSOLE_WIDTH, CONSOLE_HEIGHT);
-}
-
 
 
 // 3D → 2D projection
 Point2D projectToVanishingPoint(const Point3D& wp, const VanishingPoint& vp) {
     float px = vp.centerX + (wp.x * vp.focalLength) / (vp.viewDistance + wp.z);
     float py = vp.centerY + (wp.y * vp.focalLength) / (vp.viewDistance + wp.z);
-    return { int(px), int(py) };
+    return { px, py };
 }
 
 int calculateTotalEdges(const Graph& g) {
@@ -301,6 +301,18 @@ int calculateTotalEdges(const Graph& g) {
     return sum / 2;  // assuming undirected edges, each counted twice
 }
 
+int calculateGraphDiameter(const Graph& g) {
+    if (g.nodes.empty()) return 0;
+    int maxDist = 0;
+    for (const auto& startNode : g.nodes) {
+        auto dists = g.calculateShortestPaths(startNode.index);
+        for (const auto& [nid, d] : dists) {
+            if (d > maxDist) maxDist = d;
+        }
+    }
+    return maxDist;
+}
+
 int Graph::getMaxLabelLength() const {
     int maxLen = 0;
     for (const auto& node : nodes)
@@ -308,21 +320,30 @@ int Graph::getMaxLabelLength() const {
     return maxLen;
 }
 
-// getAdaptiveLabelLength free‐function
-int getAdaptiveLabelLength(int depth, Graph::ZoomLevel zoom) {
-    Graph tmp;
-    tmp.zoomLevel = zoom;
-    return tmp.getAdaptiveLabelLength(depth);
+// getAdaptiveLabelLength member implementation
+int Graph::getAdaptiveLabelLength(int depth, ZoomLevel zoom) const {
+    int base = getMaxLabelLength();
+    if (base == 0) base = 10; // Default if empty
+    float factor = (depth == 0 ? 1.5f : (depth == 1 ? 1.0f : 0.5f));
+    return std::max(3, int(base * factor));
 }
 
-// calculateNodeSize free‐function
-int calculateNodeSize(int depth, Graph::ZoomLevel zoom) {
-    //Graph tmp;
-    //tmp.zoomLevel = zoom;
-    //return tmp.calculateNodeSize(depth);
-    const int sizes[] = { 3, 4, 5, 5, 5 };  // Z1 → 3, Z2 → 4, then clamp to 5
-    int idx = std::min(static_cast<int>(zoom), 4);
-    return sizes[idx];
+// getAdaptiveLabelLength free‐function wrapper
+int getAdaptiveLabelLength(int depth, ZoomLevel zoom, int baseLen) {
+    float factor = (depth == 0 ? 1.5f : (depth == 1 ? 1.0f : 0.5f));
+    return std::max(3, int(baseLen * factor));
+}
+
+// calculateNodeSize member implementation
+int Graph::calculateNodeSize(int depth, ZoomLevel zoom) const {
+    int base_size = static_cast<int>(zoom) + 1;
+    return std::max(1, base_size - depth);
+}
+
+// calculateNodeSize free‐function wrapper
+int calculateNodeSize(int depth, ZoomLevel zoom) {
+    int base_size = static_cast<int>(zoom) + 1;
+    return std::max(1, base_size - depth);
 }
 
 double calculateClusteringCoefficient(const Graph& g) {
@@ -359,6 +380,13 @@ void Graph::updateSummary() {
     summary.averageDegree = computeAvgDegree();
     summary.isConnected = isConnected();
     summary.isolatedNodeCount = countIsolatedNodes();
+    summary.avgClusteringCoeff = calculateClusteringCoefficient(*this);
+    summary.diameter = calculateGraphDiameter(*this);
+    if (summary.totalNodes > 1) {
+        summary.density = (2.0f * summary.totalEdges) / (summary.totalNodes * (summary.totalNodes - 1));
+    } else {
+        summary.density = 0.0f;
+    }
 
     summary.focusedNodes.clear();
     for (int idx : focusedNodeIndices) {

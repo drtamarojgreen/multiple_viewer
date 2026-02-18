@@ -20,7 +20,7 @@ enum class Direction { UP, DOWN, LEFT, RIGHT };
 
 // Menu Rendering & Input Handling
 void drawViewerMenu();                            // prints menu in terminal
-void handleKeyPress(Graph& graph, char key);      // handles input from viewer loop
+void handleKeyPress(Graph& graph, ViewContext& view, char key);      // handles input from viewer loop
 
 // Viewport Movement
 void panView(Direction dir);                      // shifts viewer offset
@@ -34,20 +34,20 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename);      // parses
 
 // Viewer Engine (optional)
 void runEditor(Graph& graph, bool runTests = false);                     // main viewer loop with menu+analytics
-void renderGraph(const Graph& graph);                   // renders visual graph content
-void renderNexusFlow(Graph& graph);               // renders force-directed layout
-void renderBookView(Graph& graph);                // renders book view layout
+void renderGraph(const Graph& graph, const ViewContext& view);                   // renders visual graph content
+void renderNexusFlow(Graph& graph, NexusPhysicsState& physics);               // renders force-directed layout
+void renderBookView(Graph& graph, const ViewContext& view);                // renders book view layout
 
 void promptFocusAdd(Graph& graph);
 void promptFocusRemove(Graph& graph);
-void promptSetDistance(Graph& graph);
+void promptSetDistance(ViewContext& view);
 
-std::vector<BookChapter> createBookStructure(const Graph& g);
+std::vector<BookChapter> createBookStructure(const Graph& g, const ViewContext& view);
 int getGridLayer(int nodeIndex, int layerCount);
 void renderNodePage(const Graph& graph, int nodeId);
 
 // New function for executing commands from the CLI
-bool executeGraphCommand(Graph& graph, const std::string& command);
+bool executeGraphCommand(Graph& graph, ViewContext& view, const std::string& command);
 
 #endif
 
