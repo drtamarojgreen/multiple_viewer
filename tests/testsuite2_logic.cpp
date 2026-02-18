@@ -1,8 +1,8 @@
 // testsuite2_logic.cpp
 #include "testsuite2_logic.h"
-#include "map_logic.h"
-#include "viewer_logic.h"
-#include "file_logic.h"
+#include "../src/map_logic.h"
+#include "../src/viewer_logic.h"
+#include "../src/file_logic.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>

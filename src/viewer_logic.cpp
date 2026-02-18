@@ -521,9 +521,9 @@ void renderBookView(Graph& graph, const ViewContext& view) {
     drawViewerMenu();
 }
 
-#include "test_logic.h"
-#include "testsuite2_logic.h"
-#include "testsuite3_logic.h"
+#include "../tests/test_logic.h"
+#include "../tests/testsuite2_logic.h"
+#include "../tests/testsuite3_logic.h"
 #include "console_logic.h"
 #include <thread>
 #include <chrono>

@@ -5,9 +5,9 @@
 #include "viewer_logic.h"
 #include "search_logic.h"
 #include <iostream>
-#include "test_logic.h"
-#include "testsuite2_logic.h"
-#include "testsuite3_logic.h"
+#include "../tests/test_logic.h"
+#include "../tests/testsuite2_logic.h"
+#include "../tests/testsuite3_logic.h"
 #include "file_logic.h" // Explicitly include for file operations
 #include <string>
 #include <vector>

@@ -1,5 +1,5 @@
 #include "testsuite3_logic.h"
-#include "map_logic.h"
+#include "../src/map_logic.h"
 #include "testsuite2_logic.h"
 #include <iostream>
 #include <fstream>
