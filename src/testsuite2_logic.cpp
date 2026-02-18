@@ -374,6 +374,7 @@ void testNavigationAndZoom(TestRunner& runner) {
     runner.runTest("Pan Y", graph.panY == initialPanY + 3, "Should pan Y correctly");
     
     // Test focus management
+    Config::allowMultiFocus = true;
     graph.addFocus(1);
     runner.runTest("Add Focus", graph.focusedNodeIndices.count(1) == 1, "Should add focus");
     
@@ -419,6 +420,7 @@ void testAdvancedFeatures(TestRunner& runner) {
     graph.addEdge(5, 6);
     
     // Test multi-focus distances
+    Config::allowMultiFocus = true;
     graph.addFocus(1);
     graph.addFocus(5);
     auto distances = graph.computeMultiFocusDistances();

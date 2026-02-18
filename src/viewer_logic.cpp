@@ -42,10 +42,10 @@ void clearScreen() {
 
 void drawViewerMenu() {
     std::cout << "\n=== CBT Graph Viewer Menu ===\n";
-    std::cout << "[↑↓←→] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist  [/] Search\n";
+    std::cout << "[↑↓←→/IJKL] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist  [/] Search\n";
     std::cout << "[TAB] Cycle Focus [B] Book View [N] Next View [E] Page View [V] Page Cycle [Z] Zoom In   [X] Zoom Out\n";
     std::cout << "[M] Multi Foci Toggle\n";
-    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [L] Load  [ESC] Exit\n";
+    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [U] Load  [ESC] Exit\n";
     std::cout << "==============================\n\n";
 }
 
@@ -67,8 +67,10 @@ void renderNexusFlow(Graph& graph) {
         positions.clear();
         velocities.clear();
         for (const auto& node : graph.nodes) {
-            positions[node.index] = { static_cast<float>(rand() % CONSOLE_WIDTH), static_cast<float>(rand() % CONSOLE_HEIGHT) };
-            velocities[node.index] = { 0, 0 };
+            // x = Column, y = Row
+            positions[node.index] = { static_cast<float>(rand() % CONSOLE_WIDTH),
+                                      static_cast<float>(rand() % CONSOLE_HEIGHT) };
+            velocities[node.index] = { 0.0f, 0.0f };
         }
         initialized = true;
         graph.needsLayoutReset = false;
@@ -215,10 +217,10 @@ void renderGraph(const Graph& graph) {
         }
 
         if (graph.nodeExists(focus)) {
-            int baseRow = (CONSOLE_HEIGHT - 1) / 2;
-            int baseCol = (CONSOLE_WIDTH - 1) / 2;
-            pos[focus] = { baseRow, baseCol, 0 };
-            q.push({ focus, baseRow, baseCol });
+            float baseRow = (CONSOLE_HEIGHT - 1) / 2.0f;
+            float baseCol = (CONSOLE_WIDTH - 1) / 2.0f;
+            pos[focus] = { baseRow, baseCol, 0.0f };
+            q.push({ focus, static_cast<int>(baseRow), static_cast<int>(baseCol) });
         }
     } else {
         // Multi-focus: Distribute the focused nodes horizontally across the screen.
@@ -228,10 +230,10 @@ void renderGraph(const Graph& graph) {
         int i = 1;
         for (int focus_id : focused_nodes) {
             if (graph.nodeExists(focus_id)) {
-                int row = CONSOLE_HEIGHT / 2;
-                int col = i * spacing;
-                pos[focus_id] = { row, col, 0 };
-                q.push({ focus_id, row, col });
+                float row = CONSOLE_HEIGHT / 2.0f;
+                float col = static_cast<float>(i * spacing);
+                pos[focus_id] = { row, col, 0.0f };
+                q.push({ focus_id, static_cast<int>(row), static_cast<int>(col) });
                 i++;
             }
         }
@@ -284,7 +286,7 @@ void renderGraph(const Graph& graph) {
             }
             if (collision) continue;
 
-            pos[v] = { nr, nc, nz };
+            pos[v] = { static_cast<float>(nr), static_cast<float>(nc), static_cast<float>(nz) };
             q.push({ v, nr, nc });
         }
     }
@@ -421,7 +423,7 @@ void handleKeyPress(Graph& graph, char key) {
                 graph.removeNode(graph.nodes.back().index);
         }},
         {'S', [&]() { saveGraphToCSV(graph, "graph_output.csv"); }},
-        {'L', [&]() { loadGraphFromCSV(graph, "graph_input.csv"); }},
+        {'U', [&]() { loadGraphFromCSV(graph, "graph_input.csv"); }},
         {'G', [&]() { Config::viewerOverlayMode = !Config::viewerOverlayMode; }},
         {'D', [&]() { Config::autoScaleDepth = !Config::autoScaleDepth; }},
         {'W', [&]() { Config::showTopicWeights = !Config::showTopicWeights; }},
@@ -700,8 +702,8 @@ void updateZBuffer(std::vector<std::vector<float>>& zbuf,
     int half = size/2;
     for (int dy=-half; dy<=half; ++dy) {
         for (int dx=-half; dx<=half; ++dx) {
-            int r = center.y + dy;
-            int c = center.x + dx;
+            int r = static_cast<int>(center.y) + dy;
+            int c = static_cast<int>(center.x) + dx;
             if (r>=0 && r< (int)zbuf.size() &&
                 c>=0 && c< (int)zbuf[0].size())
             {

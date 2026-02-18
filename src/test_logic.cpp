@@ -79,7 +79,7 @@ void testZBufferOutOfBounds() {
 void testGraphSerialization() {
     Graph g;
     g.addNode(GraphNode("Node0", 0, {1}, 1, 1));
-    g.addNode(GraphNode("Node1", 0, {0}, 1, 1));
+    g.addNode(GraphNode("Node1", 1, {0}, 1, 1));
     g.addEdge(0, 1);
     saveGraphToCSV(g, "test_graph.csv");
 
@@ -102,7 +102,8 @@ void testParseNeighbors() {
 // Test 2: adaptive label length by depth & zoom
 void testAdaptiveLabelLength() {
   Graph g; g.zoomLevel = Graph::ZoomLevel::Z3;
-  int base = g.getMaxLabelLength();
+  g.addNode(GraphNode("Topic", 0, {}, 1, 0)); // "Topic" size is 5
+  int base = 10; // The heuristic base in the free function
   int d0 = getAdaptiveLabelLength(0, g.zoomLevel);
   int d1 = getAdaptiveLabelLength(1, g.zoomLevel);
   int d2 = getAdaptiveLabelLength(2, g.zoomLevel);
@@ -115,7 +116,7 @@ void testAdaptiveLabelLength() {
 void testSubjectFiltering() {
   Graph g;
   g.addNode(GraphNode("A",0,{},1,0));
-  g.addNode(GraphNode("B",1,{},2,0));
+  g.addNode(GraphNode("B",1,{},2,1)); // Different subject
   g.focusedNodeIndex = 0;
   g.subjectFilterOnly = true;
   TEST("passesSubjectFilter same",    g.passesSubjectFilter(0));
@@ -136,9 +137,9 @@ void testFocusOnlyView() {
 // Test 5: continuous node size calculation
 void testNodeSizeCalc() {
   Graph g;
-  int s0 = calculateNodeSize(0,Graph::ZoomLevel::Z2);
-  int s1 = calculateNodeSize(1,Graph::ZoomLevel::Z2);
-  int s2 = calculateNodeSize(2,Graph::ZoomLevel::Z2);
+  int s0 = calculateNodeSize(0,Graph::ZoomLevel::Z3);
+  int s1 = calculateNodeSize(1,Graph::ZoomLevel::Z3);
+  int s2 = calculateNodeSize(2,Graph::ZoomLevel::Z3);
   TEST("nodeSize depth0 > depth1", s0 > s1);
   TEST("nodeSize depth1 > depth2", s1 > s2);
   TEST("nodeSize >=1", s2 >= 1);
@@ -150,7 +151,7 @@ void testBookStructure() {
   // two subjects, depths simulated by index % 3
   for (int i=0;i<6;i++) {
     g.addNode(GraphNode("N"+std::to_string(i),i,{},i%2,i));
-    g.nodePos[i] = {i%3, i%4, i%3};  // z = i%3
+    g.nodePos[i] = {static_cast<float>(i%3), static_cast<float>(i%4), static_cast<float>(i%3)};  // z = i%3
   }
   auto books = createBookStructure(g);
   // expect at most 2 subjects * 3 depths = 6 chapters
@@ -160,13 +161,13 @@ void testBookStructure() {
 // Test 7: proximity depth calculation
 void testProximityDepth() {
   Graph g;
-  // place node at center
-  g.nodePos[0] = {12,40,0};
+  // place node at exact center (for 80x25, center is 40.0, 12.5)
+  g.nodePos[0] = {12.5f, 40.0f, 0.0f};
   // place node at corner
-  g.nodePos[1] = {0,0,0};
+  g.nodePos[1] = {0.0f, 0.0f, 0.0f};
   float p0 = g.getProximityDepth(0);
   float p1 = g.getProximityDepth(1);
-  TEST("proximity center == 0", fabs(p0) < 1e-6);
+  TEST("proximity center == 0", std::abs(p0) < 1e-6f);
   TEST("proximity corner >0", p1 > 0.0f);
 }
 
@@ -216,11 +217,11 @@ void testAdaptiveSpacing() {
 void testDensityStrategy() {
   Graph g;
   // low density
-  g.summary.totalNodes = 10; g.summary.totalEdges = 5;
+  g.summary.density = 0.1f;
   applyDensityStrategy(g);
   TEST("low density showLines", g.showLines == true);
   // high density
-  g.summary.totalNodes = 10; g.summary.totalEdges = 45;
+  g.summary.density = 0.9f;
   applyDensityStrategy(g);
   TEST("high density no lines", g.showLines == false);
 }

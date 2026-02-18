@@ -50,7 +50,7 @@ enum ViewMode {
 
 // 3D coordinate for node placement and depth sorting
 struct Coord3 {
-    int x, y, z;
+    float x, y, z;
     bool operator<(const Coord3& o) const {
         if (z!=o.z) return z<o.z;
         if (y!=o.y) return y<o.y;
@@ -174,7 +174,7 @@ struct VanishingPoint {
 
 // Simple 3D/2D point types for perspective projection
 struct Point3D { float x, y, z; };
-struct Point2D { int x, y; };
+struct Point2D { float x, y; };
 
 // Grouping for "Book­-Based" view
 struct BookChapter {
@@ -208,7 +208,7 @@ double calculateClusteringCoefficient(const Graph& graph);
 int    calculateGraphDiameter(const Graph& graph);
 int    calculateTotalEdges(const Graph& graph);
 
-int getAdaptiveLabelLength(int depth, Graph::ZoomLevel zoom);
+int getAdaptiveLabelLength(int depth, Graph::ZoomLevel zoom, int baseLen = 10);
 int calculateNodeSize(int depth, Graph::ZoomLevel zoom);
 
 #endif // MAP_LOGIC_H
