@@ -2,10 +2,10 @@
 #include <queue>
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 
 void Graph::addNode(const GraphNode& node) {
     if (nodeExists(node.index)) return;
-    nodes.push_back(node);
     nodeMap[node.index] = node;
 }
 
@@ -14,21 +14,15 @@ void Graph::removeNode(int index) {
 
     // Remove this node from neighbors of others
     for (auto& [otherIndex, otherNode] : nodeMap) {
-        auto before = otherNode.neighbors.size();
-        otherNode.neighbors.erase(
-            std::remove(otherNode.neighbors.begin(), otherNode.neighbors.end(), index),
-            otherNode.neighbors.end()
-        );
-        if (otherNode.neighbors.size() != before) {
-            updateNode(otherIndex, otherNode);
+        auto& nbrs = otherNode.neighbors;
+        auto it = std::find(nbrs.begin(), nbrs.end(), index);
+        if (it != nbrs.end()) {
+            nbrs.erase(it);
         }
     }
 
-    // Remove from nodeMap and nodes vector
+    // Remove from nodeMap
     nodeMap.erase(index);
-    nodes.erase(std::remove_if(nodes.begin(), nodes.end(),
-                [index](const GraphNode& node) { return node.index == index; }),
-                nodes.end());
 
     // Also remove from focused set and positions if necessary
     focusedNodeIndices.erase(index);
@@ -39,17 +33,9 @@ bool Graph::nodeExists(int index) const {
     return nodeMap.find(index) != nodeMap.end();
 }
 
-// Modular function to update a node in both nodes vector and nodeMap
+// Update a node in nodeMap
 void Graph::updateNode(int index, const GraphNode& updatedNode) {
-    // Update in nodeMap
     nodeMap[index] = updatedNode;
-
-    // Update in nodes vector
-    auto it = std::find_if(nodes.begin(), nodes.end(),
-        [index](const GraphNode& n) { return n.index == index; });
-    if (it != nodes.end()) {
-        *it = updatedNode;
-    }
 }
 
 void Graph::addEdge(int from, int to) {
@@ -70,7 +56,6 @@ void Graph::addEdge(int from, int to) {
 }
 
 void Graph::clear() {
-    nodes.clear();
     nodeMap.clear();
     focusedNodeIndices.clear();
     summary = GraphSummary{};
@@ -100,11 +85,12 @@ std::unordered_map<int, int> Graph::calculateShortestPaths(int fromIndex) const 
 
 // Connectivity Checks
 bool Graph::isConnected() const {
-    if (nodes.empty()) return true;
+    if (nodeMap.empty()) return true;
     std::set<int> visited;
     std::queue<int> q;
-    q.push(nodes[0].index);
-    visited.insert(nodes[0].index);
+    int firstNodeIndex = nodeMap.begin()->first;
+    q.push(firstNodeIndex);
+    visited.insert(firstNodeIndex);
 
     while (!q.empty()) {
         int current = q.front(); q.pop();
@@ -116,7 +102,7 @@ bool Graph::isConnected() const {
         }
     }
 
-    return visited.size() == nodes.size();
+    return visited.size() == nodeMap.size();
 }
 
 // Cull off-screen blocks
@@ -132,20 +118,20 @@ bool Graph::isInViewport(int worldX, int worldY, int blockSize, const ViewContex
 
 int Graph::edgeCount() const {
     int count = 0;
-    for (const auto& node : nodes) {
+    for (const auto& [id, node] : nodeMap) {
         count += node.neighbors.size();
     }
     return count / 2;  // undirected
 }
 
 float Graph::computeAvgDegree() const {
-    if (nodes.empty()) return 0.0f;
-    return (float)(edgeCount() * 2) / nodes.size();
+    if (nodeMap.empty()) return 0.0f;
+    return (float)(edgeCount() * 2) / nodeMap.size();
 }
 
 int Graph::countIsolatedNodes() const {
     int isolated = 0;
-    for (const auto& node : nodes) {
+    for (const auto& [id, node] : nodeMap) {
         if (node.neighbors.empty()) ++isolated;
     }
     return isolated;
@@ -224,7 +210,7 @@ std::unordered_map<int,int> Graph::computeMultiFocusDistances() const {
 
 // Navigation
 void Graph::cycleFocus() {
-    if (nodes.empty()) return;
+    if (nodeMap.empty()) return;
 
     int currentFocus = -1;
     if (!focusedNodeIndices.empty()) {
@@ -232,13 +218,20 @@ void Graph::cycleFocus() {
         focusedNodeIndices.clear();
     }
 
-    auto it = std::find_if(nodes.begin(), nodes.end(),
-        [&](const GraphNode& n) { return n.index > currentFocus; });
+    int nextFocus = -1;
+    int minIndex = -1;
 
-    if (it == nodes.end()) {
-        focusedNodeIndices.insert(nodes.front().index);  // wrap around to first
+    for (const auto& [id, node] : nodeMap) {
+        if (minIndex == -1 || id < minIndex) minIndex = id;
+        if (id > currentFocus) {
+            if (nextFocus == -1 || id < nextFocus) nextFocus = id;
+        }
+    }
+
+    if (nextFocus == -1) {
+        focusedNodeIndices.insert(minIndex);  // wrap around
     } else {
-        focusedNodeIndices.insert(it->index);            // next node
+        focusedNodeIndices.insert(nextFocus);
     }
 }
 
@@ -296,16 +289,16 @@ Point2D projectToVanishingPoint(const Point3D& wp, const VanishingPoint& vp) {
 
 int calculateTotalEdges(const Graph& g) {
     int sum = 0;
-    for (const auto& node : g.nodes)
+    for (const auto& [id, node] : g.nodeMap)
         sum += static_cast<int>(node.neighbors.size());
     return sum / 2;  // assuming undirected edges, each counted twice
 }
 
 int calculateGraphDiameter(const Graph& g) {
-    if (g.nodes.empty()) return 0;
+    if (g.nodeMap.empty()) return 0;
     int maxDist = 0;
-    for (const auto& startNode : g.nodes) {
-        auto dists = g.calculateShortestPaths(startNode.index);
+    for (const auto& [id, startNode] : g.nodeMap) {
+        auto dists = g.calculateShortestPaths(id);
         for (const auto& [nid, d] : dists) {
             if (d > maxDist) maxDist = d;
         }
@@ -315,7 +308,7 @@ int calculateGraphDiameter(const Graph& g) {
 
 int Graph::getMaxLabelLength() const {
     int maxLen = 0;
-    for (const auto& node : nodes)
+    for (const auto& [id, node] : nodeMap)
         maxLen = std::max(maxLen, static_cast<int>(node.label.size()));
     return maxLen;
 }
@@ -348,7 +341,7 @@ int calculateNodeSize(int depth, ZoomLevel zoom) {
 
 double calculateClusteringCoefficient(const Graph& g) {
     double total = 0.0;
-    for (const auto& node : g.nodes) {
+    for (const auto& [id, node] : g.nodeMap) {
         const auto& nbrs = node.neighbors;
         int k = nbrs.size();
         if (k < 2) continue;
@@ -357,11 +350,11 @@ double calculateClusteringCoefficient(const Graph& g) {
             for (int v : nbrs) {
                 if (u != v) {
                     // Find GraphNode for u
-                    auto it_u = std::find_if(g.nodes.begin(), g.nodes.end(),
-                        [u](const GraphNode& n) { return n.index == u; });
-                    if (it_u != g.nodes.end()) {
+                    auto it_u = g.nodeMap.find(u);
+                    if (it_u != g.nodeMap.end()) {
                         // Check if v is a neighbor of u
-                        if (std::find(it_u->neighbors.begin(), it_u->neighbors.end(), v) != it_u->neighbors.end()) {
+                        const auto& u_nbrs = it_u->second.neighbors;
+                        if (std::find(u_nbrs.begin(), u_nbrs.end(), v) != u_nbrs.end()) {
                             links++;
                         }
                     }
@@ -370,12 +363,12 @@ double calculateClusteringCoefficient(const Graph& g) {
         }
         total += links / float(k * (k - 1));
     }
-    return g.nodes.empty() ? 0.0f : total / g.nodes.size();
+    return g.nodeMap.empty() ? 0.0f : total / g.nodeMap.size();
 }
 
 // Update Cached Summary
 void Graph::updateSummary() {
-    summary.totalNodes = nodes.size();
+    summary.totalNodes = nodeMap.size();
     summary.totalEdges = edgeCount();
     summary.averageDegree = computeAvgDegree();
     summary.isConnected = isConnected();
@@ -397,7 +390,7 @@ void Graph::updateSummary() {
     std::vector<std::pair<int, int>> nodeDegrees;
     std::vector<std::pair<int, int>> subjectDegrees;
 
-    for (const auto& node : nodes) {
+    for (const auto& [id, node] : nodeMap) {
         int deg = node.neighbors.size();
         nodeDegrees.push_back({node.index, deg});
         if (node.subjectIndex >= 0) {
@@ -422,4 +415,28 @@ void Graph::updateSummary() {
 
 bool Graph::isNodeFocused(int index) const {
     return focusedNodeIndices.count(index) > 0;
+}
+
+// subject filter
+bool Graph::passesSubjectFilter(int nodeId) const {
+    if (!subjectFilterOnly) return true;
+    if (focusedNodeIndex < 0) return true;
+    return nodeMap.at(nodeId).subjectIndex
+         == nodeMap.at(focusedNodeIndex).subjectIndex;
+}
+
+// focus-only mode
+bool Graph::isFocusOnlyView(ZoomLevel zoom) const {
+    return focusOnlyAtMaxZoom && zoom == ZoomLevel::Z5;
+}
+
+// proximity depth
+float Graph::getProximityDepth(int nodeId, int width, int height) const {
+    auto it = nodePos.find(nodeId);
+    if (it == nodePos.end()) return 1.0f;
+    float cx = width / 2.0f, cy = height / 2.0f;
+    float dx = it->second.y - cx;
+    float dy = it->second.x - cy;
+    float dist = std::sqrt(dx*dx + dy*dy);
+    return std::min(1.0f, dist / std::max(cx, cy));
 }

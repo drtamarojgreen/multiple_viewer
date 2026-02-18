@@ -39,21 +39,26 @@ void constructGraphFromSource(Graph& graph) {
         }
     }
 
-    // Simple heuristic for edges: if a function name appears in another file, add an edge
-    for (auto& nodeA : graph.nodes) {
-        for (const auto& entry : fs::directory_iterator("src")) {
-             if (entry.is_regular_file()) {
-                 std::ifstream file(entry.path());
-                 std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-                 if (content.find(nodeA.label) != std::string::npos) {
-                     for (auto& nodeB : graph.nodes) {
-                         if (nodeA.index != nodeB.index && nodeB.subjectIndex == fileToSubject[entry.path().filename().string()]) {
-                             graph.addEdge(nodeA.index, nodeB.index);
-                             break;
-                         }
-                     }
-                 }
-             }
+    // Optimized heuristic for edges: read each file content once
+    std::map<std::string, std::string> fileContents;
+    for (const auto& entry : fs::directory_iterator("src")) {
+        if (entry.is_regular_file()) {
+            std::ifstream file(entry.path());
+            fileContents[entry.path().filename().string()] = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        }
+    }
+
+    for (auto& [idA, nodeA] : graph.nodeMap) {
+        for (auto const& [filename, content] : fileContents) {
+            if (content.find(nodeA.label) != std::string::npos) {
+                // Find first node from this file to connect to
+                for (auto& [idB, nodeB] : graph.nodeMap) {
+                    if (idA != idB && nodeB.subjectIndex == fileToSubject[filename]) {
+                        graph.addEdge(idA, idB);
+                        break;
+                    }
+                }
+            }
         }
     }
 }
@@ -63,10 +68,10 @@ void testSelfAnalysis(TestRunner& runner) {
     Graph graph;
     constructGraphFromSource(graph);
 
-    runner.runTest("Source graph not empty", !graph.nodes.empty(), "Should find some functions in src/");
+    runner.runTest("Source graph not empty", !graph.nodeMap.empty(), "Should find some functions in src/");
 
-    if (!graph.nodes.empty()) {
-        std::cout << "[INFO] Found " << graph.nodes.size() << " functions as nodes." << std::endl;
+    if (!graph.nodeMap.empty()) {
+        std::cout << "[INFO] Found " << graph.nodeMap.size() << " functions as nodes." << std::endl;
         std::cout << "[INFO] Found " << graph.edgeCount() << " relationships." << std::endl;
     }
 }
@@ -83,7 +88,7 @@ void testExtremeEdgeCases(TestRunner& runner) {
     for (int i = 0; i < numNodes - 1; ++i) {
         bigGraph.addEdge(i, i + 1);
     }
-    runner.runTest("Massive Graph Creation", bigGraph.nodes.size() == numNodes, "Should handle 1000 nodes");
+    runner.runTest("Massive Graph Creation", bigGraph.nodeMap.size() == numNodes, "Should handle 1000 nodes");
 
     bigGraph.updateSummary();
     runner.runTest("Massive Graph Summary", bigGraph.summary.totalNodes == numNodes, "Summary should correctly count 1000 nodes");

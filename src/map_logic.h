@@ -26,17 +26,6 @@ namespace Config {
     inline bool quietMode = false;
 }
 
-// === RenderBuffer (formerly render_buffer.h) ===
-class RenderBuffer {
-public:
-    std::vector<std::string> lines;
-    void clear() { lines.clear(); }
-    void pushLine(const std::string& line) { lines.push_back(line); }
-    void flushToTerminal() const {
-        for (auto& l : lines) std::cout << l << "\n";
-    }
-};
-
 // Different visualization layouts (from viewer_logic.h)
 enum ViewMode {
     VM_PERSPECTIVE,  // full BFS‐based 3D perspective
@@ -111,7 +100,6 @@ struct GraphSummary {
 
 class Graph {
 public:
-    std::vector<GraphNode> nodes;
     std::unordered_map<int, GraphNode> nodeMap;
     std::map<int,Coord3>      nodePos;
     std::set<int> focusedNodeIndices;

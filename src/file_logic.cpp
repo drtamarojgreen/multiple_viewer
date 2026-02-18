@@ -18,7 +18,7 @@ bool saveGraphToCSV(const Graph& graph, const std::string& filename) {
 
 
     // Format: "Label",Index,[Neighbors],Weight,SubjectIndex
-    for (const auto& node : graph.nodes) {
+    for (const auto& [id, node] : graph.nodeMap) {
         out << "\"" << node.label << "\"," << node.index << ",[";
         for (size_t i = 0; i < node.neighbors.size(); ++i) {
             out << node.neighbors[i];
@@ -43,6 +43,7 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
     std::string line;
     size_t lineNo = 0;
     std::vector<std::vector<std::string>> neighborTokens;
+    std::vector<int> loadedNodeIds;
 
     // First pass: parse each line into a node and neighbor token list
     while (std::getline(in, line)) {
@@ -122,6 +123,7 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
             node.neighbors    = {}; // Will be populated in second pass
             node.weight       = std::stoi(fields[3]);
             node.subjectIndex = std::stoi(fields[4]);
+            loadedNodeIds.push_back(node.index);
         } catch (const std::exception& e) {
             std::cerr << "[ERROR] Line " << lineNo << ": parsing failed: " << e.what() << "\n";
             in.close();
@@ -131,8 +133,8 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
     }
 
     // Second pass: convert neighbor tokens to ints and add edges symmetrically
-    for (size_t i = 0; i < graph.nodes.size(); ++i) {
-        int from = graph.nodes[i].index;
+    for (size_t i = 0; i < loadedNodeIds.size(); ++i) {
+        int from = loadedNodeIds[i];
         for (const auto& tok : neighborTokens[i]) {
             try {
                 int to = std::stoi(tok);
