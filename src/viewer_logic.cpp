@@ -1,4 +1,5 @@
 #include "viewer_logic.h"
+#include "analysis_logic.h"
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
@@ -555,7 +556,7 @@ void runEditor(Graph& graph, bool runTests) {
                 renderGraph(graph, view);
                 break;
         }
-        if (Config::viewerOverlayMode) drawAnalyticsPanelOverlay(graph);
+        if (Config::viewerOverlayMode) AnalyticsEngine::drawAnalyticsPanelOverlay(graph);
 
         int key = get_char_non_blocking();
 

@@ -1,5 +1,6 @@
 #include "file_logic.h"
 #include "map_logic.h"
+#include "logger.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -8,11 +9,11 @@
 #include <cstddef>
 
 bool saveGraphToCSV(const Graph& graph, const std::string& filename) {
-    std::cout << "Starting save...\n";
+    Logger::info("Starting graph save to " + filename);
 
     std::ofstream out(filename);
     if (!out.is_open()) {
-        std::cerr << "Failed to open file for writing: " << filename << "\n";
+        Logger::error("Failed to open file for writing: " + filename);
         return false;
     }
 
@@ -27,15 +28,16 @@ bool saveGraphToCSV(const Graph& graph, const std::string& filename) {
         out << "]," << node.weight << "," << node.subjectIndex << "\n";
     }
     out.close();
-    std::cout << "Graph saved to: " << filename << "\n";
+    Logger::info("Graph successfully saved to: " + filename);
     return true;
 }
 
 bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
     auto start = std::chrono::high_resolution_clock::now();
+    Logger::info("Loading graph from " + filename);
     std::ifstream in(filename);
     if (!in.is_open()) {
-        std::cerr << "Failed to open file for reading: " << filename << "\n";
+        Logger::error("Failed to open file for reading: " + filename);
         return false;
     }
 
@@ -55,7 +57,7 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
         size_t q1 = line.find('"');
         size_t q2 = (q1 == std::string::npos) ? std::string::npos : line.find('"', q1 + 1);
         if (q1 == std::string::npos || q2 == std::string::npos) {
-            std::cerr << "[ERROR] Line " << lineNo << ": missing quoted label\n";
+            Logger::error("Line " + std::to_string(lineNo) + ": missing quoted label");
             in.close();
             return false;
         }
@@ -158,7 +160,7 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
     in.close();
     auto end = std::chrono::high_resolution_clock::now();
     graph.summary.timeToLoadMs = std::chrono::duration<double, std::milli>(end - start).count();
-    std::cout << "Graph loaded in " << graph.summary.timeToLoadMs << " ms\n";
+    Logger::info("Graph loaded in " + std::to_string(graph.summary.timeToLoadMs) + " ms");
     return true;
 }
 

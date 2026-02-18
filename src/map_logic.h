@@ -205,10 +205,6 @@ void updateZBuffer(std::vector<std::vector<float>>& zbuf,
 float calculateAdaptiveNodeSpacing(const Graph& graph);
 void  applyDensityStrategy(Graph& graph);
 
-// Advanced summary metrics
-double calculateClusteringCoefficient(const Graph& graph);
-int    calculateGraphDiameter(const Graph& graph);
-int    calculateTotalEdges(const Graph& graph);
 
 int getAdaptiveLabelLength(int depth, ZoomLevel zoom, int baseLen = 10);
 int calculateNodeSize(int depth, ZoomLevel zoom);

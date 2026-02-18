@@ -1,4 +1,5 @@
 #include "map_logic.h"
+#include "analysis_logic.h"
 #include <queue>
 #include <algorithm>
 #include <chrono>
@@ -294,25 +295,6 @@ Point2D projectToVanishingPoint(const Point3D& wp, const VanishingPoint& vp) {
     return { px, py };
 }
 
-int calculateTotalEdges(const Graph& g) {
-    int sum = 0;
-    for (const auto& node : g.nodes)
-        sum += static_cast<int>(node.neighbors.size());
-    return sum / 2;  // assuming undirected edges, each counted twice
-}
-
-int calculateGraphDiameter(const Graph& g) {
-    if (g.nodes.empty()) return 0;
-    int maxDist = 0;
-    for (const auto& startNode : g.nodes) {
-        auto dists = g.calculateShortestPaths(startNode.index);
-        for (const auto& [nid, d] : dists) {
-            if (d > maxDist) maxDist = d;
-        }
-    }
-    return maxDist;
-}
-
 int Graph::getMaxLabelLength() const {
     int maxLen = 0;
     for (const auto& node : nodes)
@@ -346,78 +328,9 @@ int calculateNodeSize(int depth, ZoomLevel zoom) {
     return std::max(1, base_size - depth);
 }
 
-double calculateClusteringCoefficient(const Graph& g) {
-    double total = 0.0;
-    for (const auto& node : g.nodes) {
-        const auto& nbrs = node.neighbors;
-        int k = nbrs.size();
-        if (k < 2) continue;
-        int links = 0;
-        for (int u : nbrs) {
-            for (int v : nbrs) {
-                if (u != v) {
-                    // Find GraphNode for u
-                    auto it_u = g.nodeMap.find(u);
-                    if (it_u != g.nodeMap.end()) {
-                        // Check if v is a neighbor of u
-                        const auto& u_nbrs = it_u->second.neighbors;
-                        if (std::find(u_nbrs.begin(), u_nbrs.end(), v) != u_nbrs.end()) {
-                            links++;
-                        }
-                    }
-                }
-            }
-        }
-        total += links / float(k * (k - 1));
-    }
-    return g.nodes.empty() ? 0.0f : total / g.nodes.size();
-}
-
 // Update Cached Summary
 void Graph::updateSummary() {
-    summary.totalNodes = nodes.size();
-    summary.totalEdges = edgeCount();
-    summary.averageDegree = computeAvgDegree();
-    summary.isConnected = isConnected();
-    summary.isolatedNodeCount = countIsolatedNodes();
-    summary.avgClusteringCoeff = calculateClusteringCoefficient(*this);
-    summary.diameter = calculateGraphDiameter(*this);
-    if (summary.totalNodes > 1) {
-        summary.density = (2.0f * summary.totalEdges) / (summary.totalNodes * (summary.totalNodes - 1));
-    } else {
-        summary.density = 0.0f;
-    }
-
-    summary.focusedNodes.clear();
-    for (int idx : focusedNodeIndices) {
-        summary.focusedNodes.push_back(idx);
-    }
-
-    summary.topicWeights.clear();
-    std::vector<std::pair<int, int>> nodeDegrees;
-    std::vector<std::pair<int, int>> subjectDegrees;
-
-    for (const auto& node : nodes) {
-        int deg = node.neighbors.size();
-        nodeDegrees.push_back({node.index, deg});
-        if (node.subjectIndex >= 0) {
-            subjectDegrees.push_back({node.index, deg});
-        }
-        summary.topicWeights[node.index] = node.weight;
-    }
-
-    auto byHigh = [](auto a, auto b) { return a.second > b.second; };
-    auto byLow  = [](auto a, auto b) { return a.second < b.second; };
-
-    std::sort(nodeDegrees.begin(), nodeDegrees.end(), byHigh);
-    std::sort(subjectDegrees.begin(), subjectDegrees.end(), byHigh);
-    summary.topConnectedNodes = extractTopIndices(nodeDegrees, 3);
-    summary.topConnectedSubjects = extractTopIndices(subjectDegrees, 3);
-
-    std::sort(nodeDegrees.begin(), nodeDegrees.end(), byLow);
-    std::sort(subjectDegrees.begin(), subjectDegrees.end(), byLow);
-    summary.leastConnectedNodes = extractTopIndices(nodeDegrees, 3);
-    summary.leastConnectedSubjects = extractTopIndices(subjectDegrees, 3);
+    AnalyticsEngine::runFullAnalysis(*this);
 }
 
 bool Graph::isNodeFocused(int index) const {

@@ -11,14 +11,22 @@
 
 namespace fs = std::filesystem;
 
+/**
+ * Heuristically constructs a graph from the project's own source code.
+ * Nodes represent functions found in .cpp and .h files.
+ * Subjects (groups) represent the files containing those functions.
+ * Edges represent cross-file references (if a function name appears in another file).
+ */
 void constructGraphFromSource(Graph& graph) {
     int nodeIdx = 0;
     int subjectIdx = 0;
     std::map<std::string, int> fileToSubject;
 
-    // Regex for basic function matching
-    std::regex funcRegex(R"((?:void|int|bool|double|float|std::vector|std::string)\s+([a-zA-Z0-9_:]+)\s*\([^)]*\)\s*\{)");
+    // Regex for basic function matching in C++
+    // Matches: [ReturnType] [FunctionName]([Args]) {
+    std::regex funcRegex(R"((?:void|int|bool|double|float|std::vector|std::string|GraphNode|GraphSummary)\s+([a-zA-Z0-9_:]+)\s*\([^)]*\)\s*\{)");
 
+    // Pass 1: Identify files (subjects) and functions (nodes)
     for (const auto& entry : fs::directory_iterator("src")) {
         if (entry.is_regular_file()) {
             std::string filename = entry.path().filename().string();
@@ -31,6 +39,9 @@ void constructGraphFromSource(Graph& graph) {
                     std::smatch match;
                     if (std::regex_search(line, match, funcRegex)) {
                         std::string funcName = match[1];
+                        // Avoid common false positives or language keywords
+                        if (funcName == "if" || funcName == "while" || funcName == "for") continue;
+
                         GraphNode node(funcName, nodeIdx++, {}, 1, fileToSubject[filename]);
                         graph.addNode(node);
                     }
@@ -39,7 +50,8 @@ void constructGraphFromSource(Graph& graph) {
         }
     }
 
-    // Optimized heuristic for edges: read each file content once
+    // Pass 2: Identify relationships (edges)
+    // Heuristic: If function A's name is found in File B, create edges between A and all functions in File B.
     std::map<std::string, std::string> fileContents;
     for (const auto& entry : fs::directory_iterator("src")) {
         if (entry.is_regular_file()) {
@@ -50,12 +62,13 @@ void constructGraphFromSource(Graph& graph) {
 
     for (auto& [idA, nodeA] : graph.nodeMap) {
         for (auto const& [filename, content] : fileContents) {
+            // If function name A is mentioned in another file
             if (content.find(nodeA.label) != std::string::npos) {
-                // Find first node from this file to connect to
+                // Connect nodeA to one representative node from that file to avoid edge explosion
                 for (auto& [idB, nodeB] : graph.nodeMap) {
                     if (idA != idB && nodeB.subjectIndex == fileToSubject[filename]) {
                         graph.addEdge(idA, idB);
-                        break;
+                        break; // Just one connection per file match for this heuristic
                     }
                 }
             }
