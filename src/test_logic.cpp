@@ -70,7 +70,7 @@ void testEdgeAddition() {
 }
 
 void testZBufferOutOfBounds() {
-    int H=CONSOLE_HEIGHT, W=CONSOLE_WIDTH;
+    int H=DEFAULT_CONSOLE_HEIGHT, W=DEFAULT_CONSOLE_WIDTH;
     std::vector<std::vector<float>> zb(H, std::vector<float>(W, INFINITY));
     updateZBuffer(zb, {999,999}, 3, 1.0f); // should not crash
     TEST("zBuffer out-of-bounds safe", true);  // no crash = pass
@@ -101,12 +101,12 @@ void testParseNeighbors() {
 
 // Test 2: adaptive label length by depth & zoom
 void testAdaptiveLabelLength() {
-  Graph g; g.zoomLevel = Graph::ZoomLevel::Z3;
+  Graph g;
   g.addNode(GraphNode("Topic", 0, {}, 1, 0)); // "Topic" size is 5
   int base = 10; // The heuristic base in the free function
-  int d0 = getAdaptiveLabelLength(0, g.zoomLevel);
-  int d1 = getAdaptiveLabelLength(1, g.zoomLevel);
-  int d2 = getAdaptiveLabelLength(2, g.zoomLevel);
+  int d0 = getAdaptiveLabelLength(0, ZoomLevel::Z3, base);
+  int d1 = getAdaptiveLabelLength(1, ZoomLevel::Z3, base);
+  int d2 = getAdaptiveLabelLength(2, ZoomLevel::Z3, base);
   TEST("label depth0 > base", d0 > base);
   TEST("label depth1 == base", d1 == base);
   TEST("label depth2 < base", d2 < base);
@@ -128,18 +128,16 @@ void testFocusOnlyView() {
   Graph g;
   g.focusedNodeIndex = 5;
   g.focusOnlyAtMaxZoom = true;
-  g.zoomLevel = Graph::ZoomLevel::Z5;
-  TEST("isFocusOnlyView true", g.isFocusOnlyView());
-  g.zoomLevel = Graph::ZoomLevel::Z3;
-  TEST("isFocusOnlyView false", !g.isFocusOnlyView());
+  TEST("isFocusOnlyView true", g.isFocusOnlyView(ZoomLevel::Z5));
+  TEST("isFocusOnlyView false", !g.isFocusOnlyView(ZoomLevel::Z3));
 }
 
 // Test 5: continuous node size calculation
 void testNodeSizeCalc() {
   Graph g;
-  int s0 = calculateNodeSize(0,Graph::ZoomLevel::Z3);
-  int s1 = calculateNodeSize(1,Graph::ZoomLevel::Z3);
-  int s2 = calculateNodeSize(2,Graph::ZoomLevel::Z3);
+  int s0 = calculateNodeSize(0,ZoomLevel::Z3);
+  int s1 = calculateNodeSize(1,ZoomLevel::Z3);
+  int s2 = calculateNodeSize(2,ZoomLevel::Z3);
   TEST("nodeSize depth0 > depth1", s0 > s1);
   TEST("nodeSize depth1 > depth2", s1 > s2);
   TEST("nodeSize >=1", s2 >= 1);
@@ -148,12 +146,13 @@ void testNodeSizeCalc() {
 // Test 6: book-based structure creation
 void testBookStructure() {
   Graph g;
+  ViewContext v;
   // two subjects, depths simulated by index % 3
   for (int i=0;i<6;i++) {
     g.addNode(GraphNode("N"+std::to_string(i),i,{},i%2,i));
     g.nodePos[i] = {static_cast<float>(i%3), static_cast<float>(i%4), static_cast<float>(i%3)};  // z = i%3
   }
-  auto books = createBookStructure(g);
+  auto books = createBookStructure(g, v);
   // expect at most 2 subjects * 3 depths = 6 chapters
   TEST("bookChapters <=6", books.size()<=6);
 }
@@ -180,19 +179,19 @@ void testGridLayer() {
 
 // Test 9: vanishing point projection
 void testVanishingProjection() {
-  VanishingPoint vp = calculateVanishingPoint();
+  VanishingPoint vp = calculateVanishingPoint(DEFAULT_CONSOLE_WIDTH, DEFAULT_CONSOLE_HEIGHT);
   Point3D w{0.0f,0.0f,10.0f};
   auto p = projectToVanishingPoint(w,vp);
   // must lie within screen
   TEST("proj x in bounds",
-       p.x >= 0 && p.x < CONSOLE_WIDTH);
+       p.x >= 0 && p.x < DEFAULT_CONSOLE_WIDTH);
   TEST("proj y in bounds",
-       p.y >= 0 && p.y < CONSOLE_HEIGHT);
+       p.y >= 0 && p.y < DEFAULT_CONSOLE_HEIGHT);
 }
 
 // Test 10: z-buffer occlusion logic
 void testZBuffer() {
-  int H=CONSOLE_HEIGHT, W=CONSOLE_WIDTH;
+  int H=DEFAULT_CONSOLE_HEIGHT, W=DEFAULT_CONSOLE_WIDTH;
   std::vector<std::vector<float>> zb(H, std::vector<float>(W, INFINITY));
   // first pixel at depth 5
   updateZBuffer(zb, {10,10}, 1, 5.0f);

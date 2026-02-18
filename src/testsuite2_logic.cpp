@@ -275,6 +275,7 @@ void testVisualizationFeatures(TestRunner& runner) {
     std::cout << "\n=== Testing Visualization Features ===" << std::endl;
     
     Graph graph;
+    ViewContext view;
     
     // Add test nodes
     for (int i = 1; i <= 3; ++i) {
@@ -290,32 +291,32 @@ void testVisualizationFeatures(TestRunner& runner) {
     int maxLabelLength = graph.getMaxLabelLength();
     runner.runTest("Max Label Length", maxLabelLength > 0, "Should calculate max label length");
     
-    int adaptiveLen0 = graph.getAdaptiveLabelLength(0);
-    int adaptiveLen1 = graph.getAdaptiveLabelLength(1);
-    int adaptiveLen2 = graph.getAdaptiveLabelLength(2);
+    int adaptiveLen0 = graph.getAdaptiveLabelLength(0, view.zoomLevel);
+    int adaptiveLen1 = graph.getAdaptiveLabelLength(1, view.zoomLevel);
+    int adaptiveLen2 = graph.getAdaptiveLabelLength(2, view.zoomLevel);
     
     runner.runTest("Adaptive Label Depth 0", adaptiveLen0 >= adaptiveLen1, "Depth 0 should have longest labels");
     runner.runTest("Adaptive Label Depth 1", adaptiveLen1 >= adaptiveLen2, "Depth 1 should have medium labels");
     runner.runTest("Adaptive Label Minimum", adaptiveLen2 >= 3, "All labels should be at least 3 characters");
     
     // Test node size calculation
-    int size0 = graph.calculateNodeSize(0);
-    int size1 = graph.calculateNodeSize(1);
-    int size2 = graph.calculateNodeSize(2);
+    int size0 = graph.calculateNodeSize(0, view.zoomLevel);
+    int size1 = graph.calculateNodeSize(1, view.zoomLevel);
+    int size2 = graph.calculateNodeSize(2, view.zoomLevel);
     
     runner.runTest("Node Size Depth 0", size0 >= size1, "Depth 0 nodes should be largest");
     runner.runTest("Node Size Depth 1", size1 >= size2, "Depth 1 nodes should be medium");
     runner.runTest("Node Size Minimum", size2 >= 1, "All nodes should have minimum size 1");
     
     // Test viewport calculations
-    bool inViewport = graph.isInViewport(10, 10, 5);
+    bool inViewport = graph.isInViewport(10, 10, 5, view);
     runner.runTest("Viewport Test", inViewport, "Node at (10,10) should be in viewport");
     
-    bool outViewport = graph.isInViewport(-100, -100, 5);
+    bool outViewport = graph.isInViewport(-100, -100, 5, view);
     runner.runTest("Out of Viewport", !outViewport, "Node at (-100,-100) should be out of viewport");
     
     // Test max distance calculation
-    int maxDist = graph.getMaxDistance();
+    int maxDist = graph.getMaxDistance(view.zoomLevel);
     runner.runTest("Max Distance Positive", maxDist > 0, "Max distance should be positive");
     
     // Test subject filtering
@@ -328,11 +329,9 @@ void testVisualizationFeatures(TestRunner& runner) {
     
     // Test focus-only view
     graph.focusOnlyAtMaxZoom = true;
-    graph.zoomLevel = Graph::ZoomLevel::Z5;
-    runner.runTest("Focus Only View Max Zoom", graph.isFocusOnlyView(), "Should be focus-only at max zoom");
+    runner.runTest("Focus Only View Max Zoom", graph.isFocusOnlyView(ZoomLevel::Z5), "Should be focus-only at max zoom");
     
-    graph.zoomLevel = Graph::ZoomLevel::Z3;
-    runner.runTest("Focus Only View Mid Zoom", !graph.isFocusOnlyView(), "Should not be focus-only at mid zoom");
+    runner.runTest("Focus Only View Mid Zoom", !graph.isFocusOnlyView(ZoomLevel::Z3), "Should not be focus-only at mid zoom");
 }
 
 // Test 5: Navigation and Zoom
@@ -350,28 +349,29 @@ void testNavigationAndZoom(TestRunner& runner) {
     }
     
     // Test zoom operations
-    Graph::ZoomLevel initialZoom = graph.zoomLevel;
-    graph.zoomIn();
-    runner.runTest("Zoom In", graph.zoomLevel > initialZoom, "Should zoom in");
+    ViewContext view;
+    ZoomLevel initialZoom = view.zoomLevel;
+    view.zoomIn();
+    runner.runTest("Zoom In", view.zoomLevel > initialZoom, "Should zoom in");
     
-    graph.zoomOut();
-    runner.runTest("Zoom Out", graph.zoomLevel == initialZoom, "Should zoom out to original level");
+    view.zoomOut();
+    runner.runTest("Zoom Out", view.zoomLevel == initialZoom, "Should zoom out to original level");
     
     // Test zoom limits
-    graph.zoomLevel = Graph::ZoomLevel::Z5;
-    graph.zoomIn();
-    runner.runTest("Zoom In Limit", graph.zoomLevel == Graph::ZoomLevel::Z5, "Should not zoom beyond maximum");
+    view.zoomLevel = ZoomLevel::Z5;
+    view.zoomIn();
+    runner.runTest("Zoom In Limit", view.zoomLevel == ZoomLevel::Z5, "Should not zoom beyond maximum");
     
-    graph.zoomLevel = Graph::ZoomLevel::Z1;
-    graph.zoomOut();
-    runner.runTest("Zoom Out Limit", graph.zoomLevel == Graph::ZoomLevel::Z1, "Should not zoom beyond minimum");
+    view.zoomLevel = ZoomLevel::Z1;
+    view.zoomOut();
+    runner.runTest("Zoom Out Limit", view.zoomLevel == ZoomLevel::Z1, "Should not zoom beyond minimum");
     
     // Test panning
-    int initialPanX = graph.panX;
-    int initialPanY = graph.panY;
-    graph.pan(5, 3);
-    runner.runTest("Pan X", graph.panX == initialPanX + 5, "Should pan X correctly");
-    runner.runTest("Pan Y", graph.panY == initialPanY + 3, "Should pan Y correctly");
+    int initialPanX = view.panX;
+    int initialPanY = view.panY;
+    view.pan(5, 3);
+    runner.runTest("Pan X", view.panX == initialPanX + 5, "Should pan X correctly");
+    runner.runTest("Pan Y", view.panY == initialPanY + 3, "Should pan Y correctly");
     
     // Test focus management
     Config::allowMultiFocus = true;
@@ -392,8 +392,8 @@ void testNavigationAndZoom(TestRunner& runner) {
     runner.runTest("Cycle Focus", graph.focusedNodeIndices.size() == 1, "Should set one focus after cycling");
     
     // Test render distance
-    graph.setMaxRenderDistance(5);
-    runner.runTest("Set Max Render Distance", graph.getMaxRenderDistance() == 5, "Should set max render distance");
+    view.maxRenderDistance = 5;
+    runner.runTest("Set Max Render Distance", view.maxRenderDistance == 5, "Should set max render distance");
 }
 
 // Test 6: Advanced Features
@@ -442,7 +442,8 @@ void testAdvancedFeatures(TestRunner& runner) {
     runner.runTest("Projection Y in Bounds", point2d.y >= 0 && point2d.y < 25, "Projected Y should be in screen bounds");
     
     // Test book structure creation
-    auto bookStructure = createBookStructure(graph);
+    ViewContext viewContext;
+    auto bookStructure = createBookStructure(graph, viewContext);
     runner.runTest("Book Structure Created", !bookStructure.empty(), "Should create book structure");
     
     // Test grid layer assignment
@@ -509,8 +510,9 @@ void testEdgeCases(TestRunner& runner) {
     runner.runTest("Negative Index Node", singleNodeGraph.nodeExists(-1), "Should handle negative indices");
     
     // Test extreme coordinates
+    ViewContext view;
     singleNodeGraph.nodePos[-1] = {-1000, -1000, -1000};
-    bool extremeInViewport = singleNodeGraph.isInViewport(-1000, -1000, 1);
+    bool extremeInViewport = singleNodeGraph.isInViewport(-1000, -1000, 1, view);
     runner.runTest("Extreme Coordinates", !extremeInViewport, "Extreme coordinates should be out of viewport");
     
     // Test proximity depth edge cases

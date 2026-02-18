@@ -9,8 +9,8 @@
 #include <map>
 
 // Console dimensions (shared globally)
-static constexpr int CONSOLE_WIDTH  = 80;
-static constexpr int CONSOLE_HEIGHT = 25;
+static constexpr int DEFAULT_CONSOLE_WIDTH  = 80;
+static constexpr int DEFAULT_CONSOLE_HEIGHT = 25;
 
 // === Configuration Flags (formerly config.h) ===
 namespace Config {
@@ -46,6 +46,23 @@ enum ViewMode {
     VM_GRID,         // uniform grid layers
     VM_NEXUS_FLOW,   // force-directed animated layout
     VM_COUNT
+};
+
+enum class ZoomLevel { Z1, Z2, Z3, Z4, Z5 };
+
+// View settings and viewport state
+struct ViewContext {
+    int panX = 0;
+    int panY = 0;
+    ZoomLevel zoomLevel = ZoomLevel::Z3;
+    ViewMode currentViewMode = VM_PERSPECTIVE;
+    int maxRenderDistance = 3;
+    int width = DEFAULT_CONSOLE_WIDTH;
+    int height = DEFAULT_CONSOLE_HEIGHT;
+
+    void zoomIn();
+    void zoomOut();
+    void pan(int dx, int dy);
 };
 
 // 3D coordinate for node placement and depth sorting
@@ -99,12 +116,8 @@ public:
     std::map<int,Coord3>      nodePos;
     std::set<int> focusedNodeIndices;
     int focusedNodeIndex = 0;
-    int panX=0, panY=0;
     GraphSummary summary;
-    int maxRenderDistance = 3;
 
-    enum class ZoomLevel { Z1, Z2, Z3, Z4, Z5 };
-    ZoomLevel zoomLevel = ZoomLevel::Z3;
     // Phase II viewer/editor toggles
     bool subjectFilterOnly;
     bool focusOnlyAtMaxZoom;
@@ -113,23 +126,19 @@ public:
     Graph() : subjectFilterOnly(false), focusOnlyAtMaxZoom(false), showLines(true) {}
 
 
-    int  getMaxDistance()    const;
+    int  getMaxDistance(ZoomLevel zoom)    const;
     int  getMaxLabelLength() const;
-    bool isInViewport(int worldX, int worldY, int size) const;
+    bool isInViewport(int worldX, int worldY, int size, const ViewContext& view) const;
 
     void cycleFocus();
-    void zoomIn();
-    void zoomOut();
-    void pan(int dx, int dy);
 
     void editEdges();
 
     void addFocus(int index);
     void removeFocus(int index);
     void clearFocuses();
-    void setMaxRenderDistance(int d);
     // 4) Continuous zoom block sizing
-    int  calculateNodeSize(int depth) const;
+    int  calculateNodeSize(int depth, ZoomLevel zoom) const;
     std::unordered_map<int,int> computeMultiFocusDistances() const;
 
     void addNode(const GraphNode& node);
@@ -144,22 +153,20 @@ public:
     int edgeCount() const;
     float computeAvgDegree() const;
     int countIsolatedNodes() const;
-    int getMaxRenderDistance() const { return maxRenderDistance; }
     void pause() const;
 
     // Summary
     void updateSummary();
     // 1) Adaptive label length
-    int  getAdaptiveLabelLength(int depth) const;
+    int  getAdaptiveLabelLength(int depth, ZoomLevel zoom) const;
     // 2) Subject filtering
     bool passesSubjectFilter(int nodeId) const;
     // 3) Focus-only view at max zoom
-    bool isFocusOnlyView() const;
+    bool isFocusOnlyView(ZoomLevel zoom) const;
     // 5) Proximity-based depth
-    float getProximityDepth(int nodeId) const;
+    float getProximityDepth(int nodeId, int width = DEFAULT_CONSOLE_WIDTH, int height = DEFAULT_CONSOLE_HEIGHT) const;
 
     // --- View Mode State ---
-    ViewMode currentViewMode = VM_PERSPECTIVE;
     bool needsLayoutReset = true;
     bool isNodeFocused(int index) const;
 };
@@ -175,6 +182,13 @@ struct VanishingPoint {
 // Simple 3D/2D point types for perspective projection
 struct Point3D { float x, y, z; };
 struct Point2D { float x, y; };
+
+// Physics state for Nexus Flow layout
+struct NexusPhysicsState {
+    std::map<int, Point2D> positions;
+    std::map<int, Point2D> velocities;
+    bool initialized = false;
+};
 
 // Grouping for "Book­-Based" view
 struct BookChapter {
@@ -192,7 +206,6 @@ int getGridLayer(int nodeIndex, int layerCount);
 
 
 VanishingPoint calculateVanishingPoint(int screenW, int screenH);
-VanishingPoint calculateVanishingPoint(); // no-arg version
 Point2D      projectToVanishingPoint(const Point3D& wp, const VanishingPoint& vp);
 
 // Z-buffer occlusion
@@ -208,8 +221,8 @@ double calculateClusteringCoefficient(const Graph& graph);
 int    calculateGraphDiameter(const Graph& graph);
 int    calculateTotalEdges(const Graph& graph);
 
-int getAdaptiveLabelLength(int depth, Graph::ZoomLevel zoom, int baseLen = 10);
-int calculateNodeSize(int depth, Graph::ZoomLevel zoom);
+int getAdaptiveLabelLength(int depth, ZoomLevel zoom, int baseLen = 10);
+int calculateNodeSize(int depth, ZoomLevel zoom);
 
 #endif // MAP_LOGIC_H
 

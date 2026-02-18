@@ -120,13 +120,12 @@ bool Graph::isConnected() const {
 }
 
 // Cull off-screen blocks
-bool Graph::isInViewport(int worldX, int worldY, int blockSize) const {
-    const int H = 25, W = 80;
+bool Graph::isInViewport(int worldX, int worldY, int blockSize, const ViewContext& view) const {
     int half = blockSize / 2;
-    int r0 = worldX - half + panY, r1 = worldX + half + panY;
-    int c0 = worldY - half + panX, c1 = worldY + half + panX;
-    if (r1 < 0 || r0 >= H) return false;
-    if (c1 < 0 || c0 >= W) return false;
+    int r0 = worldX - half + view.panY, r1 = worldX + half + view.panY;
+    int c0 = worldY - half + view.panX, c1 = worldY + half + view.panX;
+    if (r1 < 0 || r0 >= view.height) return false;
+    if (c1 < 0 || c0 >= view.width) return false;
     return true;
 }
 
@@ -180,14 +179,10 @@ void Graph::clearFocuses() {
     focusedNodeIndices.clear();
 }
 
-void Graph::setMaxRenderDistance(int d) {
-    maxRenderDistance = d;
-}
-
 // BFS depth limit
-int Graph::getMaxDistance() const {
+int Graph::getMaxDistance(ZoomLevel zoom) const {
     static int baseMax[6] = {0, 2, 4, 8, 10, 20};
-    int d = baseMax[static_cast<int>(zoomLevel)];
+    int d = baseMax[static_cast<int>(zoom)];
     if (summary.totalNodes > 500) {
         int adjust = static_cast<int>(summary.averageDegree / 2.0);
         d = std::max(1, d - adjust);
@@ -247,17 +242,17 @@ void Graph::cycleFocus() {
     }
 }
 
-void Graph::zoomIn() {
+void ViewContext::zoomIn() {
     if (zoomLevel < ZoomLevel::Z5)
         zoomLevel = static_cast<ZoomLevel>(static_cast<int>(zoomLevel) + 1);
 }
 
-void Graph::zoomOut() {
+void ViewContext::zoomOut() {
     if (zoomLevel > ZoomLevel::Z1)
         zoomLevel = static_cast<ZoomLevel>(static_cast<int>(zoomLevel) - 1);
 }
 
-void Graph::pan(int dx, int dy) {
+void ViewContext::pan(int dx, int dy) {
     panX += dx;
     panY += dy;
 }
@@ -288,11 +283,6 @@ VanishingPoint calculateVanishingPoint(int screenW, int screenH) {
     vp.focalLength = std::min(screenW, screenH) * 0.5f;
     vp.viewDistance= vp.focalLength * 2.0f;
     return vp;
-}
-
-// no‐arg vanishing point
-VanishingPoint calculateVanishingPoint() {
-    return calculateVanishingPoint(CONSOLE_WIDTH, CONSOLE_HEIGHT);
 }
 
 
@@ -330,14 +320,28 @@ int Graph::getMaxLabelLength() const {
     return maxLen;
 }
 
-// getAdaptiveLabelLength free‐function
-int getAdaptiveLabelLength(int depth, Graph::ZoomLevel zoom, int baseLen) {
+// getAdaptiveLabelLength member implementation
+int Graph::getAdaptiveLabelLength(int depth, ZoomLevel zoom) const {
+    int base = getMaxLabelLength();
+    if (base == 0) base = 10; // Default if empty
+    float factor = (depth == 0 ? 1.5f : (depth == 1 ? 1.0f : 0.5f));
+    return std::max(3, int(base * factor));
+}
+
+// getAdaptiveLabelLength free‐function wrapper
+int getAdaptiveLabelLength(int depth, ZoomLevel zoom, int baseLen) {
     float factor = (depth == 0 ? 1.5f : (depth == 1 ? 1.0f : 0.5f));
     return std::max(3, int(baseLen * factor));
 }
 
-// calculateNodeSize free‐function
-int calculateNodeSize(int depth, Graph::ZoomLevel zoom) {
+// calculateNodeSize member implementation
+int Graph::calculateNodeSize(int depth, ZoomLevel zoom) const {
+    int base_size = static_cast<int>(zoom) + 1;
+    return std::max(1, base_size - depth);
+}
+
+// calculateNodeSize free‐function wrapper
+int calculateNodeSize(int depth, ZoomLevel zoom) {
     int base_size = static_cast<int>(zoom) + 1;
     return std::max(1, base_size - depth);
 }
