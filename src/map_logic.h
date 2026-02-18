@@ -26,17 +26,6 @@ namespace Config {
     inline bool quietMode = false;
 }
 
-// === RenderBuffer (formerly render_buffer.h) ===
-class RenderBuffer {
-public:
-    std::vector<std::string> lines;
-    void clear() { lines.clear(); }
-    void pushLine(const std::string& line) { lines.push_back(line); }
-    void flushToTerminal() const {
-        for (auto& l : lines) std::cout << l << "\n";
-    }
-};
-
 // Different visualization layouts (from viewer_logic.h)
 enum ViewMode {
     VM_PERSPECTIVE,  // full BFS‐based 3D perspective
@@ -216,10 +205,6 @@ void updateZBuffer(std::vector<std::vector<float>>& zbuf,
 float calculateAdaptiveNodeSpacing(const Graph& graph);
 void  applyDensityStrategy(Graph& graph);
 
-// Advanced summary metrics
-double calculateClusteringCoefficient(const Graph& graph);
-int    calculateGraphDiameter(const Graph& graph);
-int    calculateTotalEdges(const Graph& graph);
 
 int getAdaptiveLabelLength(int depth, ZoomLevel zoom, int baseLen = 10);
 int calculateNodeSize(int depth, ZoomLevel zoom);

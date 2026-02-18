@@ -1,4 +1,5 @@
 #include "viewer_logic.h"
+#include "analysis_logic.h"
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
@@ -520,9 +521,9 @@ void renderBookView(Graph& graph, const ViewContext& view) {
     drawViewerMenu();
 }
 
-#include "test_logic.h"
-#include "testsuite2_logic.h"
-#include "testsuite3_logic.h"
+#include "../tests/test_logic.h"
+#include "../tests/testsuite2_logic.h"
+#include "../tests/testsuite3_logic.h"
 #include "console_logic.h"
 #include <thread>
 #include <chrono>
@@ -555,7 +556,7 @@ void runEditor(Graph& graph, bool runTests) {
                 renderGraph(graph, view);
                 break;
         }
-        if (Config::viewerOverlayMode) drawAnalyticsPanelOverlay(graph);
+        if (Config::viewerOverlayMode) AnalyticsEngine::drawAnalyticsPanelOverlay(graph);
 
         int key = get_char_non_blocking();
 
@@ -607,29 +608,6 @@ bool executeGraphCommand(Graph& graph, ViewContext& view, const std::string& com
 }
 
 
-// subject filter
-bool Graph::passesSubjectFilter(int nodeId) const {
-    if (!subjectFilterOnly) return true;
-    if (focusedNodeIndex<0)   return true;
-    return nodes.at(nodeId).subjectIndex
-         == nodes.at(focusedNodeIndex).subjectIndex;
-}
-
-// focus-only mode
-bool Graph::isFocusOnlyView(ZoomLevel zoom) const {
-    return focusOnlyAtMaxZoom && zoom == ZoomLevel::Z5;
-}
-
-// proximity depth
-float Graph::getProximityDepth(int nodeId, int width, int height) const {
-    auto it = nodePos.find(nodeId);
-    if (it == nodePos.end()) return 1.0f;
-    float cx = width / 2.0f, cy = height / 2.0f;
-    float dx = it->second.y - cx;
-    float dy = it->second.x - cy;
-    float dist = std::sqrt(dx*dx + dy*dy);
-    return std::min(1.0f, dist / std::max(cx, cy));
-}
 
 // Free helpers
 

@@ -1,6 +1,6 @@
-#include "map_logic.h"
-#include "viewer_logic.h"
-#include "file_logic.h"
+#include "../src/map_logic.h"
+#include "../src/viewer_logic.h"
+#include "../src/file_logic.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -86,7 +86,7 @@ void testGraphSerialization() {
     Graph g2;
     bool ok = loadGraphFromCSV(g2, "test_graph.csv");
     TEST("graph reload success", ok);
-    TEST("graph reload node count", g2.nodes.size() == 2);
+    TEST("graph reload node count", g2.nodeMap.size() == 2);
     TEST("graph reload edge count", g2.edgeCount() == 1);
 }
 

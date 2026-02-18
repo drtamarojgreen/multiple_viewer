@@ -3,7 +3,7 @@
 #define TESTSUITE2_LOGIC_H
 
 
-#include "map_logic.h"
+#include "../src/map_logic.h"
 #include <set>
 #include <vector>
 #include <string>

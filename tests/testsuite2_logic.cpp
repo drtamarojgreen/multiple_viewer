@@ -1,8 +1,8 @@
 // testsuite2_logic.cpp
 #include "testsuite2_logic.h"
-#include "map_logic.h"
-#include "viewer_logic.h"
-#include "file_logic.h"
+#include "../src/map_logic.h"
+#include "../src/viewer_logic.h"
+#include "../src/file_logic.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -115,7 +115,7 @@ void testBasicGraphOperations(TestRunner& runner) {
     node1.subjectIndex = 0;
     
     graph.addNode(node1);
-    runner.runTest("Add Node", graph.nodes.size() == 1, "Node count should be 1");
+    runner.runTest("Add Node", graph.nodeMap.size() == 1, "Node count should be 1");
     runner.runTest("Node Exists", graph.nodeExists(1), "Node 1 should exist");
     runner.runTest("Node Not Exists", !graph.nodeExists(999), "Node 999 should not exist");
     
@@ -127,11 +127,11 @@ void testBasicGraphOperations(TestRunner& runner) {
     node2.subjectIndex = 1;
     
     graph.addNode(node2);
-    runner.runTest("Add Second Node", graph.nodes.size() == 2, "Node count should be 2");
+    runner.runTest("Add Second Node", graph.nodeMap.size() == 2, "Node count should be 2");
     
     // Test duplicate node addition (should not add)
     graph.addNode(node1);
-    runner.runTest("Duplicate Node Prevention", graph.nodes.size() == 2, "Should not add duplicate nodes");
+    runner.runTest("Duplicate Node Prevention", graph.nodeMap.size() == 2, "Should not add duplicate nodes");
     
     // Test edge addition
     graph.addEdge(1, 2);
@@ -144,13 +144,13 @@ void testBasicGraphOperations(TestRunner& runner) {
     
     // Test node removal
     graph.removeNode(2);
-    runner.runTest("Remove Node", graph.nodes.size() == 1, "Node count should be 1 after removal");
+    runner.runTest("Remove Node", graph.nodeMap.size() == 1, "Node count should be 1 after removal");
     runner.runTest("Node Removed", !graph.nodeExists(2), "Node 2 should not exist after removal");
     runner.runTest("Edge Cleanup", graph.nodeMap[1].neighbors.empty(), "Node 1 should have no neighbors after node 2 removal");
     
     // Test graph clearing
     graph.clear();
-    runner.runTest("Clear Graph", graph.nodes.empty(), "Graph should be empty after clear");
+    runner.runTest("Clear Graph", graph.nodeMap.empty(), "Graph should be empty after clear");
 }
 
 // Test 2: File Operations
@@ -185,7 +185,7 @@ void testFileOperations(TestRunner& runner) {
     runner.runTest("Load Graph from CSV", loadSuccess, "Should successfully load graph from CSV");
     
     if (loadSuccess) {
-        runner.runTest("Loaded Node Count", loadedGraph.nodes.size() == 2, "Should load 2 nodes");
+        runner.runTest("Loaded Node Count", loadedGraph.nodeMap.size() == 2, "Should load 2 nodes");
         runner.runTest("Loaded Node Labels", 
                       loadedGraph.nodeMap[1].label == "Node One" && 
                       loadedGraph.nodeMap[2].label == "Node Two", 
@@ -321,9 +321,9 @@ void testVisualizationFeatures(TestRunner& runner) {
     
     // Test subject filtering
     graph.subjectFilterOnly = true;
-    graph.focusedNodeIndex = 0;
-    if (graph.nodes.size() > 0) {
-        bool passesFilter = graph.passesSubjectFilter(0);
+    graph.focusedNodeIndex = 1;
+    if (graph.nodeMap.size() > 0) {
+        bool passesFilter = graph.passesSubjectFilter(1);
         runner.runTest("Subject Filter Pass", passesFilter, "Should pass subject filter for same subject");
     }
     

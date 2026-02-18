@@ -5,9 +5,10 @@
 #include "viewer_logic.h"
 #include "search_logic.h"
 #include <iostream>
-#include "test_logic.h"
-#include "testsuite2_logic.h"
-#include "testsuite3_logic.h"
+#include "../tests/test_logic.h"
+#include "../tests/testsuite2_logic.h"
+#include "../tests/testsuite3_logic.h"
+#include "../tests/dynamic_graph_tests.h"
 #include "file_logic.h" // Explicitly include for file operations
 #include <string>
 #include <vector>
@@ -44,7 +45,9 @@ void runInteractiveSession(const CmdLineParser& parser) {
 
     std::cout << "=== CBT Graph Editor ===\n";
     std::string inputFile = "graph_input.csv";
-    if (parser.hasOption("load")) {
+    if (parser.hasOption("load-graph")) {
+        inputFile = parser.getOption("load-graph");
+    } else if (parser.hasOption("load")) { // Fallback for old flag
         inputFile = parser.getOption("load");
     }
 
@@ -64,11 +67,58 @@ int runApplication(const CmdLineParser& parser) {
         runAllTests();
         runAll2Tests();
         runAll3Tests();
+        runDynamicGraphTests();
         return 0;
     }
 
     if (parser.hasOption("help")) {
-        std::cout << "Usage: viewer [--load <file.csv>] [--test] [--help]\n";
+        std::cout << "Usage: viewer [options]\n";
+        std::cout << "Options:\n";
+        std::cout << "  --load-graph <file.csv>   Load graph from CSV\n";
+        std::cout << "  --save-graph <file.csv>   Save graph to CSV (headless)\n";
+        std::cout << "  --get-node-details <id>  Print node details and exit\n";
+        std::cout << "  --test                    Run all tests\n";
+        std::cout << "  --help                    Show this help\n";
+        return 0;
+    }
+
+    // Headless operations
+    if (parser.hasOption("load-graph") || parser.hasOption("save-graph") || parser.hasOption("get-node-details")) {
+        Graph graph;
+        std::string loadPath = parser.getOption("load-graph");
+        if (loadPath.empty()) loadPath = "graph_input.csv";
+
+        if (!loadGraphFromCSV(graph, loadPath)) {
+            std::cerr << "Error: Could not load graph from " << loadPath << "\n";
+            return 1;
+        }
+
+        if (parser.hasOption("get-node-details")) {
+            int id = std::stoi(parser.getOption("get-node-details"));
+            if (graph.nodeExists(id)) {
+                const GraphNode& node = graph.nodeMap.at(id);
+                std::cout << "Node Index: " << node.index << "\n";
+                std::cout << "Label: " << node.label << "\n";
+                std::cout << "Weight: " << node.weight << "\n";
+                std::cout << "Subject Index: " << node.subjectIndex << "\n";
+                std::cout << "Neighbor Count: " << node.neighbors.size() << "\n";
+            } else {
+                std::cout << "Node with index " << id << " not found.\n";
+            }
+        }
+
+        if (parser.hasOption("save-graph")) {
+            std::string savePath = parser.getOption("save-graph");
+            if (saveGraphToCSV(graph, savePath)) {
+                std::cout << "Graph saved to " << savePath << "\n";
+            } else {
+                std::cerr << "Error: Could not save graph to " << savePath << "\n";
+                return 1;
+            }
+        }
+
+        // If we did headless ops, don't start interactive session unless specifically requested?
+        // Usually CLI flags mean headless.
         return 0;
     }
 
