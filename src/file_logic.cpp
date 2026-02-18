@@ -18,7 +18,7 @@ bool saveGraphToCSV(const Graph& graph, const std::string& filename) {
 
 
     // Format: "Label",Index,[Neighbors],Weight,SubjectIndex
-    for (const auto& [id, node] : graph.nodeMap) {
+    for (const auto& node : graph.nodes) {
         out << "\"" << node.label << "\"," << node.index << ",[";
         for (size_t i = 0; i < node.neighbors.size(); ++i) {
             out << node.neighbors[i];

@@ -6,6 +6,7 @@
 
 void Graph::addNode(const GraphNode& node) {
     if (nodeExists(node.index)) return;
+    nodes.push_back(node);
     nodeMap[node.index] = node;
 }
 
@@ -18,11 +19,16 @@ void Graph::removeNode(int index) {
         auto it = std::find(nbrs.begin(), nbrs.end(), index);
         if (it != nbrs.end()) {
             nbrs.erase(it);
+            // Sync with nodes vector
+            updateNode(otherIndex, otherNode);
         }
     }
 
-    // Remove from nodeMap
+    // Remove from nodeMap and nodes vector
     nodeMap.erase(index);
+    nodes.erase(std::remove_if(nodes.begin(), nodes.end(),
+                [index](const GraphNode& node) { return node.index == index; }),
+                nodes.end());
 
     // Also remove from focused set and positions if necessary
     focusedNodeIndices.erase(index);
@@ -33,9 +39,17 @@ bool Graph::nodeExists(int index) const {
     return nodeMap.find(index) != nodeMap.end();
 }
 
-// Update a node in nodeMap
+// Update a node in both nodes vector and nodeMap
 void Graph::updateNode(int index, const GraphNode& updatedNode) {
+    // Update in nodeMap
     nodeMap[index] = updatedNode;
+
+    // Update in nodes vector
+    auto it = std::find_if(nodes.begin(), nodes.end(),
+        [index](const GraphNode& n) { return n.index == index; });
+    if (it != nodes.end()) {
+        *it = updatedNode;
+    }
 }
 
 void Graph::addEdge(int from, int to) {
@@ -56,6 +70,7 @@ void Graph::addEdge(int from, int to) {
 }
 
 void Graph::clear() {
+    nodes.clear();
     nodeMap.clear();
     focusedNodeIndices.clear();
     summary = GraphSummary{};
@@ -85,12 +100,11 @@ std::unordered_map<int, int> Graph::calculateShortestPaths(int fromIndex) const 
 
 // Connectivity Checks
 bool Graph::isConnected() const {
-    if (nodeMap.empty()) return true;
+    if (nodes.empty()) return true;
     std::set<int> visited;
     std::queue<int> q;
-    int firstNodeIndex = nodeMap.begin()->first;
-    q.push(firstNodeIndex);
-    visited.insert(firstNodeIndex);
+    q.push(nodes[0].index);
+    visited.insert(nodes[0].index);
 
     while (!q.empty()) {
         int current = q.front(); q.pop();
@@ -102,7 +116,7 @@ bool Graph::isConnected() const {
         }
     }
 
-    return visited.size() == nodeMap.size();
+    return visited.size() == nodes.size();
 }
 
 // Cull off-screen blocks
@@ -118,20 +132,20 @@ bool Graph::isInViewport(int worldX, int worldY, int blockSize, const ViewContex
 
 int Graph::edgeCount() const {
     int count = 0;
-    for (const auto& [id, node] : nodeMap) {
+    for (const auto& node : nodes) {
         count += node.neighbors.size();
     }
     return count / 2;  // undirected
 }
 
 float Graph::computeAvgDegree() const {
-    if (nodeMap.empty()) return 0.0f;
-    return (float)(edgeCount() * 2) / nodeMap.size();
+    if (nodes.empty()) return 0.0f;
+    return (float)(edgeCount() * 2) / nodes.size();
 }
 
 int Graph::countIsolatedNodes() const {
     int isolated = 0;
-    for (const auto& [id, node] : nodeMap) {
+    for (const auto& node : nodes) {
         if (node.neighbors.empty()) ++isolated;
     }
     return isolated;
@@ -210,7 +224,7 @@ std::unordered_map<int,int> Graph::computeMultiFocusDistances() const {
 
 // Navigation
 void Graph::cycleFocus() {
-    if (nodeMap.empty()) return;
+    if (nodes.empty()) return;
 
     int currentFocus = -1;
     if (!focusedNodeIndices.empty()) {
@@ -218,20 +232,13 @@ void Graph::cycleFocus() {
         focusedNodeIndices.clear();
     }
 
-    int nextFocus = -1;
-    int minIndex = -1;
+    auto it = std::find_if(nodes.begin(), nodes.end(),
+        [&](const GraphNode& n) { return n.index > currentFocus; });
 
-    for (const auto& [id, node] : nodeMap) {
-        if (minIndex == -1 || id < minIndex) minIndex = id;
-        if (id > currentFocus) {
-            if (nextFocus == -1 || id < nextFocus) nextFocus = id;
-        }
-    }
-
-    if (nextFocus == -1) {
-        focusedNodeIndices.insert(minIndex);  // wrap around
+    if (it == nodes.end()) {
+        focusedNodeIndices.insert(nodes.front().index);  // wrap around to first
     } else {
-        focusedNodeIndices.insert(nextFocus);
+        focusedNodeIndices.insert(it->index);            // next node
     }
 }
 
@@ -289,16 +296,16 @@ Point2D projectToVanishingPoint(const Point3D& wp, const VanishingPoint& vp) {
 
 int calculateTotalEdges(const Graph& g) {
     int sum = 0;
-    for (const auto& [id, node] : g.nodeMap)
+    for (const auto& node : g.nodes)
         sum += static_cast<int>(node.neighbors.size());
     return sum / 2;  // assuming undirected edges, each counted twice
 }
 
 int calculateGraphDiameter(const Graph& g) {
-    if (g.nodeMap.empty()) return 0;
+    if (g.nodes.empty()) return 0;
     int maxDist = 0;
-    for (const auto& [id, startNode] : g.nodeMap) {
-        auto dists = g.calculateShortestPaths(id);
+    for (const auto& startNode : g.nodes) {
+        auto dists = g.calculateShortestPaths(startNode.index);
         for (const auto& [nid, d] : dists) {
             if (d > maxDist) maxDist = d;
         }
@@ -308,7 +315,7 @@ int calculateGraphDiameter(const Graph& g) {
 
 int Graph::getMaxLabelLength() const {
     int maxLen = 0;
-    for (const auto& [id, node] : nodeMap)
+    for (const auto& node : nodes)
         maxLen = std::max(maxLen, static_cast<int>(node.label.size()));
     return maxLen;
 }
@@ -341,7 +348,7 @@ int calculateNodeSize(int depth, ZoomLevel zoom) {
 
 double calculateClusteringCoefficient(const Graph& g) {
     double total = 0.0;
-    for (const auto& [id, node] : g.nodeMap) {
+    for (const auto& node : g.nodes) {
         const auto& nbrs = node.neighbors;
         int k = nbrs.size();
         if (k < 2) continue;
@@ -363,12 +370,12 @@ double calculateClusteringCoefficient(const Graph& g) {
         }
         total += links / float(k * (k - 1));
     }
-    return g.nodeMap.empty() ? 0.0f : total / g.nodeMap.size();
+    return g.nodes.empty() ? 0.0f : total / g.nodes.size();
 }
 
 // Update Cached Summary
 void Graph::updateSummary() {
-    summary.totalNodes = nodeMap.size();
+    summary.totalNodes = nodes.size();
     summary.totalEdges = edgeCount();
     summary.averageDegree = computeAvgDegree();
     summary.isConnected = isConnected();
@@ -390,7 +397,7 @@ void Graph::updateSummary() {
     std::vector<std::pair<int, int>> nodeDegrees;
     std::vector<std::pair<int, int>> subjectDegrees;
 
-    for (const auto& [id, node] : nodeMap) {
+    for (const auto& node : nodes) {
         int deg = node.neighbors.size();
         nodeDegrees.push_back({node.index, deg});
         if (node.subjectIndex >= 0) {

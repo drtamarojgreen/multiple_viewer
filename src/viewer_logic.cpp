@@ -61,11 +61,11 @@ void renderNexusFlow(Graph& graph, NexusPhysicsState& physics) {
     if (!physics.initialized || graph.needsLayoutReset) {
         physics.positions.clear();
         physics.velocities.clear();
-        for (const auto& [id, node] : graph.nodeMap) {
+        for (const auto& node : graph.nodes) {
             // x = Column, y = Row
-            physics.positions[id] = { static_cast<float>(rand() % DEFAULT_CONSOLE_WIDTH),
+            physics.positions[node.index] = { static_cast<float>(rand() % DEFAULT_CONSOLE_WIDTH),
                                       static_cast<float>(rand() % DEFAULT_CONSOLE_HEIGHT) };
-            physics.velocities[id] = { 0.0f, 0.0f };
+            physics.velocities[node.index] = { 0.0f, 0.0f };
         }
         physics.initialized = true;
         graph.needsLayoutReset = false;
@@ -76,49 +76,49 @@ void renderNexusFlow(Graph& graph, NexusPhysicsState& physics) {
         std::map<int, Point2D> forces;
 
         // 1. Repulsive forces (all pairs)
-        for (const auto& [id1, n1] : graph.nodeMap) {
-            for (const auto& [id2, n2] : graph.nodeMap) {
-                if (id1 == id2) continue;
+        for (const auto& n1 : graph.nodes) {
+            for (const auto& n2 : graph.nodes) {
+                if (n1.index == n2.index) continue;
 
-                float dx = physics.positions[id1].x - physics.positions[id2].x;
-                float dy = physics.positions[id1].y - physics.positions[id2].y;
+                float dx = physics.positions[n1.index].x - physics.positions[n2.index].x;
+                float dy = physics.positions[n1.index].y - physics.positions[n2.index].y;
                 float dist_sq = dx * dx + dy * dy;
                 if (dist_sq < 1.0f) dist_sq = 1.0f; // Avoid division by zero
 
                 float force = k_repel / dist_sq;
-                forces[id1].x += dx * force;
-                forces[id1].y += dy * force;
+                forces[n1.index].x += dx * force;
+                forces[n1.index].y += dy * force;
             }
         }
 
         // 2. Attractive forces (connected nodes)
-        for (const auto& [id, node] : graph.nodeMap) {
+        for (const auto& node : graph.nodes) {
             for (int neighbor_id : node.neighbors) {
                 if (physics.positions.count(neighbor_id) == 0) continue;
 
-                float dx = physics.positions[neighbor_id].x - physics.positions[id].x;
-                float dy = physics.positions[neighbor_id].y - physics.positions[id].y;
+                float dx = physics.positions[neighbor_id].x - physics.positions[node.index].x;
+                float dy = physics.positions[neighbor_id].y - physics.positions[node.index].y;
                 float dist = std::sqrt(dx * dx + dy * dy);
                 if (dist < 1.0f) dist = 1.0f;
 
                 float force = k_attract * std::log(dist / ideal_dist);
-                forces[id].x += dx * force;
-                forces[id].y += dy * force;
+                forces[node.index].x += dx * force;
+                forces[node.index].y += dy * force;
                 forces[neighbor_id].x -= dx * force;
                 forces[neighbor_id].y -= dy * force;
             }
         }
 
         // 3. Update velocities and positions
-        for (auto& [id, node] : graph.nodeMap) {
-            physics.velocities[id].x = (physics.velocities[id].x + forces[id].x) * damping;
-            physics.velocities[id].y = (physics.velocities[id].y + forces[id].y) * damping;
-            physics.positions[id].x += physics.velocities[id].x;
-            physics.positions[id].y += physics.velocities[id].y;
+        for (auto& node : graph.nodes) {
+            physics.velocities[node.index].x = (physics.velocities[node.index].x + forces[node.index].x) * damping;
+            physics.velocities[node.index].y = (physics.velocities[node.index].y + forces[node.index].y) * damping;
+            physics.positions[node.index].x += physics.velocities[node.index].x;
+            physics.positions[node.index].y += physics.velocities[node.index].y;
 
             // Clamp positions to screen boundaries (use default for NexusFlow for now as it's static)
-            physics.positions[id].x = std::max(0.0f, std::min(static_cast<float>(physics.positions[id].x), static_cast<float>(DEFAULT_CONSOLE_WIDTH - 1)));
-            physics.positions[id].y = std::max(0.0f, std::min(static_cast<float>(physics.positions[id].y), static_cast<float>(DEFAULT_CONSOLE_HEIGHT - 1)));
+            physics.positions[node.index].x = std::max(0.0f, std::min(static_cast<float>(physics.positions[node.index].x), static_cast<float>(DEFAULT_CONSOLE_WIDTH - 1)));
+            physics.positions[node.index].y = std::max(0.0f, std::min(static_cast<float>(physics.positions[node.index].y), static_cast<float>(DEFAULT_CONSOLE_HEIGHT - 1)));
         }
     }
 
@@ -127,10 +127,10 @@ void renderNexusFlow(Graph& graph, NexusPhysicsState& physics) {
     vector<string> screen(DEFAULT_CONSOLE_HEIGHT, string(DEFAULT_CONSOLE_WIDTH, ' '));
 
     // Render edges
-    for (const auto& [id, node] : graph.nodeMap) {
+    for (const auto& node : graph.nodes) {
         for (int neighbor_id : node.neighbors) {
              if (physics.positions.count(neighbor_id) == 0) continue;
-            int r1 = physics.positions[id].y, c1 = physics.positions[id].x;
+            int r1 = physics.positions[node.index].y, c1 = physics.positions[node.index].x;
             int r2 = physics.positions[neighbor_id].y, c2 = physics.positions[neighbor_id].x;
             // (Bresenham's line algorithm - same as in renderGraph)
              int dr = abs(r2 - r1), dc = abs(c2 - c1);
@@ -156,11 +156,11 @@ void renderNexusFlow(Graph& graph, NexusPhysicsState& physics) {
     }
 
     // Render nodes
-    for (const auto& [id, node] : graph.nodeMap) {
-        int r = physics.positions[id].y;
-        int c = physics.positions[id].x;
+    for (const auto& node : graph.nodes) {
+        int r = physics.positions[node.index].y;
+        int c = physics.positions[node.index].x;
         if (r >= 0 && r < DEFAULT_CONSOLE_HEIGHT && c >= 0 && c < DEFAULT_CONSOLE_WIDTH) {
-             char glyph = (graph.isNodeFocused(id)) ? 'O' : 'X';
+             char glyph = (graph.isNodeFocused(node.index)) ? 'O' : 'X';
             screen[r][c] = glyph;
         }
     }
@@ -178,8 +178,8 @@ void renderMindMap(const Graph& graph) {
     auto dist = graph.computeMultiFocusDistances();
     std::cout << "\n=== CBT Graph Render (Distance-X Map) ===\n";
 
-    for (const auto& [id, node] : graph.nodeMap) {
-        int d = dist.count(id) ? dist.at(id) : INT_MAX;
+    for (const auto& node : graph.nodes) {
+        int d = dist.count(node.index) ? dist.at(node.index) : INT_MAX;
         std::cout << "\n[" << node.label << "] d=" << d << "\n";
 
         if (d <= 1) {
@@ -207,8 +207,8 @@ void renderGraph(const Graph& graph, const ViewContext& view) {
         int focus = -1;
         if (!graph.focusedNodeIndices.empty()) {
             focus = *graph.focusedNodeIndices.begin();
-        } else if (!graph.nodeMap.empty()) {
-            focus = graph.nodeMap.begin()->first; // Default to first node
+        } else if (!graph.nodes.empty()) {
+            focus = graph.nodes.front().index; // Default to first node
         }
 
         if (graph.nodeExists(focus)) {
@@ -409,23 +409,13 @@ void promptSetDistance(ViewContext& view) {
 void handleKeyPress(Graph& graph, ViewContext& view, char key) {
     static const std::unordered_map<char, std::function<void()>> handlers = {
         {'A', [&]() {
-            int newIndex = 0;
-            if (!graph.nodeMap.empty()) {
-                for (const auto& [id, node] : graph.nodeMap) {
-                    if (id >= newIndex) newIndex = id + 1;
-                }
-            }
+            int newIndex = int(graph.nodes.size());
             GraphNode n("New", newIndex, {}, 1, newIndex - 1);
             graph.addNode(n);
         }},
         {'R', [&]() {
-            if (!graph.nodeMap.empty()) {
-                int lastIndex = -1;
-                for (const auto& [id, node] : graph.nodeMap) {
-                    if (id > lastIndex) lastIndex = id;
-                }
-                graph.removeNode(lastIndex);
-            }
+            if (!graph.nodes.empty())
+                graph.removeNode(graph.nodes.back().index);
         }},
         {'S', [&]() { saveGraphToCSV(graph, "graph_output.csv"); }},
         {'U', [&]() { loadGraphFromCSV(graph, "graph_input.csv"); }},
@@ -623,8 +613,8 @@ bool executeGraphCommand(Graph& graph, ViewContext& view, const std::string& com
 // Book-based grouping
 std::vector<BookChapter> createBookStructure(const Graph& g, const ViewContext& view) {
     std::map<std::string,BookChapter> chMap;
-    for (const auto& [id, node] : g.nodeMap) {
-        int depth = (g.nodePos.count(id)
+    for (const auto& node : g.nodes) {
+        int depth = (g.nodePos.count(node.index)
                    ? static_cast<int>(g.nodePos.at(node.index).z) : 0);
 
         std::string key = std::to_string(node.subjectIndex) + "_" + std::to_string(depth);

@@ -8,12 +8,12 @@ std::vector<int> findSimilarTopics(const Graph& graph, const std::string& search
     std::string lowerSearchTerm = searchTerm;
     std::transform(lowerSearchTerm.begin(), lowerSearchTerm.end(), lowerSearchTerm.begin(), ::tolower);
 
-    for (const auto& [id, node] : graph.nodeMap) {
+    for (const auto& node : graph.nodes) {
         std::string lowerLabel = node.label;
         std::transform(lowerLabel.begin(), lowerLabel.end(), lowerLabel.begin(), ::tolower);
 
         if (lowerLabel.find(lowerSearchTerm) != std::string::npos) {
-            results.push_back(id);
+            results.push_back(node.index);
         }
     }
     return results;

@@ -100,6 +100,7 @@ struct GraphSummary {
 
 class Graph {
 public:
+    std::vector<GraphNode> nodes;
     std::unordered_map<int, GraphNode> nodeMap;
     std::map<int,Coord3>      nodePos;
     std::set<int> focusedNodeIndices;
