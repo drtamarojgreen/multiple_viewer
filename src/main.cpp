@@ -7,6 +7,7 @@
 #include <iostream>
 #include "test_logic.h"
 #include "testsuite2_logic.h"
+#include "testsuite3_logic.h"
 #include "file_logic.h" // Explicitly include for file operations
 #include <string>
 #include <vector>
@@ -62,6 +63,7 @@ int runApplication(const CmdLineParser& parser) {
     if (parser.hasOption("test")) {
         runAllTests();
         runAll2Tests();
+        runAll3Tests();
         return 0;
     }
 

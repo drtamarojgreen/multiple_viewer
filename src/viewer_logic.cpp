@@ -522,6 +522,7 @@ void renderBookView(Graph& graph, const ViewContext& view) {
 
 #include "test_logic.h"
 #include "testsuite2_logic.h"
+#include "testsuite3_logic.h"
 #include "console_logic.h"
 #include <thread>
 #include <chrono>
@@ -530,6 +531,7 @@ void runEditor(Graph& graph, bool runTests) {
     if (runTests) {
         runAllTests();
         runAll2Tests();
+        runAll3Tests();
         return;
     }
 
