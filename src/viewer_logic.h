@@ -2,6 +2,8 @@
 #define VIEWER_LOGIC_H
 #include "map_logic.h"
 #include "console_logic.h"
+#include "input/command_stack.h"
+#include "input/shortcut_manager.h"
 
 // How to draw each node block
 enum DisplayMode {
@@ -20,7 +22,7 @@ enum class Direction { UP, DOWN, LEFT, RIGHT };
 
 // Menu Rendering & Input Handling
 void drawViewerMenu();                            // prints menu in terminal
-void handleKeyPress(Graph& graph, ViewContext& view, char key);      // handles input from viewer loop
+void handleKeyPress(char key, input::ShortcutManager& shortcutManager);      // handles input from viewer loop
 
 // Viewport Movement
 void panView(Direction dir);                      // shifts viewer offset

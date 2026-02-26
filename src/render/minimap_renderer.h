@@ -7,7 +7,7 @@ namespace render {
 
 class MinimapRenderer {
 public:
-    static void render(const Graph& graph, int screenWidth, int screenHeight);
+    static void render(const Graph& graph, const ViewContext& view);
 };
 
 } // namespace render

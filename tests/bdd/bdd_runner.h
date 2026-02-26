@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include <map>
+<<<<<<< HEAD
 #include "../../src/input/command_stack.h"
 #include "../../src/map_logic.h"
 #include "../../src/model/brain_model.h"
@@ -25,6 +26,11 @@
         std::cerr << "[BDD ASSERTION FAILED] " << msg << std::endl; \
         ctx.success = false; \
     }
+=======
+#include "map_logic.h"
+#include "model/brain_model.h"
+#include "model/brain_overlay.h"
+>>>>>>> main
 
 namespace bdd {
 

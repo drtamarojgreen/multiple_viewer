@@ -23,13 +23,17 @@ bool BDDRunner::executeLine(BDDContext& ctx, const std::string& line) {
 
     // Remove Gherkin keywords
     std::vector<std::string> keywords = {"Given ", "When ", "Then ", "And ", "But "};
-    std::string action = trimmed;
+    std::string action = "";
+    bool found = false;
     for (const auto& kw : keywords) {
         if (trimmed.compare(0, kw.length(), kw) == 0) {
             action = trim(trimmed.substr(kw.length()));
+            found = true;
             break;
         }
     }
+
+    if (!found) return true; // Ignore lines that don't start with a keyword (descriptions, etc.)
 
     // Very primitive matcher: exact match or placeholder match
     // For now, we look for matches that might contain quoted strings as arguments
@@ -87,6 +91,7 @@ bool BDDRunner::runFeature(const std::string& filepath) {
         }
         if (t.compare(0, 9, "Scenario:") == 0) {
             std::cout << "    " << t << "\n";
+            ctx = BDDContext(); // Reset context for each scenario
             continue;
         }
         

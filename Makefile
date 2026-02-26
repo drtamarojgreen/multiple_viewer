@@ -1,29 +1,47 @@
 CXX = g++
 BUILD_DIR = build
-TARGET = $(BUILD_DIR)/multiple_viewer
-
-# Project Root Detection (Absolute path to the directory containing this Makefile)
-PROJECT_ROOT = $(shell pwd)
-CXXFLAGS = -std=c++17 -Isrc -Itests -DPROJECT_ROOT_DIR=\"$(PROJECT_ROOT)\"
+CXXFLAGS = -std=c++17 -Isrc -Itests -Itests/bdd -DPROJECT_ROOT_DIR=\"$(shell pwd)\"
 LDFLAGS = 
 
-# Explicit list of source directories (mirroring the modular structure)
-SRC_DIRS = src src/model src/model/core src/model/core/contracts src/model/domains src/model/domains/emotion src/model/domains/stress src/model/domains/molecular src/model/domains/neuro src/model/domains/neurochemical src/model/app src/render src/input src/io src/analytics src/scripting src/layout src/ui tests tests/bdd tests/bdd/steps tests/print
+# Source directories for core logic
+CORE_DIRS = src src/model src/model/core src/model/app src/render src/input src/io src/analytics src/scripting src/layout src/ui
+CORE_FILES = $(foreach dir,$(CORE_DIRS),$(wildcard $(dir)/*.cpp))
+CORE_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CORE_FILES))
 
-# Discover all source files across modular packages
-SRC_FILES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.cpp))
+# Test source directories (excluding mains)
+TEST_CORE_DIRS = tests tests/bdd tests/bdd/steps
+TEST_CORE_FILES = $(wildcard tests/test*.cpp) tests/dynamic_graph_tests.cpp tests/bdd/bdd_runner.cpp tests/bdd/bdd_test_main.cpp $(wildcard tests/bdd/steps/*.cpp)
+TEST_CORE_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(TEST_CORE_FILES))
 
-# Generate object file paths inside the BUILD_DIR
-# This preserves the directory structure within build/
-OBJ_FILES = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRC_FILES))
+# Targets
+VIEWER_TARGET = $(BUILD_DIR)/viewer
+BRAIN_DEMO_TARGET = $(BUILD_DIR)/brain_demo
+UNIT_TESTS_TARGET = $(BUILD_DIR)/unit_tests
+BDD_TESTS_TARGET = $(BUILD_DIR)/bdd_tests
 
-all: $(TARGET)
+all: $(VIEWER_TARGET) $(BRAIN_DEMO_TARGET) $(UNIT_TESTS_TARGET) $(BDD_TESTS_TARGET)
 
-$(TARGET): $(OBJ_FILES)
+# Viewer executable
+$(VIEWER_TARGET): $(BUILD_DIR)/apps/viewer/main.o $(CORE_OBJS)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Rule to compile .cpp to .o inside BUILD_DIR
+# Brain Demo executable
+$(BRAIN_DEMO_TARGET): $(BUILD_DIR)/apps/brain_demo/main.o $(CORE_OBJS)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# Unit Tests executable
+$(UNIT_TESTS_TARGET): $(BUILD_DIR)/tests/unit_main.o $(CORE_OBJS) $(TEST_CORE_OBJS)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# BDD Tests executable
+$(BDD_TESTS_TARGET): $(BUILD_DIR)/tests/bdd/bdd_main.o $(CORE_OBJS) $(TEST_CORE_OBJS)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# Compilation rules
 $(BUILD_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -31,7 +49,8 @@ $(BUILD_DIR)/%.o: %.cpp
 clean:
 	rm -rf $(BUILD_DIR)
 
-test: $(TARGET)
-	./$(TARGET) --test
+test: $(UNIT_TESTS_TARGET) $(BDD_TESTS_TARGET)
+	./$(UNIT_TESTS_TARGET)
+	./$(BDD_TESTS_TARGET)
 
 .PHONY: all clean test
