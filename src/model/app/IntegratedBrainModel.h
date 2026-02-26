@@ -1,7 +1,9 @@
-#include "../core/contracts/ISimulationKernel.h"
-#include "../core/contracts/IOverlayService.h"
+#include "model/core/contracts/ISimulationKernel.h"
+#include "model/core/contracts/IOverlayService.h"
+#include "model/core/contracts/IModelDomainPlugin.h"
 #include <vector>
 #include <memory>
+#include <iostream>
 
 namespace brain_model::app {
 

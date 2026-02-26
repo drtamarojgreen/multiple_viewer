@@ -1,5 +1,5 @@
 #include "../bdd_runner.h"
-#include "../../src/model/core/SimulationKernel.cpp"
+#include "model/core/SimulationKernel.h"
 #include <iostream>
 #include <cassert>
 

@@ -1,41 +1,32 @@
-#include "core/contracts/IOverlayService.h"
-#include <unordered_map>
+#include "model/core/OverlayService.h"
+#include <iostream>
 
 namespace brain_model::core {
 
-using namespace brain_model::core::contracts;
+bool OverlayService::load_overlays_from_file(const std::string& path) {
+    // Mock implementation
+    std::cout << "[OverlayService] Mock loading from " << path << std::endl;
+    return true;
+}
 
-class OverlayService : public IOverlayService {
-public:
-    bool load_overlays_from_file(const std::string& path) override {
-        // GTO Parser would be used here
-        return true;
+void OverlayService::add_overlay(const contracts::OverlaySpec& spec) {
+    m_entityToOverlays[spec.anchor_entity_id].push_back(spec);
+}
+
+std::vector<contracts::OverlaySpec> OverlayService::get_active_overlays_for_entity(const std::string& entity_id) const {
+    auto it = m_entityToOverlays.find(entity_id);
+    if (it != m_entityToOverlays.end()) {
+        return it->second;
     }
+    return {};
+}
 
-    void add_overlay(const OverlaySpec& spec) override {
-        m_overlays[spec.id] = spec;
-    }
+void OverlayService::render_2d() {
+    // No-op for now
+}
 
-    std::vector<OverlaySpec> get_active_overlays_for_entity(const std::string& entity_id) const override {
-        std::vector<OverlaySpec> results;
-        for (auto const& [id, spec] : m_overlays) {
-            if (spec.anchor_entity_id == entity_id) {
-                results.push_back(spec);
-            }
-        }
-        return results;
-    }
-
-    void render_2d() override {
-        // Implementation for text rendering in 2D
-    }
-
-    void render_3d() override {
-        // Implementation for text billboards in 3D
-    }
-
-private:
-    std::unordered_map<std::string, OverlaySpec> m_overlays;
-};
+void OverlayService::render_3d() {
+    // No-op for now
+}
 
 } // namespace brain_model::core

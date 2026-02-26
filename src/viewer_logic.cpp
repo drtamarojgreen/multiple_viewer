@@ -521,18 +521,13 @@ void renderBookView(Graph& graph, const ViewContext& view) {
     drawViewerMenu();
 }
 
-#include "../tests/test_logic.h"
-#include "../tests/testsuite2_logic.h"
-#include "../tests/testsuite3_logic.h"
 #include "console_logic.h"
 #include <thread>
 #include <chrono>
 
 void runEditor(Graph& graph, bool runTests) {
     if (runTests) {
-        runAllTests();
-        runAll2Tests();
-        runAll3Tests();
+        std::cout << "Tests are now available via separate executables: unit_tests and bdd_tests\n";
         return;
     }
 

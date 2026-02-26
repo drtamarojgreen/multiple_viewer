@@ -5,11 +5,11 @@
 #include "viewer_logic.h"
 #include "search_logic.h"
 #include <iostream>
-#include "../tests/test_logic.h"
-#include "../tests/testsuite2_logic.h"
-#include "../tests/testsuite3_logic.h"
-#include "../tests/dynamic_graph_tests.h"
-#include "../tests/bdd/bdd_test_main.h"
+#include "test_logic.h"
+#include "testsuite2_logic.h"
+#include "testsuite3_logic.h"
+#include "dynamic_graph_tests.h"
+#include "bdd/bdd_test_main.h"
 #include "file_logic.h" // Explicitly include for file operations
 #include <string>
 #include <vector>
@@ -76,16 +76,8 @@ void runInteractiveSession(const CmdLineParser& parser) {
 }
 
 int runApplication(const CmdLineParser& parser) {
-    if (parser.hasOption("test") || parser.hasOption("test-unit")) {
-        runAllTests();
-        runAll2Tests();
-        runAll3Tests();
-        runDynamicGraphTests();
-        if (parser.hasOption("test-unit") && !parser.hasOption("test-bdd")) return 0;
-    }
-
-    if (parser.hasOption("test") || parser.hasOption("test-bdd")) {
-        runBDDTests();
+    if (parser.hasOption("test") || parser.hasOption("test-unit") || parser.hasOption("test-bdd")) {
+        std::cout << "Tests are now available via separate executables: unit_tests and bdd_tests\n";
         return 0;
     }
 
