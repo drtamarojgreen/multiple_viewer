@@ -10,8 +10,10 @@ namespace model {
 struct OverlayMapping {
     int graphNodeId;
     RegionID regionId;
-    PathwayID pathwayId; // Optional, can be both or one
+    PathwayID pathwayId; 
+    float confidence = 1.0f; // Feature 5: Probabilistic Region Membership
 };
+
 
 class BrainOverlay {
 public:

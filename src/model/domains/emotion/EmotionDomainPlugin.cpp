@@ -1,6 +1,13 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/emotion/EmotionDomainPlugin.h"
+#include "model/core/contracts/IOverlayService.h"
+#include <cstdint>
 
 namespace brain_model::domains::emotion {
+
+using namespace brain_model::core;
+using namespace brain_model::core::contracts;
 
 class EmotionSimulationSystem {
 public:
@@ -28,7 +35,5 @@ public:
     }
 };
 
-void EmotionDomainPlugin::register_entities(GraphRegistry&) {}
-void EmotionDomainPlugin::register_systems(SystemRegistry&) {}
-
 } // namespace brain_model::domains::emotion
+

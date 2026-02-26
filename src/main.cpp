@@ -8,7 +8,9 @@
 #include "../tests/test_logic.h"
 #include "../tests/testsuite2_logic.h"
 #include "../tests/testsuite3_logic.h"
+#include "../tests/testsuite4_logic.h"
 #include "../tests/dynamic_graph_tests.h"
+
 #include "../tests/bdd/bdd_test_main.h"
 #include "file_logic.h" // Explicitly include for file operations
 #include <string>
@@ -80,7 +82,9 @@ int runApplication(const CmdLineParser& parser) {
         runAllTests();
         runAll2Tests();
         runAll3Tests();
+        runAll4Tests();
         runDynamicGraphTests();
+
         if (parser.hasOption("test-unit") && !parser.hasOption("test-bdd")) return 0;
     }
 

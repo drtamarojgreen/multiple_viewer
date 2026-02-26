@@ -1,4 +1,4 @@
-#include "core/contracts/IEventBus.h"
+#include "model/core/contracts/IEventBus.h"
 #include <map>
 #include <mutex>
 #include <algorithm>

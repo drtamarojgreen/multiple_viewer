@@ -1,6 +1,8 @@
-#include "core/contracts/IModelGraphStore.h"
+#include "model/core/contracts/IModelGraphStore.h"
 #include <unordered_map>
 #include <optional>
+#include <cstdint>
+
 
 namespace brain_model::core {
 

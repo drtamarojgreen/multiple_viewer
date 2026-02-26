@@ -14,14 +14,13 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("I pan the view by \\((.*), (.*)\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ViewContext view;
-        view.pan(std::stoi(args[0]), std::stoi(args[1]));
+        ctx.viewContext.pan(std::stoi(args[0]), std::stoi(args[1]));
         ctx.lastResult = "panned";
     });
 
     runner.registerStep("I zoom in to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ViewContext view;
-        view.zoomLevel = ZoomLevel::Z5;
+        if (args[0] == "Z5") ctx.viewContext.zoomLevel = ZoomLevel::Z5;
+        // Add other zoom levels if needed
         ctx.lastResult = "zoomed";
     });
 

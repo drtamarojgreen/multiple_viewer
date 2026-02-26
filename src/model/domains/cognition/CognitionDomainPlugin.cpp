@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/cognition/CognitionDomainPlugin.h"
 #include <iostream>
 
@@ -29,14 +31,5 @@ public:
         overlayService.add_overlay(pfcParietal);
     }
 };
-
-void CognitionDomainPlugin::register_entities(GraphRegistry& registry) {
-    // Define entities derived from Greenhouse documentation
-    // Node: PFC, Parietal, Mesolimbic, etc.
-}
-
-void CognitionDomainPlugin::register_systems(SystemRegistry& registry) {
-    // Register the CognitionSimulationSystem
-}
 
 } // namespace brain_model::domains::cognition

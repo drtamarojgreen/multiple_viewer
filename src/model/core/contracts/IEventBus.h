@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <any>
+#include <cstdint>
 
 namespace brain_model::core::contracts {
 

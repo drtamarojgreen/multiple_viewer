@@ -363,10 +363,16 @@ float Graph::getProximityDepth(int nodeId, int width, int height) const {
 
 void Graph::applyBrainOverlay(const model::BrainOverlay& overlay) {
     for (auto& node : nodes) {
-        node.regionId = overlay.getRegionForNode(node.index);
+        model::RegionID rid = overlay.getRegionForNode(node.index);
+        if (!rid.empty()) {
+            node.regionIds = { rid }; // For now, single mapping from overlay, but logic allows more
+            node.regionConfidences = { 1.0f }; // Default confidence if not specified
+        }
         node.pathwayId = overlay.getPathwayForNode(node.index);
+        
         // Sync with nodeMap
-        nodeMap[node.index].regionId = node.regionId;
+        nodeMap[node.index].regionIds = node.regionIds;
         nodeMap[node.index].pathwayId = node.pathwayId;
     }
 }
+

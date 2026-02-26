@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/stress/StressDomainPlugin.h"
 
 namespace brain_model::domains::stress {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(reserveStatus);
     }
 };
-
-void StressDomainPlugin::register_entities(GraphRegistry&) {}
-void StressDomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::stress

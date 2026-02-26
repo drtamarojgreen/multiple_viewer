@@ -1,4 +1,4 @@
-#include "core/contracts/IOverlayService.h"
+#include "model/core/contracts/IOverlayService.h"
 #include <unordered_map>
 
 namespace brain_model::core {
