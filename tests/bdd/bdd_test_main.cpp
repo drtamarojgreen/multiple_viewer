@@ -10,6 +10,7 @@ namespace bdd {
     void registerOriginalSteps();
     void registerCoreSteps();
     void registerDomainSteps();
+    void registerBrainAPISteps();
 }
 
 #ifndef PROJECT_ROOT_DIR
@@ -26,6 +27,7 @@ void runBDDTests() {
     bdd::registerOriginalSteps();
     bdd::registerCoreSteps();
     bdd::registerDomainSteps();
+    bdd::registerBrainAPISteps();
     
     bool allSuccess = true;
     std::string root = PROJECT_ROOT_DIR;
@@ -44,7 +46,8 @@ void runBDDTests() {
         root + "/tests/bdd/features/molecular_domains.feature",
         root + "/tests/bdd/features/neurochemical_domains.feature",
         root + "/tests/bdd/features/connectionist_domains.feature",
-        root + "/tests/bdd/features/systemic_domains.feature"
+        root + "/tests/bdd/features/systemic_domains.feature",
+        root + "/tests/bdd/features/brain_api.feature"
     };
 
     for (const auto& feature : features) {
