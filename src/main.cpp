@@ -9,10 +9,12 @@
 #include "../tests/testsuite2_logic.h"
 #include "../tests/testsuite3_logic.h"
 #include "../tests/dynamic_graph_tests.h"
+#include "../tests/bdd/bdd_test_main.h"
 #include "file_logic.h" // Explicitly include for file operations
 #include <string>
 #include <vector>
 #include "cmd_line_parser.h"
+#include "model/model_repository.h"
 
 #ifdef _WIN32
 #include <conio.h>
@@ -58,16 +60,32 @@ void runInteractiveSession(const CmdLineParser& parser) {
         std::cout << "Starting with empty graph.\n";
     }
 
+    // Load brain model if specified
+    if (parser.hasOption("load-atlas")) {
+        model::ModelRepository::getInstance().loadAtlas(parser.getOption("load-atlas"));
+    }
+    if (parser.hasOption("load-labels")) {
+        model::ModelRepository::getInstance().loadLabels(parser.getOption("load-labels"));
+    }
+    if (parser.hasOption("load-overlay")) {
+        model::ModelRepository::getInstance().loadOverlay(parser.getOption("load-overlay"));
+    }
+
     // Run viewer/editor session
     runEditor(graph, parser.hasOption("test"));
 }
 
 int runApplication(const CmdLineParser& parser) {
-    if (parser.hasOption("test")) {
+    if (parser.hasOption("test") || parser.hasOption("test-unit")) {
         runAllTests();
         runAll2Tests();
         runAll3Tests();
         runDynamicGraphTests();
+        if (parser.hasOption("test-unit") && !parser.hasOption("test-bdd")) return 0;
+    }
+
+    if (parser.hasOption("test") || parser.hasOption("test-bdd")) {
+        runBDDTests();
         return 0;
     }
 
@@ -77,6 +95,11 @@ int runApplication(const CmdLineParser& parser) {
         std::cout << "  --load-graph <file.csv>   Load graph from CSV\n";
         std::cout << "  --save-graph <file.csv>   Save graph to CSV (headless)\n";
         std::cout << "  --get-node-details <id>  Print node details and exit\n";
+        std::cout << "  --load-atlas <file.brn>   Load brain atlas\n";
+        std::cout << "  --load-labels <file.txt>  Load brain labels\n";
+        std::cout << "  --load-overlay <file.txt> Load node-to-brain overlay\n";
+        std::cout << "  --test-unit               Run unit tests\n";
+        std::cout << "  --test-bdd                Run BDD tests\n";
         std::cout << "  --test                    Run all tests\n";
         std::cout << "  --help                    Show this help\n";
         return 0;

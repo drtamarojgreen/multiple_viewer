@@ -360,3 +360,13 @@ float Graph::getProximityDepth(int nodeId, int width, int height) const {
     float dist = std::sqrt(dx*dx + dy*dy);
     return std::min(1.0f, dist / std::max(cx, cy));
 }
+
+void Graph::applyBrainOverlay(const model::BrainOverlay& overlay) {
+    for (auto& node : nodes) {
+        node.regionId = overlay.getRegionForNode(node.index);
+        node.pathwayId = overlay.getPathwayForNode(node.index);
+        // Sync with nodeMap
+        nodeMap[node.index].regionId = node.regionId;
+        nodeMap[node.index].pathwayId = node.pathwayId;
+    }
+}

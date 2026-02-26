@@ -641,6 +641,8 @@ void renderNodePage(const Graph& graph, int nodeId) {
     std::cout << "Index: " << n.index << "\n";
     std::cout << "Subject: " << n.subjectIndex << "\n";
     std::cout << "Weight: " << n.weight << "\n";
+    if (!n.regionId.empty()) std::cout << "Brain Region: " << n.regionId << "\n";
+    if (!n.pathwayId.empty()) std::cout << "Brain Pathway: " << n.pathwayId << "\n";
     std::cout << "Parent: " << n.subjectIndex << "\n";
     std::cout << "Neighbors:\n";
     for (int nbr : n.neighbors)

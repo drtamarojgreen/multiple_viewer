@@ -7,6 +7,8 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include "model/model_common.h"
+#include "model/brain_overlay.h"
 
 // Console dimensions (shared globally)
 static constexpr int DEFAULT_CONSOLE_WIDTH  = 80;
@@ -71,9 +73,11 @@ struct GraphNode {
     std::vector<int> neighbors;
     int weight = 1;
     int subjectIndex = -1;  
+    model::RegionID regionId;    // Brain region mapping
+    model::PathwayID pathwayId;  // Brain pathway mapping
 
     GraphNode(std::string l = "", int i = -1, const std::vector<int>& n = {}, int w = 1, int s = -1)
-        : label(l), index(i), neighbors(n), weight(w), subjectIndex(s) {}
+        : label(l), index(i), neighbors(n), weight(w), subjectIndex(s), regionId(""), pathwayId("") {}
 };
 
 struct GraphSummary {
@@ -158,6 +162,7 @@ public:
     // --- View Mode State ---
     bool needsLayoutReset = true;
     bool isNodeFocused(int index) const;
+    void applyBrainOverlay(const model::BrainOverlay& overlay);
 };
 
 
