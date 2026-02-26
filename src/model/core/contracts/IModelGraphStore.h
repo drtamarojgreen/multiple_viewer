@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 #include <variant>
+#include <optional>
+#include <cstdint>
 
 namespace brain_model::core::contracts {
 

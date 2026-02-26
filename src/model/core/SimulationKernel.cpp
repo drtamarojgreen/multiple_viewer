@@ -1,58 +1,42 @@
-#include "core/contracts/ISimulationKernel.h"
-#include <chrono>
-#include <random>
-#include <algorithm>
+#include "model/core/SimulationKernel.h"
+#include <cstring>
 
 namespace brain_model::core {
 
-using namespace brain_model::core::contracts;
+SimulationKernel::SimulationKernel() : m_rng(m_seed) {}
 
-class SimulationKernel : public ISimulationKernel {
-public:
-    SimulationKernel() : m_rng(m_seed) {}
+void SimulationKernel::step(uint32_t delta_ms) {
+    if (!m_running) return;
+    m_currentTimeMs += delta_ms;
+}
 
-    void step(uint32_t delta_ms) override {
-        if (!m_running) return;
-        m_currentTimeMs += delta_ms;
-        // In a real implementation, this would trigger system updates
-    }
+void SimulationKernel::pause() { m_running = false; }
+void SimulationKernel::resume() { m_running = true; }
 
-    void pause() override { m_running = false; }
-    void resume() override { m_running = true; }
+contracts::SimulationSnapshot SimulationKernel::capture_snapshot() const {
+    contracts::SimulationSnapshot snapshot;
+    snapshot.timestamp_ms = m_currentTimeMs;
+    snapshot.state_blob.resize(sizeof(m_currentTimeMs) + sizeof(m_seed));
+    std::memcpy(snapshot.state_blob.data(), &m_currentTimeMs, sizeof(m_currentTimeMs));
+    std::memcpy(snapshot.state_blob.data() + sizeof(m_currentTimeMs), &m_seed, sizeof(m_seed));
+    snapshot.snapshot_hash = "hash_" + std::to_string(m_currentTimeMs);
+    return snapshot;
+}
 
-    SimulationSnapshot capture_snapshot() const override {
-        SimulationSnapshot snapshot;
-        snapshot.timestamp_ms = m_currentTimeMs;
-        // Simple state blob for now
-        snapshot.state_blob.resize(sizeof(m_currentTimeMs) + sizeof(m_seed));
-        std::memcpy(snapshot.state_blob.data(), &m_currentTimeMs, sizeof(m_currentTimeMs));
-        std::memcpy(snapshot.state_blob.data() + sizeof(m_currentTimeMs), &m_seed, sizeof(m_seed));
-        snapshot.snapshot_hash = "hash_" + std::to_string(m_currentTimeMs);
-        return snapshot;
-    }
-
-    void restore_snapshot(const SimulationSnapshot& snapshot) override {
-        if (snapshot.state_blob.size() >= sizeof(m_currentTimeMs) + sizeof(m_seed)) {
-            std::memcpy(&m_currentTimeMs, snapshot.state_blob.data(), sizeof(m_currentTimeMs));
-            std::memcpy(&m_seed, snapshot.state_blob.data() + sizeof(m_currentTimeMs), sizeof(m_seed));
-            m_rng.seed(m_seed);
-        }
-    }
-
-    void set_seed(uint64_t seed) override {
-        m_seed = seed;
+void SimulationKernel::restore_snapshot(const contracts::SimulationSnapshot& snapshot) {
+    if (snapshot.state_blob.size() >= sizeof(m_currentTimeMs) + sizeof(m_seed)) {
+        std::memcpy(&m_currentTimeMs, snapshot.state_blob.data(), sizeof(m_currentTimeMs));
+        std::memcpy(&m_seed, snapshot.state_blob.data() + sizeof(m_currentTimeMs), sizeof(m_seed));
         m_rng.seed(m_seed);
     }
+}
 
-    uint64_t current_time_ms() const override { return m_currentTimeMs; }
-    bool is_running() const override { return m_running; }
+void SimulationKernel::set_seed(uint64_t seed) {
+    m_seed = seed;
+    m_rng.seed(m_seed);
+}
 
-private:
-    uint64_t m_currentTimeMs = 0;
-    uint64_t m_seed = 42;
-    uint32_t m_timestepMs = 16; // 60fps fixed
-    bool m_running = false;
-    std::mt19937_64 m_rng;
-};
+uint64_t SimulationKernel::current_time_ms() const { return m_currentTimeMs; }
+bool SimulationKernel::is_running() const { return m_running; }
 
 } // namespace brain_model::core

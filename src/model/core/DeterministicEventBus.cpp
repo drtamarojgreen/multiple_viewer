@@ -1,61 +1,46 @@
-#include "core/contracts/IEventBus.h"
-#include <map>
-#include <mutex>
+#include "model/core/DeterministicEventBus.h"
 #include <algorithm>
 
 namespace brain_model::core {
 
-using namespace brain_model::core::contracts;
+void DeterministicEventBus::publish(const contracts::Event& event) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_recording) {
+        m_history.push_back(event);
+    }
 
-class DeterministicEventBus : public IEventBus {
-public:
-    void publish(const Event& event) override {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        
-        if (m_recording) {
-            m_history.push_back(event);
-        }
-
-        auto it = m_handlers.find(event.type);
-        if (it != m_handlers.end()) {
-            for (auto& handler : it->second) {
-                handler(event);
-            }
+    if (m_subscribers.count(event.type)) {
+        for (const auto& handler : m_subscribers[event.type]) {
+            handler(event);
         }
     }
+}
 
-    void subscribe(const std::string& type, EventHandler handler) override {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_handlers[type].push_back(handler);
+void DeterministicEventBus::subscribe(const std::string& type, contracts::EventHandler handler) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_subscribers[type].push_back(handler);
+}
+
+void DeterministicEventBus::start_recording() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_recording = true;
+    m_history.clear();
+}
+
+void DeterministicEventBus::stop_recording() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_recording = false;
+}
+
+void DeterministicEventBus::replay(const std::vector<contracts::Event>& history) {
+    for (const auto& event : history) {
+        publish(event);
     }
+}
 
-    void start_recording() override {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_recording = true;
-        m_history.clear();
-    }
-
-    void stop_recording() override {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_recording = false;
-    }
-
-    void replay(const std::vector<Event>& history) override {
-        for (const auto& event : history) {
-            publish(event);
-        }
-    }
-
-    std::vector<Event> get_recorded_history() const override {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        return m_history;
-    }
-
-private:
-    mutable std::mutex m_mutex;
-    std::map<std::string, std::vector<EventHandler>> m_handlers;
-    std::vector<Event> m_history;
-    bool m_recording = false;
-};
+std::vector<contracts::Event> DeterministicEventBus::get_recorded_history() const {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_history;
+}
 
 } // namespace brain_model::core

@@ -3,11 +3,11 @@
 #include <thread>
 #include <chrono>
 
-#include "../core/SimulationKernel.cpp"
-#include "../core/DeterministicEventBus.cpp"
-#include "../core/ModelGraphStore.cpp"
-#include "../core/OverlayService.cpp"
-#include "IntegratedBrainModel.h"
+#include "model/core/SimulationKernel.h"
+#include "model/core/DeterministicEventBus.h"
+#include "model/core/ModelGraphStore.h"
+#include "model/core/OverlayService.h"
+#include "model/app/IntegratedBrainModel.h"
 
 // Note: In a real project, we would use headers and link properly.
 // For this demonstration, we are including implementations or relying on the build system.
@@ -18,7 +18,7 @@ using namespace brain_model::core::contracts;
 
 int main() {
     std::cout << "========================================" << std::endl;
-     sentiments: ["Initializing Brain-Model Integrated CLI"]
+    // sentiments: ["Initializing Brain-Model Integrated CLI"]
     std::cout << "========================================" << std::endl;
 
     auto kernel = std::make_shared<SimulationKernel>();

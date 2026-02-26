@@ -1,5 +1,6 @@
 #include "viewer_logic.h"
 #include "analysis_logic.h"
+#include "render/minimap_renderer.h"
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
@@ -371,6 +372,7 @@ void renderGraph(const Graph& graph, const ViewContext& view) {
         cout << row << "\n";
     }
     cout << "[X: node  .: edge]" << endl;
+    render::MinimapRenderer::render(graph, view);
     drawViewerMenu();
 }
 
@@ -407,95 +409,8 @@ void promptSetDistance(ViewContext& view) {
     view.maxRenderDistance = d;
 }
 
-void handleKeyPress(Graph& graph, ViewContext& view, char key) {
-    static const std::unordered_map<char, std::function<void()>> handlers = {
-        {'A', [&]() {
-            int newIndex = int(graph.nodes.size());
-            GraphNode n("New", newIndex, {}, 1, newIndex - 1);
-            graph.addNode(n);
-        }},
-        {'R', [&]() {
-            if (!graph.nodes.empty())
-                graph.removeNode(graph.nodes.back().index);
-        }},
-        {'S', [&]() { saveGraphToCSV(graph, "graph_output.csv"); }},
-        {'U', [&]() { loadGraphFromCSV(graph, "graph_input.csv"); }},
-        {'G', [&]() { Config::viewerOverlayMode = !Config::viewerOverlayMode; }},
-        {'D', [&]() { Config::autoScaleDepth = !Config::autoScaleDepth; }},
-        {'W', [&]() { Config::showTopicWeights = !Config::showTopicWeights; }},
-        {'F', [&]() { promptFocusAdd(graph); }},
-        {'O', [&]() { promptFocusRemove(graph); }},
-        {'T', [&]() { promptSetDistance(view); }},
-        {'/', [&]() {
-            std::cout << "Enter search keyword: ";
-            std::string keyword;
-            std::getline(std::cin, keyword);
-
-            if (keyword.empty()) {
-                std::cout << "[Search] Empty keyword\n";
-                return;
-            }
-
-            std::vector<int> matches = findSimilarTopics(graph, keyword);
-
-            if (matches.empty()) {
-                std::cout << "[Search] No matches found for \"" << keyword << "\"\n";
-            } else {
-                std::cout << "[Search] Found " << matches.size() << " match(es):\n";
-                for (int idx : matches)
-                    std::cout << "  • [" << graph.nodeMap.at(idx).label << "] (id=" << idx << ")\n";
-
-                graph.clearFocuses();
-                for (int idx : matches)
-                    graph.addFocus(idx);
-                std::cout << "[Search] Focused matching nodes.\n";
-            }
-
-            graph.pause();
-        }},
-        {'Z', [&]() { view.zoomIn(); }},
-        {'X', [&]() { view.zoomOut(); }},
-        {'I', [&]() { view.pan(0, -1); }}, // Up
-        {'K', [&]() { view.pan(0, 1); }},  // Down
-        {'J', [&]() { view.pan(-1, 0); }}, // Left
-        {'L', [&]() { view.pan(1, 0); }},  // Right
-        {'B', [&]() {
-            view.currentViewMode = VM_BOOK_VIEW;
-        }},
-        {'E', [&]() {
-            std::cout << "Enter node index to view page: ";
-            int idx; std::cin >> idx;
-            std::cin.ignore();
-            renderNodePage(graph, idx);
-        }},
-        {'V', [&]() {
-            if (graph.focusedNodeIndex >= 0)
-                renderNodePage(graph, graph.focusedNodeIndex);
-            else
-                std::cout << "[Page] No focused node selected.\n";
-        }},
-        {'M', [&]() { Config::allowMultiFocus = !Config::allowMultiFocus; }},
-        {'[', [&]() { graph.cycleFocus(); }},
-        {'\t', [&]() { graph.cycleFocus(); }},
-        {'N', [&]() {
-            int current = static_cast<int>(view.currentViewMode);
-            current = (current + 1) % (static_cast<int>(VM_COUNT));
-            if (static_cast<ViewMode>(current) == VM_BOOK_VIEW) {
-                current++;
-            }
-            current = current % (static_cast<int>(VM_COUNT));
-            view.currentViewMode = static_cast<ViewMode>(current);
-            graph.needsLayoutReset = true;
-        }}
- };
-
-    key = std::toupper(key);
-    auto it = handlers.find(key);
-    if (it != handlers.end()) {
-        it->second();
-    } else {
-        std::cout << "[Viewer] Unknown key: " << key << "\n";
-    }
+void handleKeyPress(char key, input::ShortcutManager& shortcutManager) {
+    shortcutManager.handleKey(std::toupper(key));
 }
 
 void renderBookView(Graph& graph, const ViewContext& view) {
@@ -521,18 +436,13 @@ void renderBookView(Graph& graph, const ViewContext& view) {
     drawViewerMenu();
 }
 
-#include "../tests/test_logic.h"
-#include "../tests/testsuite2_logic.h"
-#include "../tests/testsuite3_logic.h"
 #include "console_logic.h"
 #include <thread>
 #include <chrono>
 
 void runEditor(Graph& graph, bool runTests) {
     if (runTests) {
-        runAllTests();
-        runAll2Tests();
-        runAll3Tests();
+        std::cout << "Tests are now available via separate executables: unit_tests and bdd_tests\n";
         return;
     }
 
@@ -542,6 +452,62 @@ void runEditor(Graph& graph, bool runTests) {
 
     NexusPhysicsState nexusPhysics;
     ViewContext view;
+    input::CommandStack commandStack;
+    input::ShortcutManager shortcutManager;
+
+    // Register all standard shortcuts
+    shortcutManager.registerShortcut('A', [&]() {
+        int newIndex = 0;
+        while (graph.nodeExists(newIndex)) newIndex++;
+        commandStack.pushAndExecute(std::make_unique<input::AddNodeCommand>(graph, GraphNode("New", newIndex)));
+    });
+    shortcutManager.registerShortcut('R', [&]() {
+        if (!graph.nodes.empty())
+            commandStack.pushAndExecute(std::make_unique<input::RemoveNodeCommand>(graph, graph.nodes.back().index));
+    });
+    shortcutManager.registerShortcut('1', [&]() { commandStack.undo(); });
+    shortcutManager.registerShortcut('2', [&]() { commandStack.redo(); });
+    shortcutManager.registerShortcut('S', [&]() { saveGraphToCSV(graph, "graph_output.csv"); });
+    shortcutManager.registerShortcut('U', [&]() { loadGraphFromCSV(graph, "graph_input.csv"); });
+    shortcutManager.registerShortcut('G', [&]() { Config::viewerOverlayMode = !Config::viewerOverlayMode; });
+    shortcutManager.registerShortcut('D', [&]() { Config::autoScaleDepth = !Config::autoScaleDepth; });
+    shortcutManager.registerShortcut('W', [&]() { Config::showTopicWeights = !Config::showTopicWeights; });
+    shortcutManager.registerShortcut('F', [&]() { promptFocusAdd(graph); });
+    shortcutManager.registerShortcut('O', [&]() { promptFocusRemove(graph); });
+    shortcutManager.registerShortcut('T', [&]() { promptSetDistance(view); });
+    shortcutManager.registerShortcut('/', [&]() {
+        std::cout << "Enter search keyword: ";
+        std::string keyword;
+        std::getline(std::cin, keyword);
+        if (!keyword.empty()) {
+            std::vector<int> matches = findSimilarTopics(graph, keyword);
+            if (!matches.empty()) {
+                graph.clearFocuses();
+                for (int idx : matches) graph.addFocus(idx);
+            }
+        }
+        graph.pause();
+    });
+    shortcutManager.registerShortcut('Z', [&]() { view.zoomIn(); });
+    shortcutManager.registerShortcut('X', [&]() { view.zoomOut(); });
+    shortcutManager.registerShortcut('I', [&]() { view.pan(0, -1); });
+    shortcutManager.registerShortcut('K', [&]() { view.pan(0, 1); });
+    shortcutManager.registerShortcut('J', [&]() { view.pan(-1, 0); });
+    shortcutManager.registerShortcut('L', [&]() { view.pan(1, 0); });
+    shortcutManager.registerShortcut('B', [&]() { view.currentViewMode = VM_BOOK_VIEW; });
+    shortcutManager.registerShortcut('E', [&]() {
+        std::cout << "Enter node index: ";
+        int idx; std::cin >> idx; std::cin.ignore();
+        renderNodePage(graph, idx);
+    });
+    shortcutManager.registerShortcut('M', [&]() { Config::allowMultiFocus = !Config::allowMultiFocus; });
+    shortcutManager.registerShortcut('\t', [&]() { graph.cycleFocus(); });
+    shortcutManager.registerShortcut('N', [&]() {
+        int current = (static_cast<int>(view.currentViewMode) + 1) % (static_cast<int>(VM_COUNT));
+        if (static_cast<ViewMode>(current) == VM_BOOK_VIEW) current = (current + 1) % VM_COUNT;
+        view.currentViewMode = static_cast<ViewMode>(current);
+        graph.needsLayoutReset = true;
+    });
 
     while (true) {
         switch (view.currentViewMode) {
@@ -577,7 +543,7 @@ void runEditor(Graph& graph, bool runTests) {
                     }
                 }
             } else {
-                handleKeyPress(graph, view, static_cast<char>(key));
+                handleKeyPress(static_cast<char>(key), shortcutManager);
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS

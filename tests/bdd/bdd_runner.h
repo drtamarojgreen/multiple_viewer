@@ -5,9 +5,9 @@
 #include <vector>
 #include <functional>
 #include <map>
-#include "../../src/map_logic.h"
-#include "../../src/model/brain_model.h"
-#include "../../src/model/brain_overlay.h"
+#include "map_logic.h"
+#include "model/brain_model.h"
+#include "model/brain_overlay.h"
 
 namespace bdd {
 

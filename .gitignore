@@ -1,0 +1,14 @@
+# Build artifacts
+build/
+*.o
+*.out
+
+# Test artifacts
+bdd_persist_test.csv
+test_graph.csv
+test_output.csv
+graph_output.csv
+
+# IDEs
+.vscode/
+.idea/
