@@ -1,6 +1,7 @@
 #include "../bdd_runner.h"
 #include "io/io_manager.h"
 #include "analytics/analytics_engine_ext.h"
+#include "viewer_logic.h"
 #include <iostream>
 
 namespace bdd {
@@ -13,7 +14,11 @@ void registerDataSteps() {
     });
 
     runner.registerStep("I load the graph from \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // io::IOManager::loadJSON(ctx.graph, args[0]);
+        if (args[0].find(".json") != std::string::npos) {
+            io::IOManager::loadJSON(ctx.graph, args[0]);
+        } else {
+            loadGraphFromCSV(ctx.graph, args[0]);
+        }
         ctx.lastResult = "loaded";
     });
 

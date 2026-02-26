@@ -1,5 +1,6 @@
 #include "../bdd_runner.h"
 #include "render/visual_mapper.h"
+#include "render/minimap_renderer.h"
 #include "input/shortcut_manager.h"
 #include "input/command_stack.h"
 #include <iostream>
@@ -74,6 +75,8 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("a minimap should be visible in the corner", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ViewContext view;
+        render::MinimapRenderer::render(ctx.graph, view);
         ctx.success = true;
     });
 
