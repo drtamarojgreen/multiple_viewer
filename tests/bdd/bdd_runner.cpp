@@ -45,15 +45,25 @@ bool BDDRunner::executeLine(BDDContext& ctx, const std::string& line) {
             }
             try {
                 func(ctx, args);
+                if (!ctx.success) {
+                    std::cerr << "[BDD ERROR] Step failed assertions: " << action << "\n";
+                    return false;
+                }
                 return true;
             } catch (const std::exception& e) {
-                std::cerr << "[BDD ERROR] Step failed: " << action << " - " << e.what() << "\n";
+                std::cerr << "[BDD ERROR] Step threw exception: " << action << " - " << e.what() << "\n";
+                ctx.success = false;
+                return false;
+            } catch (...) {
+                std::cerr << "[BDD ERROR] Step threw unknown exception: " << action << "\n";
+                ctx.success = false;
                 return false;
             }
         }
     }
 
     std::cerr << "[BDD WARNING] No step match found for: " << action << "\n";
+    ctx.success = false;
     return false;
 }
 

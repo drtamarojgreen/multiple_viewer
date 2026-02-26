@@ -31,40 +31,64 @@ void registerUISteps() {
         ctx.viewContext.panX = 0;
         ctx.viewContext.panY = 0;
         ctx.viewContext.zoomLevel = ZoomLevel::Z1;
+        
+        ctx.uiPrinter = std::make_unique<print::UIPrinter>();
+        ctx.uiPrinter->initialize(80, 25);
+        ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
     });
 
     runner.registerStep("I pan the view by \\((.*), (.*)\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.viewContext.panX += std::stoi(args[0]);
         ctx.viewContext.panY += std::stoi(args[1]);
+        if (ctx.uiPrinter) {
+            ctx.uiPrinter->clear();
+            ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
+        }
     });
 
     runner.registerStep("I zoom in to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         if (args[0] == "Z5") ctx.viewContext.zoomLevel = ZoomLevel::Z5;
+        if (ctx.uiPrinter) {
+            ctx.uiPrinter->clear();
+            ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
+        }
     });
 
     runner.registerStep("a graph is displayed", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.viewContext.panX = 0;
         ctx.viewContext.panY = 0;
         ctx.viewContext.zoomLevel = ZoomLevel::Z1;
+        
+        if (!ctx.uiPrinter) ctx.uiPrinter = std::make_unique<print::UIPrinter>();
+        ctx.uiPrinter->initialize(120, 40);
+        ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
     });
 
     runner.registerStep("I pan the view by \\((.*), (.*)\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.viewContext.panX += std::stoi(args[0]);
         ctx.viewContext.panY += std::stoi(args[1]);
+        if (ctx.uiPrinter) ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
     });
 
     runner.registerStep("I zoom in to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         if (args[0] == "Z5") ctx.viewContext.zoomLevel = ZoomLevel::Z5;
+        if (ctx.uiPrinter) ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
     });
 
     runner.registerStep("the viewport center should shift by \\((.*), (.*)\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.viewContext.panX == std::stoi(args[0]));
-        assert(ctx.viewContext.panY == std::stoi(args[1]));
+        EXPECT(ctx.viewContext.panX == std::stoi(args[0]), ctx, "panX mismatch");
+        EXPECT(ctx.viewContext.panY == std::stoi(args[1]), ctx, "panY mismatch");
+        // Extra verification: Check if UI output actually says the pan changed
+        if (ctx.uiPrinter) {
+            std::string output = ctx.uiPrinter->getPrintedOutput();
+            std::string expectedText = "Pan: (" + args[0] + ", " + args[1] + ")";
+            EXPECT(output.find(expectedText) != std::string::npos, ctx, "UIPrinter output did not reflect panning");
+        }
     });
 
     runner.registerStep("the node size should increase to zoom level (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         // Assuming ZoomLevel::Z5 is the highest
-        assert(ctx.viewContext.zoomLevel == ZoomLevel::Z5);
+        EXPECT(ctx.viewContext.zoomLevel == ZoomLevel::Z5, ctx, "zoomLevel did not reach Z5");
     });
 
     runner.registerStep("a large graph is loaded", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -77,14 +101,18 @@ void registerUISteps() {
     runner.registerStep("the graph is rendered", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.minimapVisible = true;
         ctx.minimapFocusArea = "FOCUS";
+        
+        if (!ctx.uiPrinter) ctx.uiPrinter = std::make_unique<print::UIPrinter>();
+        ctx.uiPrinter->initialize(80, 25);
+        ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
     });
 
     runner.registerStep("a minimap should be visible in the corner", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.minimapVisible == true);
+        EXPECT(ctx.minimapVisible == true, ctx, "Minimap is not visible");
     });
 
     runner.registerStep("the minimap should show the current viewport \"(.*)\" area", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.minimapFocusArea == args[0]);
+        EXPECT(ctx.minimapFocusArea == args[0], ctx, "Minimap focus area mismatch: expected " + args[0] + " got " + ctx.minimapFocusArea);
     });
 
     runner.registerStep("a shortcut manager is active", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -106,7 +134,7 @@ void registerUISteps() {
 
     runner.registerStep("the \"(.*)\" command should be executed", [](BDDContext& ctx, const std::vector<std::string>& args) {
         if (args[0] == "Save Graph") {
-            assert(ctx.saveGraphCommandExecuted == true);
+            EXPECT(ctx.saveGraphCommandExecuted == true, ctx, "Save Graph command was not executed");
         }
     });
 
@@ -121,7 +149,7 @@ void registerUISteps() {
     });
 
     runner.registerStep("\"(.*)\" should be removed from the graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(!ctx.graph.nodeExists(100));
+        EXPECT(!ctx.graph.nodeExists(100), ctx, "Node 100 should have been removed but still exists");
     });
 
     runner.registerStep("I redo the command", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -129,17 +157,26 @@ void registerUISteps() {
     });
 
     runner.registerStep("\"(.*)\" should be restored", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.graph.nodeExists(100));
+        EXPECT(ctx.graph.nodeExists(100), ctx, "Node 100 should have been restored but does not exist");
     });
 
     runner.registerStep("a node with weight (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         int weight = std::stoi(args[0]);
-        // Set a dummy node indicating it was styled based on weight
-        ctx.lastResult = (weight >= 10) ? "RED" : "NORMAL";
+        ctx.graph.clear();
+        ctx.graph.addNode(GraphNode("StyledNode", 100, {}, weight));
     });
 
     runner.registerStep("the node color should be \"(.*)\" according to VisualMapper", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.lastResult == args[0]);
+        if (!ctx.uiPrinter) {
+             ctx.uiPrinter = std::make_unique<print::UIPrinter>();
+             ctx.uiPrinter->initialize(80, 25);
+        }
+        ctx.uiPrinter->clear();
+        ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
+        
+        std::string output = ctx.uiPrinter->getPrintedOutput();
+        std::string expectedText = "Color: " + args[0];
+        EXPECT(output.find(expectedText) != std::string::npos, ctx, "Node color mismatch in UI rendering. Expected to find: " + expectedText);
     });
 }
 

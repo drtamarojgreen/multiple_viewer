@@ -17,6 +17,14 @@
 #include "../../src/model/app/IntegratedBrainModel.h" // Include IntegratedBrainModel
 #include "../../src/model/core/contracts/IOverlayService.h" // Include IOverlayService
 #include "../../src/model/core/contracts/ISimulationKernel.h" // Include ISimulationKernel
+#include "../print/UIPrinter.h" // Include UIPrinter
+#include <iostream>
+
+#define EXPECT(condition, ctx, msg) \
+    if (!(condition)) { \
+        std::cerr << "[BDD ASSERTION FAILED] " << msg << std::endl; \
+        ctx.success = false; \
+    }
 
 namespace bdd {
 
@@ -51,6 +59,7 @@ struct BDDContext {
     std::unique_ptr<brain_model::app::IntegratedBrainModel> integratedBrainModel;
     std::shared_ptr<brain_model::core::contracts::IOverlayService> mockOverlayService;
     std::shared_ptr<brain_model::core::contracts::ISimulationKernel> mockSimulationKernel;
+    std::unique_ptr<print::UIPrinter> uiPrinter;
     std::string lastResult;
     bool success = true;
 };

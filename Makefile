@@ -8,7 +8,7 @@ CXXFLAGS = -std=c++17 -Isrc -Itests -DPROJECT_ROOT_DIR=\"$(PROJECT_ROOT)\"
 LDFLAGS = 
 
 # Explicit list of source directories (mirroring the modular structure)
-SRC_DIRS = src src/model src/model/core src/model/core/contracts src/model/domains src/model/domains/emotion src/model/domains/stress src/model/domains/molecular src/model/domains/neuro src/model/domains/neurochemical src/model/app src/render src/input src/io src/analytics src/scripting src/layout src/ui tests tests/bdd tests/bdd/steps
+SRC_DIRS = src src/model src/model/core src/model/core/contracts src/model/domains src/model/domains/emotion src/model/domains/stress src/model/domains/molecular src/model/domains/neuro src/model/domains/neurochemical src/model/app src/render src/input src/io src/analytics src/scripting src/layout src/ui tests tests/bdd tests/bdd/steps tests/print
 
 # Discover all source files across modular packages
 SRC_FILES = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.cpp))
