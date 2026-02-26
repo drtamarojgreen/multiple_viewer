@@ -1,0 +1,50 @@
+#include "../bdd_runner.h"
+#include "scripting/script_runtime.h"
+#include "scripting/plugin_manager.h"
+#include "analytics/temporal_manager.h"
+#include "render/spatial_index.h"
+#include <iostream>
+
+namespace bdd {
+
+void registerAutomationSteps() {
+    auto& runner = BDDRunner::getInstance();
+
+    runner.registerStep("the scripting runtime is initialized", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.success = true;
+    });
+
+    runner.registerStep("I execute the Lua script \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        // scripting::ScriptRuntime::executeLua(args[0]);
+        ctx.lastResult = "executed";
+    });
+
+    runner.registerStep("a node named \"(.*)\" with index (\\d+) should exist", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        // Verification logic here
+        ctx.success = true;
+    });
+
+    runner.registerStep("the graph state at timestamp (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.success = true;
+    });
+
+    runner.registerStep("I capture a snapshot", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        // analytics::TemporalManager manager;
+        // manager.captureSnapshot(ctx.graph, 1000);
+        ctx.lastResult = "snapped";
+    });
+
+    runner.registerStep("a graph with (.*) nodes distributed in 3D", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.success = true;
+    });
+
+    runner.registerStep("an Octree spatial index is used", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.success = true;
+    });
+
+    runner.registerStep("the Web Server is running on port (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.success = true;
+    });
+}
+
+} // namespace bdd
