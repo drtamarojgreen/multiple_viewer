@@ -18,7 +18,7 @@ void OctreeIndex::insert(int nodeId, float x, float y, float z) {
     }
 
     subdivide();
-    
+
     // After subdivision, this node is empty and subdivided_ is true
     // Need to re-insert the current node as well
     insert(nodeId, x, y, z);

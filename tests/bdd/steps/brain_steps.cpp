@@ -32,7 +32,7 @@ void registerBrainSteps() {
         mapping.regionId = regionId;
         ctx.overlay.addMapping(mapping);
         // Apply to graph
-        ctx.graph.applyBrainOverlay(ctx.overlay);
+        ctx.graph.applyBrainOverlay((ctx.overlay));
         std::cout << "[STEP] Mapped node " << nodeId << " to region " << regionId << "\n";
     });
 

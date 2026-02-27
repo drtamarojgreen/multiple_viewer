@@ -22,6 +22,13 @@ struct ModelCapabilities {
     bool supportsProbabilistic = false;
 };
 
+struct ModelAsset {
+    std::string id;
+    std::string path;
+    std::string type;
+    std::string checksum;
+};
+
 struct BrainModelManifest {
     std::string id;
     std::string name;
@@ -30,7 +37,9 @@ struct BrainModelManifest {
     ModelCapabilities capabilities;
     std::string provenance;
     std::vector<std::string> dependencies;
+    std::vector<ModelAsset> assets;
     std::map<std::string, std::string> metadata;
+    std::string schemaVersion = "1.0";
 };
 
 } // namespace model

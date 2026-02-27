@@ -20,7 +20,7 @@ public:
 
     virtual TextSlice generateSlice(const BrainModel& model, TextSlice::Plane plane, float position, int resolution) = 0;
     virtual std::vector<RegionID> getNeighborhood(const BrainModel& model, const RegionID& id) = 0;
-    
+
     virtual std::string generateHierarchyTree(const BrainModel& model) = 0;
     virtual std::string generatePathwaySummary(const BrainModel& model) = 0;
 

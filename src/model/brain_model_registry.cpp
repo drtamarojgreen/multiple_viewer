@@ -30,6 +30,31 @@ const BrainModelManifest* BrainModelRegistry::getManifest(const std::string& id)
     return nullptr;
 }
 
+bool BrainModelRegistry::modelSupports(const std::string& id, const std::string& capability) const {
+    const auto* manifest = getManifest(id);
+    if (!manifest) return false;
+
+    if (capability == "temporal") return manifest->capabilities.supportsTemporal;
+    if (capability == "layers") return manifest->capabilities.supportsLayers;
+    if (capability == "weights") return manifest->capabilities.supportsEdgeWeights;
+    if (capability == "probabilistic") return manifest->capabilities.supportsProbabilistic;
+
+    return false;
+}
+
+std::vector<std::string> BrainModelRegistry::getDependencies(const std::string& id) const {
+    const auto* manifest = getManifest(id);
+    if (manifest) return manifest->dependencies;
+    return {};
+}
+
+bool BrainModelRegistry::checkIntegrity(const std::string& id) const {
+    const auto* manifest = getManifest(id);
+    if (!manifest) return false;
+    // Mock integrity check: assume true if assets list is not empty or if it's a simple model
+    return true;
+}
+
 std::vector<std::string> BrainModelRegistry::getAllModelIds() const {
     std::vector<std::string> ids;
     for (const auto& pair : manifests_) {

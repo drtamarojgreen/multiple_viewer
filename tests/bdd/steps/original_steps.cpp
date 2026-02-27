@@ -44,10 +44,6 @@ void registerOriginalSteps() {
         std::cout << "[STEP] Verified connection " << u << "->" << v << "\n";
     });
 
-    runner.registerStep("a graph with node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode("Test", std::stoi(args[0])));
-    });
-
     runner.registerStep("I add focus to node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.addFocus(std::stoi(args[0]));
     });
@@ -58,10 +54,6 @@ void registerOriginalSteps() {
 
     runner.registerStep("node (\\d+) should be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(ctx.graph.isNodeFocused(std::stoi(args[0])));
-    });
-
-    runner.registerStep("I remove focus from node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.removeFocus(std::stoi(args[0]));
     });
 
     runner.registerStep("node (\\d+) should not be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -77,7 +69,7 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("I save the graph to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        saveGraphToCSV(ctx.graph, args[0]);
+        saveGraphToCSV((ctx.graph), args[0]);
     });
 
     runner.registerStep("I clear the current graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -85,13 +77,14 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("I load the graph from \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        loadGraphFromCSV(ctx.graph, args[0]);
+        loadGraphFromCSV((ctx.graph), args[0]);
     });
 
     runner.registerStep("a populated graph with nodes and edges", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode("A", 0));
-        ctx.graph.addNode(GraphNode("B", 1));
-        ctx.graph.addEdge(0, 1);
+        ctx.graph.clear();
+        ctx.graph.addNode(GraphNode("A", 1));
+        ctx.graph.addNode(GraphNode("B", 2));
+        ctx.graph.addEdge(1, 2);
     });
 
     runner.registerStep("the graph should restore all previous nodes and edges", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -134,7 +127,7 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("I search for nodes containing \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        auto results = findSimilarTopics(ctx.graph, args[0]);
+        auto results = findSimilarTopics((ctx.graph), args[0]);
         ctx.graph.clearFocuses();
         for (int id : results) ctx.graph.addFocus(id);
         ctx.lastResult = std::to_string(results.size());

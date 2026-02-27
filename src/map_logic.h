@@ -75,7 +75,7 @@ struct GraphNode {
     int subjectIndex = -1;  
     std::vector<model::RegionID> regionIds; // Feature 3: Multi-Region Membership
     std::vector<float> regionConfidences;    // Feature 5 extension: probabilistic weights per region
-    model::PathwayID pathwayId;  
+    model::PathwayID pathwayId;
 
     GraphNode(std::string l = "", int i = -1, const std::vector<int>& n = {}, int w = 1, int s = -1)
         : label(l), index(i), neighbors(n), weight(w), subjectIndex(s), pathwayId("") {}

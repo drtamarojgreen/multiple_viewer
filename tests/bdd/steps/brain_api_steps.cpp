@@ -17,8 +17,6 @@ void registerBrainAPISteps() {
         manifest.id = args[0];
         manifest.family = model::ModelFamily::STRUCTURAL;
         ctx.lastResult = manifest.id;
-        // Store manifest in a scratchpad or context extension if needed.
-        // For now let's just use it in the next step.
     });
 
     runner.registerStep("a structural brain model with (\\d+) regions", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -29,7 +27,6 @@ void registerBrainAPISteps() {
             r.id = "reg_" + std::to_string(i);
             model->addRegion(r);
         }
-        // ctx.brainModel = *model; // Can't easily store unique_ptr in shared context without refactor
         std::cout << "[STEP] Created model with " << count << " regions\n";
     });
 
@@ -54,37 +51,47 @@ void registerBrainAPISteps() {
 
     // Temporal
     runner.registerStep("a temporal engine with frames at (\\d+)ms and (\\d+)ms", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // Local engine for test
-        ctx.success = true;
+        ctx.temporalEngine.setTimelinePosition(0);
     });
 
     runner.registerStep("the data at (\\d+)ms is \\((.*), (.*), (.*)\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        model::TemporalFrame frame;
+        frame.timestamp_ms = std::stoull(args[0]);
+        frame.data = { std::stof(args[1]), std::stof(args[2]), std::stof(args[3]) };
+        ctx.temporalEngine.addFrame(frame);
     });
 
     runner.registerStep("I set the timeline position to (\\d+)ms", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        ctx.temporalEngine.setTimelinePosition(std::stoull(args[0]));
     });
 
     runner.registerStep("the interpolated data should be approximately \\((.*), (.*), (.*)\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        auto data = ctx.temporalEngine.getCurrentInterpolatedData();
+        assert(data.size() == 3);
+        assert(std::abs(data[0] - std::stof(args[0])) < 0.1f);
+        assert(std::abs(data[1] - std::stof(args[1])) < 0.1f);
+        assert(std::abs(data[2] - std::stof(args[2])) < 0.1f);
     });
 
     // Layers
     runner.registerStep("a render layer \"(.*)\" of type \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        render::RenderLayer layer;
+        layer.id = args[0];
+        if (args[1] == "SURFACE") layer.type = render::LayerType::SURFACE;
+        render::RenderLayerManager::getInstance().addLayer(layer);
     });
 
     runner.registerStep("I add the layer to the RenderLayerManager", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        // Already handled in Given
     });
 
-    runner.registerStep("I set the visibility of \"(.*)\" to false", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+    runner.registerStep("I set the visibility of \"(.*)\" to (.*)", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        bool visible = (args[1] == "true" || args[1] == "false" ? (args[1] == "true") : false);
+        render::RenderLayerManager::getInstance().setVisibility(args[0], visible);
     });
 
     runner.registerStep("the layer \"(.*)\" should not be visible", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        assert(!render::RenderLayerManager::getInstance().isVisible(args[0]));
     });
 }
 

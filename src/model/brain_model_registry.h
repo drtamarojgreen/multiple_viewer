@@ -22,6 +22,13 @@ public:
     BrainModel* getModel(const std::string& id);
     const BrainModelManifest* getManifest(const std::string& id) const;
 
+    // Capability negotiation
+    bool modelSupports(const std::string& id, const std::string& capability) const;
+
+    // Dependency management
+    std::vector<std::string> getDependencies(const std::string& id) const;
+    bool checkIntegrity(const std::string& id) const;
+
     std::vector<std::string> getAllModelIds() const;
 
     void clear();

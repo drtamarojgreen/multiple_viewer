@@ -36,4 +36,8 @@ std::vector<RenderLayer> RenderLayerManager::getSortedLayers() const {
     return result;
 }
 
+void RenderLayerManager::setLayerDepthMode(const std::string& id, bool depthAware) {
+    // Stub: To be integrated with the renderer pipeline in a future phase
+}
+
 } // namespace render

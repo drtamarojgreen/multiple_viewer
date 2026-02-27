@@ -56,12 +56,12 @@ bool ModelRepository::loadAtlas(const std::string& filepath) {
                 region.name = tokens[2];
                 region.center = { std::stof(tokens[3]), std::stof(tokens[4]), std::stof(tokens[5]) };
                 region.radius = std::stof(tokens[6]);
-                
+
                 if (tokens.size() > 7) region.regionCode = tokens[7];
                 if (tokens.size() > 8) region.hemisphere = static_cast<Hemisphere>(std::stoi(tokens[8]));
                 if (tokens.size() > 9) region.lobe = static_cast<Lobe>(std::stoi(tokens[9]));
                 if (tokens.size() > 10) region.parentID = tokens[10];
-                
+
                 model_.addRegion(region);
             } catch (const std::exception& e) {
                 Logger::warn("Error parsing REGION at line " + std::to_string(lineNum) + ": " + std::string(e.what()));
@@ -78,7 +78,7 @@ bool ModelRepository::loadAtlas(const std::string& filepath) {
                 pathway.name = tokens[2];
                 pathway.sourceRegion = tokens[3];
                 pathway.targetRegion = tokens[4];
-                
+
                 if (tokens.size() > 5) pathway.direction = static_cast<PathwayDirection>(std::stoi(tokens[5]));
                 if (tokens.size() > 6) pathway.strength = std::stof(tokens[6]);
                 if (tokens.size() > 7) pathway.type = static_cast<PathwayType>(std::stoi(tokens[7]));
@@ -89,7 +89,7 @@ bool ModelRepository::loadAtlas(const std::string& filepath) {
             }
         }
     }
-    
+
     indexer_->buildIndex(model_);
     Logger::info("Atlas loaded successfully: " + filepath);
     return true;
@@ -129,30 +129,30 @@ bool ModelRepository::exportToJSON(const std::string& filepath) {
         file << "    }" << (++pCount == pathways.size() ? "" : ",") << "\n";
     }
     file << "  ]\n}\n";
-    
+
     Logger::info("Atlas exported to JSON: " + filepath);
     return true;
 }
 
 void ModelRepository::mirrorAtlas() {
     Logger::info("Generating structural symmetry mirroring (L -> R)...");
-    
+
     std::vector<BrainRegion> mirroredRegions;
     for (const auto& [id, region] : model_.getRegions()) {
         if (region.hemisphere == Hemisphere::Left) {
             BrainRegion mirrored = region;
-            mirrored.id = region.id + "_R"; 
+            mirrored.id = region.id + "_R";
             mirrored.name = "Right " + region.name;
-            mirrored.center.x = -region.center.x; 
+            mirrored.center.x = -region.center.x;
             mirrored.hemisphere = Hemisphere::Right;
             mirroredRegions.push_back(mirrored);
         }
     }
-    
+
     for (const auto& r : mirroredRegions) {
         model_.addRegion(r);
     }
-    
+
     Logger::info("Mirroring complete. Total regions: " + std::to_string(model_.getRegions().size()));
 }
 
@@ -196,7 +196,7 @@ bool ModelRepository::loadOverlay(const std::string& filepath) {
                 mapping.pathwayId = tokens[3];
             }
             if (tokens.size() >= 5) {
-                mapping.confidence = std::stof(tokens[4]); 
+                mapping.confidence = std::stof(tokens[4]);
             }
             overlay_.addMapping(mapping);
         }
