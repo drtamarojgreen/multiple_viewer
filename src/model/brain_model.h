@@ -45,8 +45,8 @@ struct BrainRegion {
     Lobe lobe = Lobe::Unknown;
     Layer layer = Layer::Unknown;
 
-    RegionID parentId; // Merged: using parentId (camelCase from my branch or main's parentID)
-    std::vector<RegionID> childrenIds; // From my branch
+    RegionID parentId; // Standardized to parentId
+    std::vector<RegionID> childrenIds;
 
     ActivationLevel activation = ActivationLevel::Resting; // Feature 12: Region Activation State
 
@@ -89,11 +89,11 @@ public:
     const std::unordered_map<RegionID, BrainRegion>& getRegions() const { return regions_; }
     const std::unordered_map<PathwayID, BrainPathway>& getPathways() const { return pathways_; }
 
-    // Hierarchy traversal (from my branch)
+    // Hierarchy traversal
     std::vector<RegionID> getHierarchyPath(const RegionID& id) const;
     std::vector<RegionID> getDescendants(const RegionID& id) const;
 
-    // ROI support (from my branch)
+    // ROI support
     std::vector<RegionID> getRegionsInRadius(const Vec3& center, float radius) const;
     std::vector<int> getNodesInROI(const Vec3& center, float radius, const Graph& graph) const;
 

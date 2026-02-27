@@ -16,11 +16,11 @@ void registerOriginalSteps() {
 
     runner.registerStep("a graph with node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.clear();
-        ctx.graph.addNode(GraphNode("", std::stoi(args[0])));
+        ctx.graph.addNode(GraphNode("", std::stoi(args[0]), {}, 1, 0));
     });
 
     runner.registerStep("I add a node \"(.*)\" at index (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode(args[0], std::stoi(args[1])));
+        ctx.graph.addNode(GraphNode(args[0], std::stoi(args[1]), {}, 1, 0));
         std::cout << "[STEP] Added node " << args[0] << "\n";
     });
 
@@ -98,9 +98,9 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("a triangle graph \\(nodes 0, 1, 2 all connected\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode("0", 0));
-        ctx.graph.addNode(GraphNode("1", 1));
-        ctx.graph.addNode(GraphNode("2", 2));
+        ctx.graph.addNode(GraphNode("0", 0, {}, 1, 0));
+        ctx.graph.addNode(GraphNode("1", 1, {}, 1, 0));
+        ctx.graph.addNode(GraphNode("2", 2, {}, 1, 0));
         ctx.graph.addEdge(0, 1);
         ctx.graph.addEdge(1, 2);
         ctx.graph.addEdge(2, 0);
@@ -123,9 +123,9 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("a graph with nodes \"([^\"]*)\", \"([^\"]*)\", \"([^\"]*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode(args[0], 0));
-        ctx.graph.addNode(GraphNode(args[1], 1));
-        ctx.graph.addNode(GraphNode(args[2], 2));
+        ctx.graph.addNode(GraphNode(args[0], 0, {}, 1, 0));
+        ctx.graph.addNode(GraphNode(args[1], 1, {}, 1, 0));
+        ctx.graph.addNode(GraphNode(args[2], 2, {}, 1, 0));
     });
 
     runner.registerStep("I search for nodes containing \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {

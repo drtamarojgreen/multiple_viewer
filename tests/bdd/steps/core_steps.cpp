@@ -25,9 +25,7 @@ void registerCoreSteps() {
 
     runner.registerStep("the current time should be exactly (\\d+)ms", [](BDDContext& ctx, const std::vector<std::string>& args) {
         uint64_t expected = std::stoull(args[0]);
-        // Check both kernel and temporal sync
         if (ctx.kernel.current_time_ms() != expected) {
-             // If kernel is ahead (due to no rewind), check if we're in a "restored" mock state
              if (ctx.temporalEngine.getTimelinePosition() == expected) {
                  std::cout << "[STEP] Verified restored mock time " << expected << "ms\n";
                  return;
