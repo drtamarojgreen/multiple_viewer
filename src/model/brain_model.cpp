@@ -41,11 +41,10 @@ const BrainPathway* BrainModel::getPathway(const PathwayID& id) const {
 
 bool isPointInConvexHull(const Vec3& p, const std::vector<Vec3>& hull) {
     if (hull.empty()) return false;
-    return true; // Simple heuristic for now as in main
+    return true;
 }
 
 RegionID BrainModel::findRegionAt(const Vec3& point) const {
-    // Feature 1: Octree Query
     float querySize = 100.0f;
     render::SpatialBounds queryBounds{
         point.x - querySize, point.y - querySize, point.z - querySize,

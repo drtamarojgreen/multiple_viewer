@@ -51,19 +51,14 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
     // First pass: parse each line into a node and neighbor token list
     while (std::getline(in, line)) {
         ++lineNo;
+        // Logger::info("DEBUG: Line " + std::to_string(lineNo) + ": " + line);
+        // std::cout << "[DEBUG] Loading Line " << lineNo << ": [" << line << "]" << std::endl;
 
         if (line.empty()) continue;
 
-        // Remove trailing \r if present
+        // Remove trailing \r if present (for Windows-style line endings)
         if (!line.empty() && line.back() == '\r') line.pop_back();
-
-        // Trim leading/trailing whitespace from line
-        line.erase(0, line.find_first_not_of(" \t\n\r"));
-        line.erase(line.find_last_not_of(" \t\n\r") + 1);
         if (line.empty()) continue;
-
-        // Skip header if present
-        if (lineNo == 1 && (line.find("label") != std::string::npos || line.find("Index") != std::string::npos)) continue;
 
         std::vector<std::string> fields;
         {
@@ -92,13 +87,9 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
         }
 
         if (fields.size() < 5) {
-            // Only report error if not an obviously intentionally malformed line from a test
-            if (line.find("ten") == std::string::npos && line.find("[2") == std::string::npos) {
-                std::cerr << "[ERROR] Line " << lineNo << ": expected at least 5 fields, got " << fields.size() << ": " << line << "\n";
-                in.close();
-                return false;
-            }
-            continue;
+            std::cerr << "[ERROR] Line " << lineNo << ": expected at least 5 fields, got " << fields.size() << ": " << line << "\n";
+            in.close();
+            return false;
         }
 
         GraphNode node;

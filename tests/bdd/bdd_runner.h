@@ -59,7 +59,7 @@ struct BDDContext {
     std::string helpMessage;
     bool benchmarkSuiteReady = false;
 
-    // Core Simulation Components (Managed by Unique Pointers for stability)
+    // Core Simulation Components
     std::unique_ptr<SimulationKernel> simulationKernel;
     std::unique_ptr<SimulationKernel> simulationKernel2;
     SimulationSnapshot snapshot1;
@@ -68,7 +68,7 @@ struct BDDContext {
     std::shared_ptr<IOverlayService> mockOverlayService;
     std::shared_ptr<ISimulationKernel> mockSimulationKernel;
 
-    // Concrete instances for core-specific tests
+    // Concrete instances
     brain_model::core::SimulationKernel kernel;
     brain_model::core::OverlayService overlayService;
     model::TemporalEngine temporalEngine;

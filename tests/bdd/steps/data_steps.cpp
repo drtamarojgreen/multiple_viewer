@@ -72,7 +72,7 @@ void registerDataSteps() {
         for(int c=0; c<3; ++c) {
             for(int i=0; i<3; ++i) {
                 int id = c*10 + i;
-                ctx.graph.addNode(GraphNode("N", id));
+                ctx.graph.addNode(GraphNode("N", id, {}, 1, c));
                 for(int j=0; j<i; ++j) ctx.graph.addEdge(id, c*10 + j);
             }
         }
@@ -98,16 +98,16 @@ void registerDataSteps() {
 
     runner.registerStep("a star-topology graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.clear();
-        ctx.graph.addNode(GraphNode("Center", 0));
+        ctx.graph.addNode(GraphNode("Center", 0, {}, 1, 0));
         for(int i=1; i<=5; ++i) {
-            ctx.graph.addNode(GraphNode("Leaf", i));
+            ctx.graph.addNode(GraphNode("Leaf", i, {}, 1, 0));
             ctx.graph.addEdge(0, i);
         }
     });
 
     runner.registerStep("a populated graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode("N1", 0));
-        ctx.graph.addNode(GraphNode("N2", 1));
+        ctx.graph.addNode(GraphNode("N1", 0, {}, 1, 0));
+        ctx.graph.addNode(GraphNode("N2", 1, {}, 1, 0));
         ctx.graph.addEdge(0, 1);
     });
 

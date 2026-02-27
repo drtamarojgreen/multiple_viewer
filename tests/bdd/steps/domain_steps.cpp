@@ -63,7 +63,6 @@ void registerDomainSteps() {
         ctx.mockSimulationKernel = std::make_shared<MockSimulationKernel>();
         ctx.integratedBrainModel = std::make_unique<IntegratedBrainModel>(ctx.mockSimulationKernel, ctx.mockOverlayService);
 
-        // Populate mock overlay service with expected data if not already there
         if (domain == "Cognition") {
              OverlaySpec spec;
              spec.id = "cognition_exec_control";
@@ -134,7 +133,6 @@ void registerDomainSteps() {
         } else {
             ctx.overlayService.add_overlay(spec);
         }
-        std::cout << "[STEP] Regions interacting: " << args[0] << " and " << args[1] << "\n";
     });
 
     runner.registerStep("an overlay with ID \"(.*)\" should be published", [](BDDContext& ctx, const std::vector<std::string>& args) {

@@ -20,7 +20,7 @@ void registerAutomationSteps() {
     runner.registerStep("I execute the Lua script \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         scripting::ScriptRuntime::executeLua(args[0]);
         if (args[0].find("addNode") != std::string::npos) {
-            ctx.graph.addNode(GraphNode("LuaNode", 100));
+            ctx.graph.addNode(GraphNode("LuaNode", 100, {}, 1, 0));
         }
         ctx.lastResult = "executed";
     });
@@ -62,7 +62,7 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("I modify the graph at timestamp (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode("ModifiedNode", 999));
+        ctx.graph.addNode(GraphNode("ModifiedNode", 999, {}, 1, 0));
         ctx.modifiedGraphNodeCount = ctx.graph.nodes.size();
     });
 
@@ -89,7 +89,7 @@ void registerAutomationSteps() {
         ctx.graph.clear();
         int count = std::stoi(args[0]);
         for(int i = 0; i < count; ++i) {
-            ctx.graph.addNode(GraphNode("3DNode" + std::to_string(i), i));
+            ctx.graph.addNode(GraphNode("3DNode" + std::to_string(i), i, {}, 1, 0));
             ctx.graph.nodePos[i] = { (float)i, (float)i, (float)i };
         }
     });

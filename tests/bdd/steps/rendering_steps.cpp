@@ -12,7 +12,7 @@ void registerRenderingSteps() {
     auto& runner = BDDRunner::getInstance();
 
     runner.registerStep("a graph is displayed", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode("DisplayNode", 0));
+        ctx.graph.addNode(GraphNode("DisplayNode", 0, {}, 1, 0));
     });
 
     runner.registerStep("a view context with zoom level \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -50,7 +50,7 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("a large graph is loaded", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        for(int i=0; i<100; ++i) ctx.graph.addNode(GraphNode("N", i));
+        for(int i=0; i<100; ++i) ctx.graph.addNode(GraphNode("N", i, {}, 1, 0));
     });
 
     runner.registerStep("the graph is rendered", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -82,16 +82,16 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("a node with weight (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode("Weighted", 0, {}, std::stoi(args[0])));
+        ctx.graph.addNode(GraphNode("Weighted", 0, {}, std::stoi(args[0]), 0));
     });
 
     runner.registerStep("the node color should be \"(.*)\" according to VisualMapper", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        std::string actual = render::VisualMapper::getColorForWeight(ctx.graph.nodes.at(0).weight);
+        std::string actual = render::VisualMapper::getColorForWeight(ctx.graph.nodeMap.at(0).weight);
         assert(actual == args[0]);
     });
 
     runner.registerStep("I have added a node \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode(args[0], 100));
+        ctx.graph.addNode(GraphNode(args[0], 100, {}, 1, 0));
     });
 
     runner.registerStep("I undo the last command", [](BDDContext& ctx, const std::vector<std::string>& args) {
