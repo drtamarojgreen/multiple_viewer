@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/dna/DNADomainPlugin.h"
 
 namespace brain_model::domains::dna {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(mmtStatus);
     }
 };
-
-void DNADomainPlugin::register_entities(GraphRegistry&) {}
-void DNADomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::dna

@@ -49,15 +49,25 @@ bool BDDRunner::executeLine(BDDContext& ctx, const std::string& line) {
             }
             try {
                 func(ctx, args);
+                if (!ctx.success) {
+                    std::cerr << "[BDD ERROR] Step failed assertions: " << action << "\n";
+                    return false;
+                }
                 return true;
             } catch (const std::exception& e) {
-                std::cerr << "[BDD ERROR] Step failed: " << action << " - " << e.what() << "\n";
+                std::cerr << "[BDD ERROR] Step threw exception: " << action << " - " << e.what() << "\n";
+                ctx.success = false;
+                return false;
+            } catch (...) {
+                std::cerr << "[BDD ERROR] Step threw unknown exception: " << action << "\n";
+                ctx.success = false;
                 return false;
             }
         }
     }
 
     std::cerr << "[BDD WARNING] No step match found for: " << action << "\n";
+    ctx.success = false;
     return false;
 }
 
@@ -81,7 +91,39 @@ bool BDDRunner::runFeature(const std::string& filepath) {
         }
         if (t.compare(0, 9, "Scenario:") == 0) {
             std::cout << "    " << t << "\n";
-            ctx = BDDContext(); // Reset context for each scenario
+            // Reset context for each scenario
+            ctx.graph.clear();
+            ctx.brainModel.clear();
+            ctx.overlay = model::BrainOverlay(); // Assuming BrainOverlay has a default constructor that initializes it to an empty state
+            ctx.commandStack = CommandStack(); // Assuming CommandStack is default constructible and clears its state
+            ctx.viewContext = ViewContext(); // Assuming ViewContext is default constructible and clears its state
+            ctx.minimapVisible = false;
+            ctx.minimapFocusArea = "";
+            ctx.saveGraphCommandExecuted = false;
+            ctx.svgExported = false;
+            ctx.centralityMetrics = CentralityMetrics(); // Assuming default constructor works
+            ctx.pluginLoaded = false;
+            ctx.loadedPluginName = "";
+            ctx.temporalManager = TemporalManager(); // Assuming default constructor works
+            ctx.hypothesisAnnotation = "";
+            ctx.initialGraphNodeCount = 0;
+            ctx.modifiedGraphNodeCount = 0;
+            ctx.spatialIndex = OctreeIndex({-1000, -1000, -1000, 1000, 1000, 1000}, 8, 0); // Re-initialize spatialIndex
+            ctx.queryResultCount = 0;
+            ctx.webServer = WebServerStub(); // Assuming default constructor works
+            ctx.webServerResponse = "";
+            ctx.currentMenu = "";
+            ctx.helpMessage = "";
+            ctx.benchmarkSuiteReady = false;
+            ctx.simulationKernel.reset();
+            ctx.simulationKernel2.reset();
+            // ctx.snapshot1 and ctx.snapshot2 are structs, reassignment is fine if default-constructible
+            ctx.integratedBrainModel.reset();
+            ctx.mockOverlayService.reset();
+            ctx.mockSimulationKernel.reset();
+            // ctx.uiPrinter.reset(); // If uiPrinter is uncommented
+            ctx.lastResult = "";
+            ctx.success = true;
             continue;
         }
         

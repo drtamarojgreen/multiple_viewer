@@ -14,6 +14,11 @@ void registerOriginalSteps() {
         std::cout << "[STEP] Graph cleared\n";
     });
 
+    runner.registerStep("a graph with node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.clear();
+        ctx.graph.addNode(GraphNode("", std::stoi(args[0])));
+    });
+
     runner.registerStep("I add a node \"(.*)\" at index (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.addNode(GraphNode(args[0], std::stoi(args[1])));
         std::cout << "[STEP] Added node " << args[0] << "\n";
@@ -45,6 +50,10 @@ void registerOriginalSteps() {
 
     runner.registerStep("I add focus to node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.addFocus(std::stoi(args[0]));
+    });
+
+    runner.registerStep("I remove focus from node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.removeFocus(std::stoi(args[0]));
     });
 
     runner.registerStep("node (\\d+) should be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -87,6 +96,9 @@ void registerOriginalSteps() {
 
     runner.registerStep("the graph should restore all previous nodes and edges", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(!ctx.graph.nodes.empty());
+        assert(ctx.graph.nodeExists(1));
+        assert(ctx.graph.nodeExists(2));
+        assert(ctx.graph.nodeMap.at(1).neighbors.size() > 0);
         std::cout << "[STEP] Verified persistence restore\n";
     });
 

@@ -10,6 +10,7 @@ namespace bdd {
     void registerOriginalSteps();
     void registerCoreSteps();
     void registerDomainSteps();
+    void registerUISteps();
 }
 
 #ifndef PROJECT_ROOT_DIR
@@ -26,6 +27,7 @@ void runBDDTests() {
     bdd::registerOriginalSteps();
     bdd::registerCoreSteps();
     bdd::registerDomainSteps();
+    bdd::registerUISteps();
     
     bool allSuccess = true;
     std::string root = PROJECT_ROOT_DIR;

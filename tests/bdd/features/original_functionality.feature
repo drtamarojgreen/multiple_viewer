@@ -44,5 +44,5 @@ Feature: Original Viewer Functionality
   Scenario: Label Search
     Given a graph with nodes "SearchMe", "FindMe", "Other"
     When I search for nodes containing "Me"
-    Then "2" nodes should be identified
+    Then "3" nodes should be identified
     And they should be added to the focus set

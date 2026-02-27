@@ -41,8 +41,8 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("I zoom in to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ViewContext view;
-        view.zoomLevel = ZoomLevel::Z5;
+        if (args[0] == "Z5") ctx.viewContext.zoomLevel = ZoomLevel::Z5;
+        // Add other zoom levels if needed
         ctx.lastResult = "zoomed";
     });
 

@@ -1,23 +1,194 @@
 #include "../bdd_runner.h"
 #include "model/app/IntegratedBrainModel.h"
 #include <iostream>
+
 #include <cassert>
+
+#include <memory>
+
+
 
 namespace bdd {
 
+
+
 using namespace brain_model::app;
 
+using namespace brain_model::core::contracts;
+
+
+
+// Mock IOverlayService
+
+class MockOverlayService : public IOverlayService {
+
+public:
+
+    bool load_overlays_from_file(const std::string& path) override { return true; }
+
+    void add_overlay(const OverlaySpec& spec) override {
+
+        active_overlays_.push_back(spec);
+
+    }
+
+    std::vector<OverlaySpec> get_active_overlays_for_entity(const std::string& entity_id) const override {
+
+        std::vector<OverlaySpec> result;
+
+        for(const auto& spec : active_overlays_) {
+
+            if (spec.anchor_entity_id == entity_id) {
+
+                result.push_back(spec);
+
+            }
+
+        }
+
+        return result;
+
+    }
+
+    void render_2d() override {}
+
+    void render_3d() override {}
+
+
+
+    std::vector<OverlaySpec> active_overlays_;
+
+};
+
+
+
+// Mock ISimulationKernel
+
+class MockSimulationKernel : public ISimulationKernel {
+
+public:
+
+    void step(uint32_t delta_ms) override { current_time_ms_ += delta_ms; }
+
+    void pause() override { is_running_ = false; }
+
+    void resume() override { is_running_ = true; }
+
+    SimulationSnapshot capture_snapshot() const override {
+
+        SimulationSnapshot snapshot;
+
+        snapshot.timestamp_ms = current_time_ms_;
+
+        snapshot.snapshot_hash = "mock_hash_" + std::to_string(current_time_ms_);
+
+        return snapshot;
+
+    }
+
+    void restore_snapshot(const SimulationSnapshot& snapshot) override {
+
+        current_time_ms_ = snapshot.timestamp_ms;
+
+    }
+
+    void set_seed(uint64_t seed) override {}
+
+    uint64_t current_time_ms() const override { return current_time_ms_; }
+
+    bool is_running() const override { return is_running_; }
+
+
+
+    uint64_t current_time_ms_ = 0;
+
+    bool is_running_ = false;
+
+};
+
+
+
 void registerDomainSteps() {
+
     auto& runner = BDDRunner::getInstance();
+
+
 
     runner.registerStep("an integrated brain model with the (.*) domain", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::string domain = args[0];
+
+        ctx.mockOverlayService = std::make_shared<MockOverlayService>();
+
+        ctx.mockSimulationKernel = std::make_shared<MockSimulationKernel>();
+
+        ctx.integratedBrainModel = std::make_unique<IntegratedBrainModel>(ctx.mockSimulationKernel, ctx.mockOverlayService);
+
+        // Add a mock domain plugin if needed
+
         std::cout << "[STEP] Model initialized with domain: " << domain << "\n";
+
     });
 
+
+
+    runner.registerStep("the simulation kernel is running", [](BDDContext& ctx, const std::vector<std::string>& args) {
+
+        assert(ctx.mockSimulationKernel != nullptr);
+
+        std::shared_ptr<MockSimulationKernel> mockSimulationKernel = std::dynamic_pointer_cast<MockSimulationKernel>(ctx.mockSimulationKernel);
+
+        assert(mockSimulationKernel != nullptr);
+
+        mockSimulationKernel->resume();
+
+        assert(mockSimulationKernel->is_running() == true);
+
+    });
+
+
+
+    runner.registerStep("(\\d+)ms have elapsed", [](BDDContext& ctx, const std::vector<std::string>& args) {
+
+        assert(ctx.mockSimulationKernel != nullptr);
+
+        std::shared_ptr<MockSimulationKernel> mockSimulationKernel = std::dynamic_pointer_cast<MockSimulationKernel>(ctx.mockSimulationKernel);
+
+        assert(mockSimulationKernel != nullptr);
+
+        mockSimulationKernel->step(std::stoi(args[0]));
+
+    });
+
+
+
     runner.registerStep("an overlay with ID \"(.*)\" should be active", [](BDDContext& ctx, const std::vector<std::string>& args) {
+
         std::string id = args[0];
+
+        assert(ctx.mockOverlayService != nullptr);
+
+        bool found = false;
+
+        std::shared_ptr<MockOverlayService> mockOverlayService = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+
+        assert(mockOverlayService != nullptr);
+
+        for (const auto& overlay : mockOverlayService->active_overlays_) {
+
+            if (overlay.id == id) {
+
+                found = true;
+
+                break;
+
+            }
+
+        }
+
+        assert(found == true);
+
         std::cout << "[STEP] Verified overlay active: " << id << "\n";
+
     });
 
     runner.registerStep("the text should contain \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -26,7 +197,31 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("the overlay text should contain \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+
         std::string text = args[0];
+
+        assert(ctx.mockOverlayService != nullptr);
+
+        bool found = false;
+
+        std::shared_ptr<MockOverlayService> mockOverlayService = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+
+        assert(mockOverlayService != nullptr);
+
+        for (const auto& overlay : mockOverlayService->active_overlays_) {
+
+            if (overlay.text.find(text) != std::string::npos) {
+
+                found = true;
+
+                break;
+
+            }
+
+        }
+
+        assert(found == true);
+
         std::cout << "[STEP] Verified overlay text contains: " << text << "\n";
     });
 
@@ -168,3 +363,5 @@ void registerDomainSteps() {
 }
 
 } // namespace bdd
+
+

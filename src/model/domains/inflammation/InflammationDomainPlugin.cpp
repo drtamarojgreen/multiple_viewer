@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/inflammation/InflammationDomainPlugin.h"
 
 namespace brain_model::domains::inflammation {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(cytokineTone);
     }
 };
-
-void InflammationDomainPlugin::register_entities(GraphRegistry&) {}
-void InflammationDomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::inflammation

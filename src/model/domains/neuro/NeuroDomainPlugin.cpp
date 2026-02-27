@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/neuro/NeuroDomainPlugin.h"
 
 namespace brain_model::domains::neuro {
@@ -27,8 +29,5 @@ public:
         overlayService.add_overlay(plasticityNote);
     }
 };
-
-void NeuroDomainPlugin::register_entities(GraphRegistry&) {}
-void NeuroDomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::neuro

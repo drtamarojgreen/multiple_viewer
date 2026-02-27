@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/synapse/SynapseDomainPlugin.h"
 
 namespace brain_model::domains::synapse {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(commStatus);
     }
 };
-
-void SynapseDomainPlugin::register_entities(GraphRegistry&) {}
-void SynapseDomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::synapse

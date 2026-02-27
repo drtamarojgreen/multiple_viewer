@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/pathway/PathwayDomainPlugin.h"
 
 namespace brain_model::domains::pathway {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(rigidityStatus);
     }
 };
-
-void PathwayDomainPlugin::register_entities(GraphRegistry&) {}
-void PathwayDomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::pathway
