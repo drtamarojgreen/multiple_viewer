@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/contracts/IModelDomainPlugin.h"
+#include "model/core/contracts/IModelDomainPlugin.h"
 
 namespace brain_model::domains::cognition {
 

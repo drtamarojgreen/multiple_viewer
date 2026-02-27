@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/dopamine/DopamineDomainPlugin.h"
 
 namespace brain_model::domains::dopamine {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(driveStatus);
     }
 };
-
-void DopamineDomainPlugin::register_entities(GraphRegistry&) {}
-void DopamineDomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::dopamine

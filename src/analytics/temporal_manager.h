@@ -15,6 +15,7 @@ struct GraphSnapshot {
 class TemporalManager {
 public:
     void captureSnapshot(const Graph& graph, int timestamp);
+    void restoreSnapshot(int timestamp);
     const Graph* getSnapshot(int timestamp) const;
 
 private:

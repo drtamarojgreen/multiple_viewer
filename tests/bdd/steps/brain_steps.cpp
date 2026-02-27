@@ -32,14 +32,14 @@ void registerBrainSteps() {
         mapping.regionId = regionId;
         ctx.overlay.addMapping(mapping);
         // Apply to graph
-        ctx.graph.applyBrainOverlay(ctx.overlay);
+        ctx.graph.applyBrainOverlay((ctx.overlay));
         std::cout << "[STEP] Mapped node " << nodeId << " to region " << regionId << "\n";
     });
 
     runner.registerStep("node (\\d+) should be associated with region \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         int nodeId = std::stoi(args[0]);
         std::string expectedRegion = args[1];
-        std::string actualRegion = ctx.graph.nodeMap.at(nodeId).regionId;
+        std::string actualRegion = ctx.graph.nodeMap.at(nodeId).regionIds.empty() ? "" : ctx.graph.nodeMap.at(nodeId).regionIds[0];
         if (actualRegion != expectedRegion) {
             throw std::runtime_error("Expected region " + expectedRegion + " but found " + actualRegion);
         }

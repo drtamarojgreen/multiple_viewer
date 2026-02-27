@@ -12,6 +12,10 @@ void TemporalEngine::addFrame(const TemporalFrame& frame) {
     });
 }
 
+void TemporalEngine::addBookmark(const TimelineBookmark& bookmark) {
+    bookmarks_.push_back(bookmark);
+}
+
 void TemporalEngine::setTimelinePosition(uint64_t timestamp_ms) {
     currentPositionMs_ = timestamp_ms;
 }

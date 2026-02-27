@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/genetic/GeneticDomainPlugin.h"
 
 namespace brain_model::domains::genetic {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(reactivityStatus);
     }
 };
-
-void GeneticDomainPlugin::register_entities(GraphRegistry&) {}
-void GeneticDomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::genetic

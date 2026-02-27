@@ -9,7 +9,18 @@
 
 namespace model {
 
-using BrainAttributeValue = std::variant<double, int, std::string, bool, std::vector<float>>;
+struct TimeSeries {
+    std::vector<float> samples;
+    float sampleRateHz = 1.0f;
+    std::string unit;
+};
+
+using BrainAttributeValue = std::variant<double, int, std::string, bool, std::vector<float>, TimeSeries>;
+
+struct ProbabilisticMembership {
+    std::string regionId;
+    float probability;
+};
 
 struct BrainNode {
     std::string id;
@@ -17,6 +28,16 @@ struct BrainNode {
     Vec3 coordinate;
     std::string type;
     std::map<std::string, BrainAttributeValue> attributes;
+
+    // Probabilistic region membership
+    std::vector<ProbabilisticMembership> memberships;
+};
+
+enum class EdgeModality {
+    STRUCTURAL,
+    FUNCTIONAL,
+    EFFECTIVE,
+    VIRTUAL
 };
 
 struct BrainEdge {
@@ -25,7 +46,13 @@ struct BrainEdge {
     std::string targetId;
     float weight = 1.0f;
     float confidence = 1.0f;
-    std::string modality;
+    float delay_ms = 0.0f;
+
+    // Confidence intervals
+    float lowerBound = 1.0f;
+    float upperBound = 1.0f;
+
+    EdgeModality modality = EdgeModality::STRUCTURAL;
     std::map<std::string, BrainAttributeValue> attributes;
 };
 

@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/rna/RNADomainPlugin.h"
 
 namespace brain_model::domains::rna {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(repairStatus);
     }
 };
-
-void RNADomainPlugin::register_entities(GraphRegistry&) {}
-void RNADomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::rna

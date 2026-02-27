@@ -12,7 +12,9 @@ enum class LayerType {
     NODE,
     EDGE,
     SCALAR_FIELD,
-    OVERLAY
+    OVERLAY,
+    GLYPH,
+    ANNOTATION
 };
 
 struct RenderLayer {
@@ -38,6 +40,9 @@ public:
     bool isVisible(const std::string& id) const;
 
     std::vector<RenderLayer> getSortedLayers() const;
+
+    // Depth rules
+    void setLayerDepthMode(const std::string& id, bool depthAware);
 
 private:
     RenderLayerManager() = default;

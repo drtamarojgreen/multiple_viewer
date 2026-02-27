@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/serotonin/SerotoninDomainPlugin.h"
 
 namespace brain_model::domains::serotonin {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(equilibriumStatus);
     }
 };
-
-void SerotoninDomainPlugin::register_entities(GraphRegistry&) {}
-void SerotoninDomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::serotonin

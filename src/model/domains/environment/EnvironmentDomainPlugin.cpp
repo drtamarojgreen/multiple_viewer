@@ -1,3 +1,5 @@
+#include <cstdint>
+#include "model/core/contracts/IOverlayService.h"
 #include "model/domains/environment/EnvironmentDomainPlugin.h"
 
 namespace brain_model::domains::environment {
@@ -26,8 +28,5 @@ public:
         overlayService.add_overlay(supportStatus);
     }
 };
-
-void EnvironmentDomainPlugin::register_entities(GraphRegistry&) {}
-void EnvironmentDomainPlugin::register_systems(SystemRegistry&) {}
 
 } // namespace brain_model::domains::environment

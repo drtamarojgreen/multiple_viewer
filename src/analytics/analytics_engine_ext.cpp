@@ -18,13 +18,27 @@ CentralityMetrics AnalyticsEngine::computeCentrality(const Graph& graph) {
 
 std::vector<std::vector<int>> AnalyticsEngine::detectCommunities(const Graph& graph) {
     std::vector<std::vector<int>> communities;
-    // Simple mock community detection: group by subject index
-    std::map<int, std::vector<int>> groups;
+    std::set<int> visited;
+
     for (const auto& [id, node] : graph.nodeMap) {
-        groups[node.subjectIndex].push_back(id);
-    }
-    for (auto& pair : groups) {
-        communities.push_back(pair.second);
+        if (visited.count(id)) continue;
+
+        std::vector<int> currentComp;
+        std::vector<int> q = {id};
+        visited.insert(id);
+
+        while(!q.empty()) {
+            int u = q.back(); q.pop_back();
+            currentComp.push_back(u);
+            const auto& nNode = graph.nodeMap.at(u);
+            for(int v : nNode.neighbors) {
+                if(!visited.count(v)) {
+                    visited.insert(v);
+                    q.push_back(v);
+                }
+            }
+        }
+        communities.push_back(currentComp);
     }
     return communities;
 }

@@ -13,12 +13,20 @@ struct TemporalFrame {
     std::vector<float> data;
 };
 
+struct TimelineBookmark {
+    uint64_t timestamp_ms;
+    std::string label;
+    std::string category;
+};
+
 class TemporalEngine {
 public:
     TemporalEngine();
     ~TemporalEngine() = default;
 
     void addFrame(const TemporalFrame& frame);
+    void addBookmark(const TimelineBookmark& bookmark);
+    std::vector<TimelineBookmark> getBookmarks() const { return bookmarks_; }
     void setTimelinePosition(uint64_t timestamp_ms);
     uint64_t getTimelinePosition() const { return currentPositionMs_; }
 
@@ -34,6 +42,7 @@ public:
 
 private:
     std::vector<TemporalFrame> frames_;
+    std::vector<TimelineBookmark> bookmarks_;
     uint64_t currentPositionMs_ = 0;
     bool isPlaying_ = false;
 };
