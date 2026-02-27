@@ -21,7 +21,7 @@ Feature: Original Viewer Functionality
     Then a node should be focused
 
   Scenario: Graph Persistence
-    Given a populated graph with nodes and edges
+    Given a persistent graph with nodes 1 and 2
     When I save the graph to "bdd_persist_test.csv"
     And I clear the current graph
     And I load the graph from "bdd_persist_test.csv"
@@ -42,7 +42,7 @@ Feature: Original Viewer Functionality
     Then the pan offsets should reflect the change
 
   Scenario: Label Search
-    Given a graph with nodes "SearchMe", "FindMe", "Other"
+    Given a graph with nodes "SearchMe", "FindMe", "IncludeMe"
     When I search for nodes containing "Me"
     Then "3" nodes should be identified
     And they should be added to the focus set

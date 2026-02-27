@@ -60,7 +60,7 @@ bool ModelRepository::loadAtlas(const std::string& filepath) {
                 if (tokens.size() > 7) region.regionCode = tokens[7];
                 if (tokens.size() > 8) region.hemisphere = static_cast<Hemisphere>(std::stoi(tokens[8]));
                 if (tokens.size() > 9) region.lobe = static_cast<Lobe>(std::stoi(tokens[9]));
-                if (tokens.size() > 10) region.parentID = tokens[10];
+                if (tokens.size() > 10) region.parentId = tokens[10];
 
                 model_.addRegion(region);
             } catch (const std::exception& e) {
@@ -114,7 +114,7 @@ bool ModelRepository::exportToJSON(const std::string& filepath) {
         file << "      \"name\": \"" << region.name << "\",\n";
         file << "      \"center\": [" << region.center.x << ", " << region.center.y << ", " << region.center.z << "],\n";
         file << "      \"radius\": " << region.radius << ",\n";
-        file << "      \"parent\": \"" << region.parentID << "\"\n";
+        file << "      \"parent\": \"" << region.parentId << "\"\n";
         file << "    }" << (++rCount == regions.size() ? "" : ",") << "\n";
     }
     file << "  ],\n  \"pathways\": [\n";

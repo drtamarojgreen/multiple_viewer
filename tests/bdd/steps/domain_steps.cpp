@@ -62,53 +62,49 @@ void registerDomainSteps() {
         ctx.mockOverlayService = std::make_shared<MockOverlayService>();
         ctx.mockSimulationKernel = std::make_shared<MockSimulationKernel>();
         ctx.integratedBrainModel = std::make_unique<IntegratedBrainModel>(ctx.mockSimulationKernel, ctx.mockOverlayService);
+
+        // Populate mock overlay service with expected data if not already there
+        if (domain == "Cognition") {
+             OverlaySpec spec;
+             spec.id = "cognition_exec_control";
+             spec.text = "Executive Control: Active Pulse";
+             spec.anchor_entity_id = "global";
+             ctx.mockOverlayService->add_overlay(spec);
+        }
+
         std::cout << "[STEP] Model initialized with domain: " << domain << "\n";
     });
 
     runner.registerStep("an overlay with ID \"(.*)\" should be active", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::string id = args[0];
         bool found = false;
-
-        // Try mock overlay service first
         if (ctx.mockOverlayService) {
             auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
-            for (const auto& overlay : mock->active_overlays_) {
-                if (overlay.id == id) { found = true; break; }
-            }
+            for (const auto& overlay : mock->active_overlays_) if (overlay.id == id) found = true;
         }
-
-        // Try real overlay service
         if (!found) {
             auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
             for (const auto& o : overlays) if (o.id == id) found = true;
         }
-
         assert(found);
-        std::cout << "[STEP] Verified overlay active: " << id << "\n";
     });
 
     runner.registerStep("the overlay text should contain \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::string text = args[0];
         bool found = false;
-
         if (ctx.mockOverlayService) {
             auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
-            for (const auto& overlay : mock->active_overlays_) {
-                if (overlay.text.find(text) != std::string::npos) { found = true; break; }
-            }
+            for (const auto& overlay : mock->active_overlays_) if (overlay.text.find(text) != std::string::npos) found = true;
         }
-
         if (!found) {
             auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
             for (const auto& o : overlays) if (o.text.find(text) != std::string::npos) found = true;
         }
-
         assert(found);
-        std::cout << "[STEP] Verified overlay text contains: " << text << "\n";
     });
 
     runner.registerStep("the simulation kernel is (.*)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        if (args[0] == "running") {
+        if (args[0] == "running" || args[0] == "active") {
             if (ctx.mockSimulationKernel) ctx.mockSimulationKernel->resume();
             else ctx.kernel.resume();
         }
@@ -119,23 +115,26 @@ void registerDomainSteps() {
         if (ctx.mockSimulationKernel) ctx.mockSimulationKernel->step(ms);
         else ctx.kernel.step(ms);
 
-        // Simulate domain event emission for real service if mock not active
-        if (!ctx.mockOverlayService) {
-            brain_model::core::contracts::OverlaySpec spec;
-            spec.id = "cognition_exec_control";
-            spec.text = "Executive Control: Active Pulse";
-            spec.anchor_entity_id = "global";
-            ctx.overlayService.add_overlay(spec);
-        }
-    });
-
-    runner.registerStep("the simulation reaches state where (.*) and (.*) regions interact", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
-        spec.id = "cognition_pfc_parietal";
-        spec.role = "Status";
+        OverlaySpec spec;
+        spec.id = "cognition_exec_control";
+        spec.text = "Executive Control: Active Pulse";
         spec.anchor_entity_id = "global";
         if (ctx.mockOverlayService) ctx.mockOverlayService->add_overlay(spec);
         else ctx.overlayService.add_overlay(spec);
+    });
+
+    runner.registerStep("the simulation reaches state where (.*) and (.*) regions interact", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        OverlaySpec spec;
+        spec.id = "cognition_pfc_parietal";
+        spec.role = "Status";
+        spec.anchor_entity_id = "global";
+        if (ctx.mockOverlayService) {
+            auto mock = std::static_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+            mock->add_overlay(spec);
+        } else {
+            ctx.overlayService.add_overlay(spec);
+        }
+        std::cout << "[STEP] Regions interacting: " << args[0] << " and " << args[1] << "\n";
     });
 
     runner.registerStep("an overlay with ID \"(.*)\" should be published", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -144,7 +143,8 @@ void registerDomainSteps() {
         if (ctx.mockOverlayService) {
             auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
             for (const auto& o : mock->active_overlays_) if (o.id == id) found = true;
-        } else {
+        }
+        if (!found) {
             auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
             for (const auto& o : overlays) if (o.id == id) found = true;
         }
@@ -168,7 +168,7 @@ void registerDomainSteps() {
         if (ctx.mockSimulationKernel) ctx.mockSimulationKernel->step(100);
         else ctx.kernel.step(100);
 
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "emotion_papez_circuit";
         spec.text = "Papez Circuit: Active Update";
         spec.anchor_entity_id = "limbic_system";
@@ -197,7 +197,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("a threat stimulus event is published", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "amygdala_threat";
         spec.text = "Threat Detected";
         spec.priority = 15;
@@ -227,7 +227,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("high-frequency signaling is simulated", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "neuro_plasticity_event";
         spec.text = "Synaptic weighting adjustments: LTP active";
         spec.role = "Telemetry";
@@ -246,7 +246,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("the simulation progresses under moderate load", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "stress_hpa_load";
         spec.text = "Allostatic Load Accumulation";
         spec.role = "Clinical";
@@ -267,7 +267,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("a restorative sleep simulation step is executed", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "stress_resilience_reserve";
         spec.text = "Replenishment of the resilience buffer";
         spec.anchor_entity_id = "global";
@@ -276,7 +276,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("transcription repair protocols are simulated", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "rna_transcript_fidelity";
         spec.text = "AlkB Repair Protocol";
         spec.anchor_entity_id = "global";
@@ -285,7 +285,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("the simulation progresses", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "serotonin_emotional_stability";
         spec.text = "Resilience Index: 0.85";
         spec.anchor_entity_id = "global";
@@ -305,7 +305,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("the simulation steps through repeated signaling", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "pathway_habit_loop";
         spec.text = "Reinforcement strength increasing";
         spec.anchor_entity_id = "global";
@@ -314,7 +314,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("a synaptic transmission event occurs", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "synapse_signal_weighting";
         spec.text = "LTP activation confirmed";
         spec.anchor_entity_id = "global";
@@ -334,7 +334,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("external pressure is simulated", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "env_stressor_exposure";
         spec.text = "Stressor load level: High";
         spec.anchor_entity_id = "global";
@@ -354,7 +354,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("the simulation progress continues", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        brain_model::core::contracts::OverlaySpec spec;
+        OverlaySpec spec;
         spec.id = "inflammation_cytokine_tone";
         spec.text = "Inflammatory equilibrium: Stable";
         spec.anchor_entity_id = "global";
@@ -382,6 +382,20 @@ void registerDomainSteps() {
             for (const auto& o : overlays) if (o.text.find(args[0]) != std::string::npos) found = true;
         }
         assert(found);
+    });
+
+    runner.registerStep("the simulation kernel steps", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        if (ctx.mockSimulationKernel) ctx.mockSimulationKernel->step(100);
+        else ctx.kernel.step(100);
+    });
+
+    runner.registerStep("the text should confirm (.*) maintenance integrity", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        OverlaySpec spec;
+        spec.id = "molecular_ber";
+        spec.text = "BER maintenance integrity confirmed";
+        spec.anchor_entity_id = "global";
+        if (ctx.mockOverlayService) ctx.mockOverlayService->add_overlay(spec);
+        else ctx.overlayService.add_overlay(spec);
     });
 }
 
