@@ -206,10 +206,10 @@ public:
         std::vector<RegionID> roots;
 
         for (const auto& [id, region] : model.getRegions()) {
-            if (region.parentID.empty()) {
+            if (region.parentId.empty()) {
                 roots.push_back(id);
             } else {
-                children[region.parentID].push_back(id);
+                children[region.parentId].push_back(id);
             }
         }
 

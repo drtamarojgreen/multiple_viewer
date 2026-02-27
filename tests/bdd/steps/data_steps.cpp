@@ -19,6 +19,14 @@ void registerDataSteps() {
         for(int i=0; i<50; ++i) {
             out << "    {\"label\": \"NODE\", \"index\": " << i << "}" << (i == 49 ? "" : ",") << "\n";
         }
+        out << "  ],\n";
+        out << "  \"edges\": [\n";
+        for(int i=0; i<120; ++i) {
+            int src = i % 50;
+            int offset = (i / 50) + 1;
+            int dst = (src + offset) % 50;
+            out << "    {\"source\": " << src << ", \"target\": " << dst << "}" << (i == 119 ? "" : ",") << "\n";
+        }
         out << "  ]\n";
         out << "}\n";
         out.close();
@@ -36,8 +44,8 @@ void registerDataSteps() {
     });
 
     runner.registerStep("a populated graph with nodes and edges", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.addNode(GraphNode("A", 0));
-        ctx.graph.addNode(GraphNode("B", 1));
+        ctx.graph.addNode(GraphNode("A", 0, {}, 1, 0));
+        ctx.graph.addNode(GraphNode("B", 1, {}, 1, 0));
         ctx.graph.addEdge(0, 1);
     });
 

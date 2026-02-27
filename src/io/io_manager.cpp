@@ -27,7 +27,25 @@ bool IOManager::loadJSON(Graph& graph, const std::string& filepath) {
             };
             std::string label = getVal("\"label\"");
             int index = std::stoi(getVal("\"index\""));
-            graph.addNode(GraphNode(label, index));
+            graph.addNode(GraphNode(label, index, {}, 1, 0));
+        }
+        if (line.find("\"source\":") != std::string::npos) {
+            auto getVal = [&](const std::string& key) {
+                size_t pos = line.find(key);
+                if (pos == std::string::npos) return std::string("");
+                size_t start = line.find(":", pos);
+                if (start == std::string::npos) return std::string("");
+                start++;
+                while (start < line.size() && (std::isspace(line[start]) || line[start] == '\"')) start++;
+                size_t end = start;
+                while (end < line.size() && line[end] != '\"' && line[end] != ',' && line[end] != '}' && line[end] != ']') end++;
+                return line.substr(start, end - start);
+            };
+            try {
+                int src = std::stoi(getVal("\"source\""));
+                int dst = std::stoi(getVal("\"target\""));
+                graph.addEdge(src, dst);
+            } catch (...) {}
         }
     }
     return true;

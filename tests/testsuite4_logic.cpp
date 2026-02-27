@@ -61,8 +61,8 @@ void testRegionHierarchyAccess() {
     parent.id = "CTX";
     BrainRegion child;
     child.id = "PFC";
-    child.parentID = "CTX";
-    TEST_PHASE1("Region hierarchy link", child.parentID == "CTX");
+    child.parentId = "CTX";
+    TEST_PHASE1("Region hierarchy link", child.parentId == "CTX");
 }
 
 void testSubjectMapping() {

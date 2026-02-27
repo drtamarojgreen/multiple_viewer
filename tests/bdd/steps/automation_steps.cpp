@@ -102,9 +102,10 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("I query nodes within a \\((.*), (.*), (.*)\\) bounding box", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        float x = std::stof(args[0]), y = std::stof(args[1]), z = std::stof(args[2]);
         render::SpatialBounds queryBounds{
-            std::stof(args[0]) - 5, std::stof(args[1]) - 5, std::stof(args[2]) - 5,
-            std::stof(args[0]) + 5, std::stof(args[1]) + 5, std::stof(args[2]) + 5
+            x - 50, y - 50, z - 50,
+            x + 50, y + 50, z + 50
         };
         auto results = ctx.spatialIndex.queryRange(queryBounds);
         ctx.queryResultCount = results.size();

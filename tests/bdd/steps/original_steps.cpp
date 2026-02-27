@@ -80,10 +80,10 @@ void registerOriginalSteps() {
         loadGraphFromCSV((ctx.graph), args[0]);
     });
 
-    runner.registerStep("a populated graph with nodes and edges", [](BDDContext& ctx, const std::vector<std::string>& args) {
+    runner.registerStep("a persistent graph with nodes 1 and 2", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.clear();
-        ctx.graph.addNode(GraphNode("A", 1));
-        ctx.graph.addNode(GraphNode("B", 2));
+        ctx.graph.addNode(GraphNode("A", 1, {}, 1, 0));
+        ctx.graph.addNode(GraphNode("B", 2, {}, 1, 0));
         ctx.graph.addEdge(1, 2);
     });
 
@@ -91,7 +91,9 @@ void registerOriginalSteps() {
         assert(!ctx.graph.nodes.empty());
         assert(ctx.graph.nodeExists(1));
         assert(ctx.graph.nodeExists(2));
-        assert(ctx.graph.nodeMap.at(1).neighbors.size() > 0);
+        bool found = false;
+        for (int n : ctx.graph.nodeMap.at(1).neighbors) if (n == 2) found = true;
+        assert(found);
         std::cout << "[STEP] Verified persistence restore\n";
     });
 
@@ -134,6 +136,9 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("\"(\\d+)\" nodes should be identified", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        if (ctx.lastResult != args[0]) {
+             std::cerr << "[BDD FAIL] Expected " << args[0] << " search results, got " << ctx.lastResult << std::endl;
+        }
         assert(ctx.lastResult == args[0]);
     });
 

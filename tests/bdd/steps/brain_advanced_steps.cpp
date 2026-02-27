@@ -67,7 +67,7 @@ void registerBrainAdvancedSteps() {
         node.memberships.push_back({args[2], 0.3f});
         ctx.lastResult = std::to_string(node.memberships.size());
         // Simple hack: store probability in a way we can check it
-        ctx.view.panX = 70; // reusing a field for mock storage
+        ctx.viewContext.panX = 70; // reusing a field for mock storage
     });
 
     runner.registerStep("node \"(.*)\" should have (\\d+) memberships", [](BDDContext& ctx, const std::vector<std::string>& args) {
