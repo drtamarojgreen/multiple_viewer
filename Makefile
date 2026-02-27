@@ -10,7 +10,7 @@ CORE_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CORE_FILES))
 
 # Test source directories (excluding mains)
 TEST_CORE_DIRS = tests tests/bdd tests/bdd/steps
-TEST_CORE_FILES = $(wildcard tests/test*.cpp) tests/dynamic_graph_tests.cpp tests/bdd/bdd_runner.cpp tests/bdd/bdd_test_main.cpp $(wildcard tests/bdd/steps/*.cpp)
+TEST_CORE_FILES = $(wildcard tests/test*.cpp) tests/dynamic_graph_tests.cpp tests/bdd/bdd_runner.cpp tests/bdd/bdd_test_main.cpp $(wildcard tests/bdd/steps/*.cpp) $(wildcard tests/print/*.cpp)
 TEST_CORE_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(TEST_CORE_FILES))
 
 # Targets

@@ -6,10 +6,6 @@
 #include <variant>
 #include <optional>
 #include <cstdint>
-<<<<<<< HEAD
-
-=======
->>>>>>> main
 
 namespace brain_model::core::contracts {
 

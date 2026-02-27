@@ -60,13 +60,10 @@ void registerOriginalSteps() {
         assert(ctx.graph.isNodeFocused(std::stoi(args[0])));
     });
 
-<<<<<<< HEAD
-=======
     runner.registerStep("I remove focus from node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.removeFocus(std::stoi(args[0]));
     });
 
->>>>>>> main
     runner.registerStep("node (\\d+) should not be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(!ctx.graph.isNodeFocused(std::stoi(args[0])));
     });
@@ -76,18 +73,7 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("a node should be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
-<<<<<<< HEAD
-        assert(!ctx.graph.focusedNodeIndices.empty());
-    });
-
-    runner.registerStep("a populated graph with nodes and edges", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.clear();
-        ctx.graph.addNode(GraphNode("A", 1));
-        ctx.graph.addNode(GraphNode("B", 2));
-        ctx.graph.addEdge(1, 2);
-=======
         assert(ctx.graph.focusedNodeIndex != -1 || !ctx.graph.focusedNodeIndices.empty());
->>>>>>> main
     });
 
     runner.registerStep("I save the graph to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -116,19 +102,6 @@ void registerOriginalSteps() {
         std::cout << "[STEP] Verified persistence restore\n";
     });
 
-<<<<<<< HEAD
-    runner.registerStep("a triangle graph \\(nodes (\\d+), (\\d+), (\\d+) all connected\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.clear();
-        int u = std::stoi(args[0]);
-        int v = std::stoi(args[1]);
-        int w = std::stoi(args[2]);
-        ctx.graph.addNode(GraphNode("", u));
-        ctx.graph.addNode(GraphNode("", v));
-        ctx.graph.addNode(GraphNode("", w));
-        ctx.graph.addEdge(u, v);
-        ctx.graph.addEdge(v, w);
-        ctx.graph.addEdge(w, u);
-=======
     runner.registerStep("a triangle graph \\(nodes 0, 1, 2 all connected\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.addNode(GraphNode("0", 0));
         ctx.graph.addNode(GraphNode("1", 1));
@@ -136,7 +109,6 @@ void registerOriginalSteps() {
         ctx.graph.addEdge(0, 1);
         ctx.graph.addEdge(1, 2);
         ctx.graph.addEdge(2, 0);
->>>>>>> main
     });
 
     runner.registerStep("I run full graph analysis", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -151,38 +123,6 @@ void registerOriginalSteps() {
         assert(std::abs(ctx.graph.computeAvgDegree() - std::stof(args[0])) < 0.01f);
     });
 
-<<<<<<< HEAD
-    runner.registerStep("the clustering coefficient should be greater than \"(\\d+)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // This is a placeholder, a real implementation needs to calculate clustering coefficient
-        assert(true);
-    });
-
-    runner.registerStep("a view context with zoom level \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // Placeholder
-    });
-    
-    runner.registerStep("I zoom in", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // Placeholder
-    });
-    
-    runner.registerStep("the zoom level should be \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // Placeholder
-    });
-    
-    runner.registerStep("I pan the view by \\((.*), (.*)\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // Placeholder
-    });
-    
-    runner.registerStep("the pan offsets should reflect the change", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // Placeholder
-    });
-
-    runner.registerStep("a graph with nodes \"(.*)\", \"(.*)\", \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.clear();
-        ctx.graph.addNode(GraphNode(args[0], 1));
-        ctx.graph.addNode(GraphNode(args[1], 2));
-        ctx.graph.addNode(GraphNode(args[2], 3));
-=======
     runner.registerStep("the clustering coefficient should be greater than \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(ctx.graph.summary.avgClusteringCoeff > std::stof(args[0]));
     });
@@ -191,7 +131,6 @@ void registerOriginalSteps() {
         ctx.graph.addNode(GraphNode(args[0], 0));
         ctx.graph.addNode(GraphNode(args[1], 1));
         ctx.graph.addNode(GraphNode(args[2], 2));
->>>>>>> main
     });
 
     runner.registerStep("I search for nodes containing \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -204,15 +143,9 @@ void registerOriginalSteps() {
     runner.registerStep("\"(\\d+)\" nodes should be identified", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(ctx.lastResult == args[0]);
     });
-<<<<<<< HEAD
-    
-    runner.registerStep("they should be added to the focus set", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.graph.focusedNodeIndices.size() == std::stoi(ctx.lastResult));
-=======
 
     runner.registerStep("they should be added to the focus set", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(!ctx.graph.focusedNodeIndices.empty());
->>>>>>> main
     });
 }
 

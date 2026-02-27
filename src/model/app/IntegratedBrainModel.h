@@ -1,14 +1,8 @@
-<<<<<<< HEAD
 #pragma once
 
-#include "model/core/contracts/IModelDomainPlugin.h"
-#include "model/core/contracts/ISimulationKernel.h"
-#include "model/core/contracts/IOverlayService.h"
-=======
 #include "model/core/contracts/ISimulationKernel.h"
 #include "model/core/contracts/IOverlayService.h"
 #include "model/core/contracts/IModelDomainPlugin.h"
->>>>>>> main
 #include <vector>
 #include <memory>
 #include <iostream>

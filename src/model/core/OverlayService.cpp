@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-#include "model/core/contracts/IOverlayService.h"
-#include <unordered_map>
-=======
 #include "model/core/OverlayService.h"
 #include <iostream>
->>>>>>> main
 
 namespace brain_model::core {
 

@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-#include "model/core/contracts/IEventBus.h"
-#include <map>
-#include <mutex>
-=======
 #include "model/core/DeterministicEventBus.h"
->>>>>>> main
 #include <algorithm>
 
 namespace brain_model::core {

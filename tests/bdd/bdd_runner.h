@@ -5,7 +5,6 @@
 #include <vector>
 #include <functional>
 #include <map>
-<<<<<<< HEAD
 #include "../../src/input/command_stack.h"
 #include "../../src/map_logic.h"
 #include "../../src/model/brain_model.h"
@@ -14,58 +13,54 @@
 #include "../../src/analytics/temporal_manager.h"
 #include "../../src/render/spatial_index.h"
 #include "../../src/io/web_server_stub.h"
-#include "../../src/model/core/SimulationKernel.h" // Include SimulationKernel
-#include "../../src/model/app/IntegratedBrainModel.h" // Include IntegratedBrainModel
-#include "../../src/model/core/contracts/IOverlayService.h" // Include IOverlayService
-#include "../../src/model/core/contracts/ISimulationKernel.h" // Include ISimulationKernel
-#include "../print/UIPrinter.h" // Include UIPrinter
-#include <iostream>
-
-#define EXPECT(condition, ctx, msg) \
-    if (!(condition)) { \
-        std::cerr << "[BDD ASSERTION FAILED] " << msg << std::endl; \
-        ctx.success = false; \
-    }
-=======
-#include "map_logic.h"
-#include "model/brain_model.h"
-#include "model/brain_overlay.h"
->>>>>>> main
+#include "../../src/model/core/SimulationKernel.h"
+#include "../../src/model/app/IntegratedBrainModel.h"
+#include "../../src/model/core/contracts/IOverlayService.h"
+#include "../../src/model/core/contracts/ISimulationKernel.h"
+#include "../print/UIPrinter.h"
 
 namespace bdd {
+
+using namespace input;
+using namespace analytics;
+using namespace io;
+using namespace brain_model::core;
+using namespace brain_model::app;
+using namespace brain_model::core::contracts;
+using namespace render;
 
 struct BDDContext {
     Graph graph;
     model::BrainModel brainModel;
     model::BrainOverlay overlay;
-    input::CommandStack commandStack;
+    CommandStack commandStack;
     ViewContext viewContext; // Add ViewContext
     bool minimapVisible = false;
     std::string minimapFocusArea;
     bool saveGraphCommandExecuted = false;
     bool svgExported = false; // Add svgExported
-    analytics::CentralityMetrics centralityMetrics; // Add centralityMetrics
+    CentralityMetrics centralityMetrics; // Add centralityMetrics
     bool pluginLoaded = false;
     std::string loadedPluginName;
-    analytics::TemporalManager temporalManager;
+    TemporalManager temporalManager;
     std::string hypothesisAnnotation;
     int initialGraphNodeCount;
     int modifiedGraphNodeCount;
-    render::OctreeIndex spatialIndex = render::OctreeIndex({-1000, -1000, -1000, 1000, 1000, 1000}, 8, 0);
+    OctreeIndex spatialIndex = OctreeIndex({-1000, -1000, -1000, 1000, 1000, 1000}, 8, 0);
     int queryResultCount;
-    io::WebServerStub webServer;
+    WebServerStub webServer;
     std::string webServerResponse;
     std::string currentMenu;
     std::string helpMessage;
     bool benchmarkSuiteReady = false;
-    std::unique_ptr<brain_model::core::SimulationKernel> simulationKernel;
-    std::unique_ptr<brain_model::core::SimulationKernel> simulationKernel2;
-    brain_model::core::SimulationSnapshot snapshot1;
-    brain_model::core::SimulationSnapshot snapshot2;
-    std::unique_ptr<brain_model::app::IntegratedBrainModel> integratedBrainModel;
-    std::shared_ptr<brain_model::core::contracts::IOverlayService> mockOverlayService;
-    std::shared_ptr<brain_model::core::contracts::ISimulationKernel> mockSimulationKernel;
-    std::unique_ptr<print::UIPrinter> uiPrinter;
+    std::unique_ptr<SimulationKernel> simulationKernel;
+    std::unique_ptr<SimulationKernel> simulationKernel2;
+    SimulationSnapshot snapshot1;
+    SimulationSnapshot snapshot2;
+    std::unique_ptr<IntegratedBrainModel> integratedBrainModel;
+    std::shared_ptr<IOverlayService> mockOverlayService;
+    std::shared_ptr<ISimulationKernel> mockSimulationKernel;
+    std::unique_ptr<print::UIPrinter> uiPrinter; // UIPrinter might not exist or be needed yet
     std::string lastResult;
     bool success = true;
 };

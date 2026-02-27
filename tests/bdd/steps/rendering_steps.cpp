@@ -21,10 +21,6 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("I pan the view by \\((.*), (.*)\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-<<<<<<< HEAD
-        ctx.viewContext.pan(std::stoi(args[0]), std::stoi(args[1]));
-        ctx.lastResult = "panned";
-=======
         ViewContext view;
         view.pan(std::stoi(args[0]), std::stoi(args[1]));
         ctx.lastResult = std::to_string(view.panX) + "," + std::to_string(view.panY);
@@ -42,7 +38,6 @@ void registerRenderingSteps() {
 
     runner.registerStep("the zoom level should be \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(ctx.lastResult == args[0]);
->>>>>>> main
     });
 
     runner.registerStep("I zoom in to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
