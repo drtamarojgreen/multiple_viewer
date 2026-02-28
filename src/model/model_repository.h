@@ -5,6 +5,7 @@
 #include "brain_label.h"
 #include "brain_overlay.h"
 #include "brain_text_topology.h"
+#include "brain_text_topology.h"
 #include <memory>
 #include <string>
 
@@ -17,6 +18,7 @@ public:
         return instance;
     }
 
+    // Load and reload (Requirement 10)
     // Load and reload (Requirement 10)
     bool loadAtlas(const std::string& filepath);
     bool reloadAtlas();
@@ -57,6 +59,10 @@ private:
     ModelRepository& operator=(const ModelRepository&) = delete;
 
     BrainModel model_;
+    std::unordered_map<RegionID, int> regionToSubjectMap_;
+
+
+
     std::unordered_map<RegionID, int> regionToSubjectMap_;
 
 

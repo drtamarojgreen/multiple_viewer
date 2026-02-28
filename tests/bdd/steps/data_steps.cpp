@@ -54,6 +54,8 @@ void registerDataSteps() {
         assert(ctx.graph.edgeCount() == std::stoul(args[1]));
     });
 
+
+
     runner.registerStep("I export the graph as SVG to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         io::IOManager::exportSVG(ctx.graph, args[0]);
         ctx.svgExported = true;

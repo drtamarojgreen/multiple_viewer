@@ -88,3 +88,4 @@ enum class RelationType {
 } // namespace model
 
 #endif // MODEL_COMMON_H
+

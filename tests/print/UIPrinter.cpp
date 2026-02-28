@@ -19,7 +19,7 @@ void UIPrinter::clear() {
 
 void UIPrinter::render(const Graph& graph, const ViewContext& view) {
     outputBuffer_ << "--- UI RENDER FRAME ---\n";
-    outputBuffer_ << "Viewport: " << width_ << "x" << height_
+    outputBuffer_ << "Viewport: " << width_ << "x" << height_ 
                   << " | Pan: (" << view.panX << ", " << view.panY << ")"
                   << " | Zoom: " << static_cast<int>(view.zoomLevel) << "\n";
     outputBuffer_ << "Nodes Rendered:\n";
@@ -32,17 +32,17 @@ void UIPrinter::render(const Graph& graph, const ViewContext& view) {
         // Simulate basic panning offset check
         // In actual UI, layout engine would do this. We capture the logical position
         // shifted by the panning context so tests can assert on the output string coordinates.
-
+        
         // Base coordinate (mock for UI testing, based on index layout)
         int layoutX = (id * 10);
         int layoutY = (id * 5);
-
+        
         int drawX = layoutX + view.panX;
         int drawY = layoutY + view.panY;
 
         std::string color = render::VisualMapper::getColorForWeight(node.weight);
 
-        outputBuffer_ << "[Node: " << id << " | Name: " << node.label
+        outputBuffer_ << "[Node: " << id << " | Name: " << node.label 
                       << " | ScreenCoord: (" << drawX << ", " << drawY << ")"
                       << " | Color: " << color << "]\n";
     }

@@ -1,10 +1,13 @@
 #include "../bdd_runner.h"
 #include "model/app/IntegratedBrainModel.h"
 #include <iostream>
+
 #include <cassert>
 #include <memory>
 
 namespace bdd {
+
+
 
 using namespace brain_model::app;
 using namespace brain_model::core::contracts;
@@ -55,7 +58,10 @@ public:
 };
 
 void registerDomainSteps() {
+
     auto& runner = BDDRunner::getInstance();
+
+
 
     runner.registerStep("an integrated brain model with the (.*) domain", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::string domain = args[0];
@@ -72,9 +78,43 @@ void registerDomainSteps() {
         }
 
         std::cout << "[STEP] Model initialized with domain: " << domain << "\n";
+
     });
 
+
+
+    runner.registerStep("the simulation kernel is running", [](BDDContext& ctx, const std::vector<std::string>& args) {
+
+        assert(ctx.mockSimulationKernel != nullptr);
+
+        std::shared_ptr<MockSimulationKernel> mockSimulationKernel = std::dynamic_pointer_cast<MockSimulationKernel>(ctx.mockSimulationKernel);
+
+        assert(mockSimulationKernel != nullptr);
+
+        mockSimulationKernel->resume();
+
+        assert(mockSimulationKernel->is_running() == true);
+
+    });
+
+
+
+    runner.registerStep("(\\d+)ms have elapsed", [](BDDContext& ctx, const std::vector<std::string>& args) {
+
+        assert(ctx.mockSimulationKernel != nullptr);
+
+        std::shared_ptr<MockSimulationKernel> mockSimulationKernel = std::dynamic_pointer_cast<MockSimulationKernel>(ctx.mockSimulationKernel);
+
+        assert(mockSimulationKernel != nullptr);
+
+        mockSimulationKernel->step(std::stoi(args[0]));
+
+    });
+
+
+
     runner.registerStep("an overlay with ID \"(.*)\" should be active", [](BDDContext& ctx, const std::vector<std::string>& args) {
+
         std::string id = args[0];
         bool found = false;
         if (ctx.mockOverlayService) {
@@ -89,6 +129,7 @@ void registerDomainSteps() {
     });
 
     runner.registerStep("the overlay text should contain \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+
         std::string text = args[0];
         bool found = false;
         if (ctx.mockOverlayService) {
@@ -398,3 +439,5 @@ void registerDomainSteps() {
 }
 
 } // namespace bdd
+
+

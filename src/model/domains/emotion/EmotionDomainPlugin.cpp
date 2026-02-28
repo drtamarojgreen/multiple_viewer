@@ -36,3 +36,4 @@ public:
 };
 
 } // namespace brain_model::domains::emotion
+
