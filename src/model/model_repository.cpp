@@ -1,9 +1,11 @@
 #include "model_repository.h"
 #include "../logger.h"
+#include "../logger.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <algorithm>
 
 namespace model {
@@ -28,13 +30,12 @@ TopologyIndexer& ModelRepository::getIndexer() { return *indexer_; }
 
 bool ModelRepository::loadAtlas(const std::string& filepath) {
     std::ifstream file(filepath);
+    currentAtlasPath_ = filepath;
+    model_.clear();
     if (!file.is_open()) {
         Logger::error("Failed to open atlas file: " + filepath);
         return false;
     }
-
-    currentAtlasPath_ = filepath;
-    model_.clear();
 
     std::string line;
     int lineNum = 0;
