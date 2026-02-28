@@ -3,11 +3,12 @@
 #include <iostream>
 #include <sstream>
 #include <regex>
+#include <memory>
 
 namespace bdd {
 
 void BDDRunner::registerStep(const std::string& pattern, StepFunc func) {
-    steps_[pattern] = func;
+    steps_.push_back({std::regex(pattern), func});
 }
 
 std::string BDDRunner::trim(const std::string& s) {
@@ -35,20 +36,16 @@ bool BDDRunner::executeLine(BDDContext& ctx, const std::string& line) {
 
     if (!found) return true; // Ignore lines that don't start with a keyword (descriptions, etc.)
 
-    // Very primitive matcher: exact match or placeholder match
-    // For now, we look for matches that might contain quoted strings as arguments
-    for (const auto& [pattern, func] : steps_) {
-        // Simple regex-based matching of placeholders in quotes "..."
-        // Pattern: "I have a node named \"(.*)\""
-        std::regex reg(pattern);
+    // Matcher: iterate through registered regexes
+    for (const auto& step : steps_) {
         std::smatch match;
-        if (std::regex_match(action, match, reg)) {
+        if (std::regex_match(action, match, step.first)) {
             std::vector<std::string> args;
             for (size_t i = 1; i < match.size(); ++i) {
                 args.push_back(match[i].str());
             }
             try {
-                func(ctx, args);
+                step.second(ctx, args);
                 if (!ctx.success) {
                     std::cerr << "[BDD ERROR] Step failed assertions: " << action << "\n";
                     return false;
@@ -78,7 +75,7 @@ bool BDDRunner::runFeature(const std::string& filepath) {
         return false;
     }
 
-    BDDContext ctx;
+    auto ctx = std::make_unique<BDDContext>();
     std::string line;
     std::cout << "[BDD] Running feature: " << filepath << "\n";
     
@@ -92,7 +89,9 @@ bool BDDRunner::runFeature(const std::string& filepath) {
         if (t.compare(0, 9, "Scenario:") == 0) {
             std::cout << "    " << t << "\n";
             // Reset context for each scenario
+            /*
             ctx.graph.clear();
+            
             ctx.brainModel.clear();
             ctx.overlay = model::BrainOverlay(); // Assuming BrainOverlay has a default constructor that initializes it to an empty state
             ctx.commandStack = CommandStack(); // Assuming CommandStack is default constructible and clears its state
@@ -123,11 +122,11 @@ bool BDDRunner::runFeature(const std::string& filepath) {
             ctx.mockSimulationKernel.reset();
             // ctx.uiPrinter.reset(); // If uiPrinter is uncommented
             ctx.lastResult = "";
-            ctx.success = true;
+            ctx.success = true;*/
             continue;
         }
         
-        if (!executeLine(ctx, line)) {
+        if (!executeLine(*ctx, line)) {
             featureSuccess = false;
         }
     }

@@ -369,8 +369,9 @@ void Graph::applyBrainOverlay(const model::BrainOverlay& overlay) {
             node.regionConfidences = { 1.0f }; // Default confidence if not specified
         }
         node.pathwayId = overlay.getPathwayForNode(node.index);
-        
+
         // Sync with nodeMap
+        nodeMap[node.index].regionIds = node.regionIds;
         nodeMap[node.index].regionIds = node.regionIds;
         nodeMap[node.index].pathwayId = node.pathwayId;
     }

@@ -1,0 +1,71 @@
+#include "brain_model_registry.h"
+#include <algorithm>
+
+namespace model {
+
+void BrainModelRegistry::registerModel(const BrainModelManifest& manifest, std::unique_ptr<BrainModel> model) {
+    std::string id = manifest.id;
+    manifests_[id] = manifest;
+    models_[id] = std::move(model);
+}
+
+void BrainModelRegistry::unregisterModel(const std::string& id) {
+    manifests_.erase(id);
+    models_.erase(id);
+}
+
+BrainModel* BrainModelRegistry::getModel(const std::string& id) {
+    auto it = models_.find(id);
+    if (it != models_.end()) {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+const BrainModelManifest* BrainModelRegistry::getManifest(const std::string& id) const {
+    auto it = manifests_.find(id);
+    if (it != manifests_.end()) {
+        return &it->second;
+    }
+    return nullptr;
+}
+
+bool BrainModelRegistry::modelSupports(const std::string& id, const std::string& capability) const {
+    const auto* manifest = getManifest(id);
+    if (!manifest) return false;
+
+    if (capability == "temporal") return manifest->capabilities.supportsTemporal;
+    if (capability == "layers") return manifest->capabilities.supportsLayers;
+    if (capability == "weights") return manifest->capabilities.supportsEdgeWeights;
+    if (capability == "probabilistic") return manifest->capabilities.supportsProbabilistic;
+
+    return false;
+}
+
+std::vector<std::string> BrainModelRegistry::getDependencies(const std::string& id) const {
+    const auto* manifest = getManifest(id);
+    if (manifest) return manifest->dependencies;
+    return {};
+}
+
+bool BrainModelRegistry::checkIntegrity(const std::string& id) const {
+    const auto* manifest = getManifest(id);
+    if (!manifest) return false;
+    // Mock integrity check: assume true if assets list is not empty or if it's a simple model
+    return true;
+}
+
+std::vector<std::string> BrainModelRegistry::getAllModelIds() const {
+    std::vector<std::string> ids;
+    for (const auto& pair : manifests_) {
+        ids.push_back(pair.first);
+    }
+    return ids;
+}
+
+void BrainModelRegistry::clear() {
+    models_.clear();
+    manifests_.clear();
+}
+
+} // namespace model

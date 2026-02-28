@@ -26,7 +26,7 @@ static int testsFailed = 0;
 
 void testOctreeSubdivision() {
     SpatialBounds bounds{-100, -100, -100, 100, 100, 100};
-    OctreeIndex index(bounds, 2); 
+    OctreeIndex index(bounds, 2);
 
     index.insert(1, 10, 10, 10);
     index.insert(2, 20, 20, 20);
@@ -34,7 +34,7 @@ void testOctreeSubdivision() {
 
     auto results = index.queryRange(SpatialBounds{5, 5, 5, 15, 15, 15});
     TEST_PHASE1("Octree single point query", results.size() == 1 && results[0] == 1);
-    
+
     auto results2 = index.queryRange(SpatialBounds{0, 0, 0, 50, 50, 50});
     TEST_PHASE1("Octree range query", results2.size() == 3);
 }
@@ -42,7 +42,7 @@ void testOctreeSubdivision() {
 void testSplineInterpolationPoints() {
     BrainPathway pathway;
     pathway.controlPoints = { {0,0,0}, {10,10,10}, {20,0,20} };
-    
+
     auto points = pathway.getInterpolatedPoints(5);
     TEST_PHASE1("Spline points count", points.size() == 11);
     TEST_PHASE1("Spline start point", points[0].x == 0);
@@ -61,8 +61,8 @@ void testRegionHierarchyAccess() {
     parent.id = "CTX";
     BrainRegion child;
     child.id = "PFC";
-    child.parentID = "CTX";
-    TEST_PHASE1("Region hierarchy link", child.parentID == "CTX");
+    child.parentId = "CTX";
+    TEST_PHASE1("Region hierarchy link", child.parentId == "CTX");
 }
 
 void testSubjectMapping() {
@@ -75,21 +75,21 @@ void testSubjectMapping() {
 void testHotReload() {
     auto& repo = ModelRepository::getInstance();
     repo.clearAll();
-    
+
     // Create a temporary atlas file
     std::ofstream tmp("tmp_atlas.csv");
     tmp << "REGION,R1,Region 1,0,0,0,10\n";
     tmp.close();
-    
+
     repo.loadAtlas("tmp_atlas.csv");
     TEST_PHASE1("Initial load", repo.getModel().getRegions().size() == 1);
-    
+
     // Modify atlas file
     std::ofstream tmp2("tmp_atlas.csv");
     tmp2 << "REGION,R1,Region 1,0,0,0,10\n";
     tmp2 << "REGION,R2,Region 2,100,100,100,5\n";
     tmp2.close();
-    
+
     repo.reloadAtlas();
     TEST_PHASE1("Hot-Reload count", repo.getModel().getRegions().size() == 2);
     TEST_PHASE1("Hot-Reload contains R2", repo.getModel().getRegion("R2") != nullptr);
@@ -97,12 +97,12 @@ void testHotReload() {
 
 void testProbabilisticMembership() {
     auto& repo = ModelRepository::getInstance();
-    
+
     // Create a temporary overlay file
     std::ofstream tmp("tmp_overlay.csv");
     tmp << "MAP,1,R1,,0.85\n"; // probabilistic mapping
     tmp.close();
-    
+
     repo.loadOverlay("tmp_overlay.csv");
     const auto& mappings = repo.getOverlay().getAllMappings();
     bool found = false;
@@ -126,7 +126,7 @@ void runAll4Tests() {
     testHotReload();
     testProbabilisticMembership();
 
-    
+
     std::cout << "Phase 1 Results: " << testsPassed << " passed, " << testsFailed << " failed.\n";
 }
 
@@ -136,4 +136,3 @@ int main() {
     return 0;
 }
 #endif
-

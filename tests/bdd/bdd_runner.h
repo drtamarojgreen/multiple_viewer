@@ -5,6 +5,9 @@
 #include <vector>
 #include <functional>
 #include <map>
+#include <regex>
+#include <utility>
+#include <memory>
 #include "../../src/input/command_stack.h"
 #include "../../src/map_logic.h"
 #include "../../src/model/brain_model.h"
@@ -17,6 +20,8 @@
 #include "../../src/model/app/IntegratedBrainModel.h"
 #include "../../src/model/core/contracts/IOverlayService.h"
 #include "../../src/model/core/contracts/ISimulationKernel.h"
+#include "../../src/model/core/OverlayService.h"
+#include "../../src/model/temporal_engine.h"
 #include "../print/UIPrinter.h"
 
 namespace bdd {
@@ -34,12 +39,12 @@ struct BDDContext {
     model::BrainModel brainModel;
     model::BrainOverlay overlay;
     CommandStack commandStack;
-    ViewContext viewContext; // Add ViewContext
+    ViewContext viewContext;
     bool minimapVisible = false;
     std::string minimapFocusArea;
     bool saveGraphCommandExecuted = false;
-    bool svgExported = false; // Add svgExported
-    CentralityMetrics centralityMetrics; // Add centralityMetrics
+    bool svgExported = false;
+    CentralityMetrics centralityMetrics;
     bool pluginLoaded = false;
     std::string loadedPluginName;
     TemporalManager temporalManager;
@@ -53,6 +58,8 @@ struct BDDContext {
     std::string currentMenu;
     std::string helpMessage;
     bool benchmarkSuiteReady = false;
+
+    // Core Simulation Components
     std::unique_ptr<SimulationKernel> simulationKernel;
     std::unique_ptr<SimulationKernel> simulationKernel2;
     SimulationSnapshot snapshot1;
@@ -60,9 +67,17 @@ struct BDDContext {
     std::unique_ptr<IntegratedBrainModel> integratedBrainModel;
     std::shared_ptr<IOverlayService> mockOverlayService;
     std::shared_ptr<ISimulationKernel> mockSimulationKernel;
-    std::unique_ptr<print::UIPrinter> uiPrinter; // UIPrinter might not exist or be needed yet
+
+    // Concrete instances
+    brain_model::core::SimulationKernel kernel;
+    brain_model::core::OverlayService overlayService;
+    model::TemporalEngine temporalEngine;
+
+    std::unique_ptr<print::UIPrinter> uiPrinter;
     std::string lastResult;
     bool success = true;
+
+    BDDContext() = default;
 };
 
 using StepFunc = std::function<void(BDDContext&, const std::vector<std::string>&)>;
@@ -80,7 +95,7 @@ public:
 private:
     BDDRunner() = default;
     
-    std::map<std::string, StepFunc> steps_;
+    std::vector<std::pair<std::regex, StepFunc>> steps_;
     
     bool executeLine(BDDContext& ctx, const std::string& line);
     std::string trim(const std::string& s);

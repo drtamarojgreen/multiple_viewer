@@ -10,7 +10,7 @@ namespace model {
 struct OverlayMapping {
     int graphNodeId;
     RegionID regionId;
-    PathwayID pathwayId; 
+    PathwayID pathwayId;
     float confidence = 1.0f; // Feature 5: Probabilistic Region Membership
 };
 

@@ -5,6 +5,7 @@
 #include "brain_label.h"
 #include "brain_overlay.h"
 #include "brain_text_topology.h"
+#include "brain_text_topology.h"
 #include <memory>
 #include <string>
 
@@ -18,9 +19,10 @@ public:
     }
 
     // Load and reload (Requirement 10)
+    // Load and reload (Requirement 10)
     bool loadAtlas(const std::string& filepath);
-    bool reloadAtlas(); 
-    
+    bool reloadAtlas();
+
     bool loadLabels(const std::string& filepath);
     bool loadOverlay(const std::string& filepath);
 
@@ -30,7 +32,7 @@ public:
     const BrainModel& getModel() const { return model_; }
     const BrainLabelSet& getLabels() const { return labels_; }
     const BrainOverlay& getOverlay() const { return overlay_; }
-    
+
     // Topology Services
     BrainTextTopology& getTopology();
     TopologyIndexer& getIndexer();
@@ -51,19 +53,16 @@ private:
     
     std::string currentAtlasPath_;
 
-    
+
     // Explicitly non-copyable
     ModelRepository(const ModelRepository&) = delete;
     ModelRepository& operator=(const ModelRepository&) = delete;
 
     BrainModel model_;
     std::unordered_map<RegionID, int> regionToSubjectMap_;
-
-
-
     BrainLabelSet labels_;
     BrainOverlay overlay_;
-    
+
     std::unique_ptr<BrainTextTopology> topology_;
     std::unique_ptr<TopologyIndexer> indexer_;
 };

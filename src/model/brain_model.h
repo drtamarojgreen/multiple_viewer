@@ -12,6 +12,8 @@ namespace render {
     class OctreeIndex;
 }
 
+class Graph;
+
 namespace model {
 
 
@@ -35,17 +37,19 @@ struct BrainRegion {
     float radius; // Bounding sphere for fast rejection
     std::vector<Vec3> geometry; // Detailed vertex data
     std::vector<Vec3> convexHull; // Feature 2: Convex hull vertices
-    
-    // Metadata Expansion (from previous task but kept/refined)
+
+    // Metadata Expansion
     std::string regionCode;
     std::vector<std::string> aliases;
     Hemisphere hemisphere = Hemisphere::Unknown;
     Lobe lobe = Lobe::Unknown;
     Layer layer = Layer::Unknown;
-    
-    RegionID parentID; // Feature 9: Region Hierarchy
+
+    RegionID parentId; // Standardized to parentId
+    std::vector<RegionID> childrenIds;
+
     ActivationLevel activation = ActivationLevel::Resting; // Feature 12: Region Activation State
-    
+
     float surfaceArea = 0.0f;
     float volume = 0.0f;
     int displayPriority = 0; // Feature extension for LOD/Filtering
@@ -84,6 +88,14 @@ public:
 
     const std::unordered_map<RegionID, BrainRegion>& getRegions() const { return regions_; }
     const std::unordered_map<PathwayID, BrainPathway>& getPathways() const { return pathways_; }
+
+    // Hierarchy traversal
+    std::vector<RegionID> getHierarchyPath(const RegionID& id) const;
+    std::vector<RegionID> getDescendants(const RegionID& id) const;
+
+    // ROI support
+    std::vector<RegionID> getRegionsInRadius(const Vec3& center, float radius) const;
+    std::vector<int> getNodesInROI(const Vec3& center, float radius, const Graph& graph) const;
 
     // Feature 4: Atlas Version Control
     std::string versionTag;
