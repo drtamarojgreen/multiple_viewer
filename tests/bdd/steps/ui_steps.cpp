@@ -44,7 +44,7 @@ void registerUISteps() {
         ctx.viewContext.panX = 0;
         ctx.viewContext.panY = 0;
         ctx.viewContext.zoomLevel = ZoomLevel::Z1;
-        
+
         if (!ctx.uiPrinter) {
              ctx.uiPrinter = std::make_unique<UIPrinter>();
         }
@@ -96,7 +96,7 @@ void registerUISteps() {
     runner.registerStep("the graph is rendered", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.minimapVisible = true;
         ctx.minimapFocusArea = "FOCUS";
-        
+
         if (!ctx.uiPrinter) {
              ctx.uiPrinter = std::make_unique<UIPrinter>();
              ctx.uiPrinter->initialize(80, 25);
@@ -169,7 +169,7 @@ void registerUISteps() {
         }
         ctx.uiPrinter->clear();
         ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
-        
+
         std::string output = ctx.uiPrinter->getPrintedOutput();
         std::string expectedText = "Color: " + args[0];
         EXPECT(output.find(expectedText) != std::string::npos, ctx, "Node color mismatch in UI rendering. Expected to find: " + expectedText);

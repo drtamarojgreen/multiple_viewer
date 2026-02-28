@@ -368,17 +368,10 @@ void Graph::applyBrainOverlay(const model::BrainOverlay& overlay) {
             node.regionIds = { rid }; // For now, single mapping from overlay, but logic allows more
             node.regionConfidences = { 1.0f }; // Default confidence if not specified
         }
-        model::RegionID rid = overlay.getRegionForNode(node.index);
-        if (!rid.empty()) {
-            node.regionIds = { rid }; // For now, single mapping from overlay, but logic allows more
-            node.regionConfidences = { 1.0f }; // Default confidence if not specified
-        }
         node.pathwayId = overlay.getPathwayForNode(node.index);
 
         // Sync with nodeMap
         nodeMap[node.index].regionIds = node.regionIds;
-        nodeMap[node.index].regionIds = node.regionIds;
         nodeMap[node.index].pathwayId = node.pathwayId;
     }
 }
-
