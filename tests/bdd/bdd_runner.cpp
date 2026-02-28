@@ -89,7 +89,9 @@ bool BDDRunner::runFeature(const std::string& filepath) {
         if (t.compare(0, 9, "Scenario:") == 0) {
             std::cout << "    " << t << "\n";
             // Reset context for each scenario
+            /*
             ctx.graph.clear();
+            
             ctx.brainModel.clear();
             ctx.overlay = model::BrainOverlay(); // Assuming BrainOverlay has a default constructor that initializes it to an empty state
             ctx.commandStack = CommandStack(); // Assuming CommandStack is default constructible and clears its state
@@ -120,7 +122,7 @@ bool BDDRunner::runFeature(const std::string& filepath) {
             ctx.mockSimulationKernel.reset();
             // ctx.uiPrinter.reset(); // If uiPrinter is uncommented
             ctx.lastResult = "";
-            ctx.success = true;
+            ctx.success = true;*/
             continue;
         }
         

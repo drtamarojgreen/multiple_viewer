@@ -28,36 +28,18 @@ ModelRepository::ModelRepository() {
 BrainTextTopology& ModelRepository::getTopology() { return *topology_; }
 TopologyIndexer& ModelRepository::getIndexer() { return *indexer_; }
 
-ModelRepository::ModelRepository() {
-    topology_ = createBrainTextTopology();
-    indexer_ = createTopologyIndexer();
-}
-
-BrainTextTopology& ModelRepository::getTopology() { return *topology_; }
-TopologyIndexer& ModelRepository::getIndexer() { return *indexer_; }
-
 bool ModelRepository::loadAtlas(const std::string& filepath) {
     std::ifstream file(filepath);
-    if (!file.is_open()) {
-        Logger::error("Failed to open atlas file: " + filepath);
-        return false;
-    }
-
     currentAtlasPath_ = filepath;
     model_.clear();
     if (!file.is_open()) {
         Logger::error("Failed to open atlas file: " + filepath);
         return false;
     }
-
-    currentAtlasPath_ = filepath;
-    model_.clear();
 
     std::string line;
     int lineNum = 0;
-    int lineNum = 0;
     while (std::getline(file, line)) {
-        lineNum++;
         lineNum++;
         if (line.empty() || line[0] == '#') continue;
         auto tokens = split(line, ',');
@@ -221,15 +203,6 @@ bool ModelRepository::loadOverlay(const std::string& filepath) {
         }
     }
     return true;
-}
-
-int ModelRepository::getSubjectIndexForRegion(const RegionID& id) const {
-    auto it = regionToSubjectMap_.find(id);
-    return (it != regionToSubjectMap_.end()) ? it->second : -1;
-}
-
-void ModelRepository::setSubjectIndexForRegion(const RegionID& id, int subjectIndex) {
-    regionToSubjectMap_[id] = subjectIndex;
 }
 
 int ModelRepository::getSubjectIndexForRegion(const RegionID& id) const {

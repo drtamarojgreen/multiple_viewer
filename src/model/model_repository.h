@@ -60,13 +60,6 @@ private:
 
     BrainModel model_;
     std::unordered_map<RegionID, int> regionToSubjectMap_;
-
-
-
-    std::unordered_map<RegionID, int> regionToSubjectMap_;
-
-
-
     BrainLabelSet labels_;
     BrainOverlay overlay_;
 

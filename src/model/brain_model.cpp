@@ -17,16 +17,6 @@ BrainModel::BrainModel() {
 BrainModel::~BrainModel() = default;
 
 
-
-BrainModel::BrainModel() {
-    // Initialize spatial index with broad brain bounds (e.g., MNI space +/- 100mm)
-    render::SpatialBounds bounds{-150.0f, -150.0f, -150.0f, 150.0f, 150.0f, 150.0f};
-    spatialIndex_ = std::make_unique<render::OctreeIndex>(bounds);
-}
-
-BrainModel::~BrainModel() = default;
-
-
 void BrainModel::addRegion(const BrainRegion& region) {
     regions_[region.id] = region;
 
