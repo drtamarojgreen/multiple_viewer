@@ -9,25 +9,31 @@ bool IOManager::loadJSON(Graph& graph, const std::string& filepath) {
     if (!file.is_open()) return false;
     graph.clear();
     std::string line;
+
+    auto getVal = [&](const std::string& l, const std::string& key) {
+        size_t pos = l.find(key);
+        if (pos == std::string::npos) return std::string("");
+        size_t start = l.find(":", pos);
+        if (start == std::string::npos) return std::string("");
+        start++; // Skip colon
+        while (start < l.size() && (std::isspace(l[start]) || l[start] == '\"')) start++;
+        size_t end = start;
+        while (end < l.size() && l[end] != '\"' && l[end] != ',' && l[end] != '}' && l[end] != ']') end++;
+        // Trim trailing whitespace
+        size_t actualEnd = end;
+        while (actualEnd > start && std::isspace(l[actualEnd - 1])) actualEnd--;
+        return l.substr(start, actualEnd - start);
+    };
+
     while (std::getline(file, line)) {
         if (line.find("\"label\":") != std::string::npos) {
-            auto getVal = [&](const std::string& key) {
-                size_t pos = line.find(key);
-                if (pos == std::string::npos) return std::string("");
-                size_t start = line.find(":", pos);
-                if (start == std::string::npos) return std::string("");
-                start++; // Skip colon
-                while (start < line.size() && (std::isspace(line[start]) || line[start] == '\"')) start++;
-                size_t end = start;
-                while (end < line.size() && line[end] != '\"' && line[end] != ',' && line[end] != '}' && line[end] != ']') end++;
-                // Trim trailing whitespace
-                size_t actualEnd = end;
-                while (actualEnd > start && std::isspace(line[actualEnd - 1])) actualEnd--;
-                return line.substr(start, actualEnd - start);
-            };
-            std::string label = getVal("\"label\"");
-            int index = std::stoi(getVal("\"index\""));
+            std::string label = getVal(line, "\"label\"");
+            int index = std::stoi(getVal(line, "\"index\""));
             graph.addNode(GraphNode(label, index));
+        } else if (line.find("\"source\":") != std::string::npos) {
+            int src = std::stoi(getVal(line, "\"source\""));
+            int dst = std::stoi(getVal(line, "\"target\""));
+            graph.addEdge(src, dst);
         }
     }
     return true;
