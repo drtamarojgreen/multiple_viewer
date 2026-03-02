@@ -5,6 +5,7 @@
 #include "brain_label.h"
 #include "brain_overlay.h"
 #include "brain_text_topology.h"
+#include "brain_text_topology.h"
 #include <memory>
 #include <string>
 
@@ -58,6 +59,8 @@ private:
 
     BrainModel model_;
     std::unordered_map<RegionID, int> regionToSubjectMap_;
+
+
 
     BrainLabelSet labels_;
     BrainOverlay overlay_;
