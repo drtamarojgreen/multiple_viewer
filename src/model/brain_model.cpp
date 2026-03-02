@@ -3,10 +3,8 @@
 #include "../render/spatial_index.h"
 #include <cmath>
 #include <functional>
-#include <functional>
 
 namespace model {
-
 
 BrainModel::BrainModel() {
     // Initialize spatial index with broad brain bounds (e.g., MNI space +/- 100mm)
