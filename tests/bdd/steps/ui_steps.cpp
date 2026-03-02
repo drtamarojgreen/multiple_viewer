@@ -174,6 +174,16 @@ void registerUISteps() {
         std::string expectedText = "Color: " + args[0];
         EXPECT(output.find(expectedText) != std::string::npos, ctx, "Node color mismatch in UI rendering. Expected to find: " + expectedText);
     });
+
+    runner.registerStep("the UI output should contain \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        if (!ctx.uiPrinter) {
+             ctx.uiPrinter = std::make_unique<UIPrinter>();
+             ctx.uiPrinter->initialize(80, 25);
+             ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
+        }
+        std::string output = ctx.uiPrinter->getPrintedOutput();
+        EXPECT(output.find(args[0]) != std::string::npos, ctx, "UI output mismatch. Missing: " + args[0]);
+    });
 }
 
 } // namespace bdd

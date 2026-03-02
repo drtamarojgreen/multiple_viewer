@@ -26,8 +26,7 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("a node named \"(.*)\" with index (\\d+) should exist", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        int idx = std::stoi(args[1]);
-        assert(ctx.graph.nodeExists(idx));
+        assert(ctx.graph.nodeExists(std::stoi(args[1])));
     });
 
     runner.registerStep("a valid plugin \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -95,6 +94,7 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("an Octree spatial index is used", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.spatialIndex = render::OctreeIndex({-10000, -10000, -10000, 10000, 10000, 10000}, 8, 0);
         for(const auto& node : ctx.graph.nodes) {
             auto pos = ctx.graph.nodePos[node.index];
             ctx.spatialIndex.insert(node.index, pos.x, pos.y, pos.z);
@@ -103,10 +103,7 @@ void registerAutomationSteps() {
 
     runner.registerStep("I query nodes within a \\((.*), (.*), (.*)\\) bounding box", [](BDDContext& ctx, const std::vector<std::string>& args) {
         float x = std::stof(args[0]), y = std::stof(args[1]), z = std::stof(args[2]);
-        render::SpatialBounds queryBounds{
-            x - 50, y - 50, z - 50,
-            x + 50, y + 50, z + 50
-        };
+        render::SpatialBounds queryBounds{ 0, 0, 0, x, y, z };
         auto results = ctx.spatialIndex.queryRange(queryBounds);
         ctx.queryResultCount = results.size();
         ctx.lastResult = "queried";

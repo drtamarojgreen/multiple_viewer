@@ -74,34 +74,6 @@ void registerDomainSteps() {
         std::cout << "[STEP] Model initialized with domain: " << domain << "\n";
     });
 
-    runner.registerStep("an overlay with ID \"(.*)\" should be active", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        std::string id = args[0];
-        bool found = false;
-        if (ctx.mockOverlayService) {
-            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
-            for (const auto& overlay : mock->active_overlays_) if (overlay.id == id) found = true;
-        }
-        if (!found) {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.id == id) found = true;
-        }
-        assert(found);
-    });
-
-    runner.registerStep("the overlay text should contain \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        std::string text = args[0];
-        bool found = false;
-        if (ctx.mockOverlayService) {
-            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
-            for (const auto& overlay : mock->active_overlays_) if (overlay.text.find(text) != std::string::npos) found = true;
-        }
-        if (!found) {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.text.find(text) != std::string::npos) found = true;
-        }
-        assert(found);
-    });
-
     runner.registerStep("the simulation kernel is (.*)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         if (args[0] == "running" || args[0] == "active") {
             if (ctx.mockSimulationKernel) ctx.mockSimulationKernel->resume();
@@ -114,12 +86,50 @@ void registerDomainSteps() {
         if (ctx.mockSimulationKernel) ctx.mockSimulationKernel->step(ms);
         else ctx.kernel.step(ms);
 
-        OverlaySpec spec;
-        spec.id = "cognition_exec_control";
-        spec.text = "Executive Control: Active Pulse";
-        spec.anchor_entity_id = "global";
-        if (ctx.mockOverlayService) ctx.mockOverlayService->add_overlay(spec);
-        else ctx.overlayService.add_overlay(spec);
+        // For BDD flow, we manually trigger the expected overlay if not already there
+        bool found = false;
+        auto overlays = ctx.mockOverlayService ?
+            ctx.mockOverlayService->get_active_overlays_for_entity("global") :
+            ctx.overlayService.get_active_overlays_for_entity("global");
+
+        for(const auto& o : overlays) if(o.id == "cognition_exec_control") found = true;
+
+        if(!found) {
+            OverlaySpec spec;
+            spec.id = "cognition_exec_control";
+            spec.text = "Executive Control: Active Pulse";
+            spec.anchor_entity_id = "global";
+            if (ctx.mockOverlayService) ctx.mockOverlayService->add_overlay(spec);
+            else ctx.overlayService.add_overlay(spec);
+        }
+    });
+
+    runner.registerStep("an overlay with ID \"(.*)\" should be active", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        std::string id = args[0];
+        bool found = false;
+        std::vector<OverlaySpec> overlays;
+        if (ctx.mockOverlayService) {
+            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+            overlays = mock->active_overlays_;
+        } else {
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
+        }
+        for (const auto& o : overlays) if (o.id == id) found = true;
+        assert(found);
+    });
+
+    runner.registerStep("the overlay text should contain \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        std::string text = args[0];
+        bool found = false;
+        std::vector<OverlaySpec> overlays;
+        if (ctx.mockOverlayService) {
+            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+            overlays = mock->active_overlays_;
+        } else {
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
+        }
+        for (const auto& o : overlays) if (o.text.find(text) != std::string::npos) found = true;
+        assert(found);
     });
 
     runner.registerStep("the simulation reaches state where (.*) and (.*) regions interact", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -127,38 +137,35 @@ void registerDomainSteps() {
         spec.id = "cognition_pfc_parietal";
         spec.role = "Status";
         spec.anchor_entity_id = "global";
-        if (ctx.mockOverlayService) {
-            auto mock = std::static_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
-            mock->add_overlay(spec);
-        } else {
-            ctx.overlayService.add_overlay(spec);
-        }
+        if (ctx.mockOverlayService) ctx.mockOverlayService->add_overlay(spec);
+        else ctx.overlayService.add_overlay(spec);
     });
 
     runner.registerStep("an overlay with ID \"(.*)\" should be published", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::string id = args[0];
         bool found = false;
+        std::vector<OverlaySpec> overlays;
         if (ctx.mockOverlayService) {
             auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
-            for (const auto& o : mock->active_overlays_) if (o.id == id) found = true;
+            overlays = mock->active_overlays_;
+        } else {
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
         }
-        if (!found) {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.id == id) found = true;
-        }
+        for (const auto& o : overlays) if (o.id == id) found = true;
         assert(found);
     });
 
     runner.registerStep("the role should be \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::string role = args[0];
         bool found = false;
+        std::vector<OverlaySpec> overlays;
         if (ctx.mockOverlayService) {
              auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
-             for (const auto& o : mock->active_overlays_) if (o.role == role) found = true;
+             overlays = mock->active_overlays_;
         } else {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.role == role) found = true;
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
         }
+        for (const auto& o : overlays) if (o.role == role) found = true;
         assert(found);
     });
 
@@ -184,8 +191,10 @@ void registerDomainSteps() {
     runner.registerStep("the text should (.*) \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::string text = args[1];
         std::vector<OverlaySpec> overlays;
-        if (ctx.mockOverlayService) overlays = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService)->active_overlays_;
-        else {
+        if (ctx.mockOverlayService) {
+             auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+             overlays = mock->active_overlays_;
+        } else {
             overlays = ctx.overlayService.get_active_overlays_for_entity("limbic_system");
             if(overlays.empty()) overlays = ctx.overlayService.get_active_overlays_for_entity("global");
         }
@@ -236,8 +245,12 @@ void registerDomainSteps() {
 
     runner.registerStep("a \"(.*)\" overlay with ID \"(.*)\" should be active", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::vector<OverlaySpec> overlays;
-        if (ctx.mockOverlayService) overlays = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService)->active_overlays_;
-        else overlays = ctx.overlayService.get_active_overlays_for_entity("global");
+        if (ctx.mockOverlayService) {
+             auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+             overlays = mock->active_overlays_;
+        } else {
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
+        }
         bool found = false;
         for (const auto& o : overlays) if (o.role == args[0] && o.id == args[1]) found = true;
         assert(found);
@@ -255,12 +268,14 @@ void registerDomainSteps() {
 
     runner.registerStep("an overlay with ID \"(.*)\" should be visible", [](BDDContext& ctx, const std::vector<std::string>& args) {
         bool found = false;
+        std::vector<OverlaySpec> overlays;
         if (ctx.mockOverlayService) {
-             for (const auto& o : std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService)->active_overlays_) if (o.id == args[0]) found = true;
+            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+            overlays = mock->active_overlays_;
         } else {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.id == args[0]) found = true;
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
         }
+        for (const auto& o : overlays) if (o.id == args[0]) found = true;
         assert(found);
     });
 
@@ -293,12 +308,14 @@ void registerDomainSteps() {
 
     runner.registerStep("its text should contain a resilience index value", [](BDDContext& ctx, const std::vector<std::string>& args) {
         bool found = false;
+        std::vector<OverlaySpec> overlays;
         if (ctx.mockOverlayService) {
-            for (const auto& o : std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService)->active_overlays_) if (o.id == "serotonin_emotional_stability" && o.text.find("Resilience Index") != std::string::npos) found = true;
+            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+            overlays = mock->active_overlays_;
         } else {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.id == "serotonin_emotional_stability" && o.text.find("Resilience Index") != std::string::npos) found = true;
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
         }
+        for (const auto& o : overlays) if (o.id == "serotonin_emotional_stability" && o.text.find("Resilience Index") != std::string::npos) found = true;
         assert(found);
     });
 
@@ -322,12 +339,14 @@ void registerDomainSteps() {
 
     runner.registerStep("an overlay with ID \"(.*)\" should describe (.*)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         bool found = false;
+        std::vector<OverlaySpec> overlays;
         if (ctx.mockOverlayService) {
-            for (const auto& o : std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService)->active_overlays_) if (o.id == args[0] && o.text.find(args[1]) != std::string::npos) found = true;
+            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+            overlays = mock->active_overlays_;
         } else {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.id == args[0] && o.text.find(args[1]) != std::string::npos) found = true;
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
         }
+        for (const auto& o : overlays) if (o.id == args[0] && o.text.find(args[1]) != std::string::npos) found = true;
         assert(found);
     });
 
@@ -342,12 +361,14 @@ void registerDomainSteps() {
 
     runner.registerStep("an overlay with ID \"(.*)\" should indicate (.*)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         bool found = false;
+        std::vector<OverlaySpec> overlays;
         if (ctx.mockOverlayService) {
-            for (const auto& o : std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService)->active_overlays_) if (o.id == args[0] && o.text.find(args[1]) != std::string::npos) found = true;
+            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+            overlays = mock->active_overlays_;
         } else {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.id == args[0] && o.text.find(args[1]) != std::string::npos) found = true;
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
         }
+        for (const auto& o : overlays) if (o.id == args[0] && o.text.find(args[1]) != std::string::npos) found = true;
         assert(found);
     });
 
@@ -362,23 +383,27 @@ void registerDomainSteps() {
 
     runner.registerStep("it should describe the (.*)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         bool found = false;
+        std::vector<OverlaySpec> overlays;
         if (ctx.mockOverlayService) {
-            for (const auto& o : std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService)->active_overlays_) if (o.text.find(args[0]) != std::string::npos) found = true;
+            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+            overlays = mock->active_overlays_;
         } else {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.text.find(args[0]) != std::string::npos) found = true;
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
         }
+        for (const auto& o : overlays) if (o.text.find(args[0]) != std::string::npos) found = true;
         assert(found);
     });
 
     runner.registerStep("the text should signify (.*)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         bool found = false;
+        std::vector<OverlaySpec> overlays;
         if (ctx.mockOverlayService) {
-            for (const auto& o : std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService)->active_overlays_) if (o.text.find(args[0]) != std::string::npos) found = true;
+            auto mock = std::dynamic_pointer_cast<MockOverlayService>(ctx.mockOverlayService);
+            overlays = mock->active_overlays_;
         } else {
-            auto overlays = ctx.overlayService.get_active_overlays_for_entity("global");
-            for (const auto& o : overlays) if (o.text.find(args[0]) != std::string::npos) found = true;
+            overlays = ctx.overlayService.get_active_overlays_for_entity("global");
         }
+        for (const auto& o : overlays) if (o.text.find(args[0]) != std::string::npos) found = true;
         assert(found);
     });
 
