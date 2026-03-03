@@ -15,19 +15,13 @@ TEST_CORE_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(TEST_CORE_FILES))
 
 # Targets
 VIEWER_TARGET = $(BUILD_DIR)/viewer
-BRAIN_DEMO_TARGET = $(BUILD_DIR)/brain_demo
 UNIT_TESTS_TARGET = $(BUILD_DIR)/unit_tests
 BDD_TESTS_TARGET = $(BUILD_DIR)/bdd_tests
 
-all: $(VIEWER_TARGET) $(BRAIN_DEMO_TARGET) $(UNIT_TESTS_TARGET) $(BDD_TESTS_TARGET)
+all: $(VIEWER_TARGET) $(UNIT_TESTS_TARGET) $(BDD_TESTS_TARGET)
 
 # Viewer executable
 $(VIEWER_TARGET): $(BUILD_DIR)/apps/viewer/main.o $(CORE_OBJS)
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-
-# Brain Demo executable
-$(BRAIN_DEMO_TARGET): $(BUILD_DIR)/apps/brain_demo/main.o $(CORE_OBJS)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 

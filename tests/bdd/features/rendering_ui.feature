@@ -31,3 +31,8 @@ Feature: Core Rendering and UI/UX
     Given a node with weight 15
     When the graph is rendered
     Then the node color should be "RED" according to VisualMapper
+
+  Scenario: Viewport metadata in UIPrinter
+    Given a graph is displayed
+    When I pan the view by (20, 20)
+    Then the UI output should contain "Pan: (20, 20)"

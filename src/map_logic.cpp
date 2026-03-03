@@ -372,8 +372,6 @@ void Graph::applyBrainOverlay(const model::BrainOverlay& overlay) {
 
         // Sync with nodeMap
         nodeMap[node.index].regionIds = node.regionIds;
-        nodeMap[node.index].regionIds = node.regionIds;
         nodeMap[node.index].pathwayId = node.pathwayId;
     }
 }
-
