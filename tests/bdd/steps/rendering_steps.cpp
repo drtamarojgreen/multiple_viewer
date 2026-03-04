@@ -73,6 +73,10 @@ void registerRenderingSteps() {
         ctx.lastResult = args[1];
     });
 
+    runner.registerStep("I register '(.*)' to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.lastResult = args[1];
+    });
+
     runner.registerStep("I press '(.*)'", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(!ctx.lastResult.empty());
     });

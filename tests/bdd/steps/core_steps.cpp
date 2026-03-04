@@ -86,6 +86,7 @@ void registerCoreSteps() {
     runner.registerStep("both kernels should have identical state hashes", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(!ctx.snapshot1.snapshot_hash.empty());
         assert(ctx.snapshot1.snapshot_hash == ctx.snapshot2.snapshot_hash);
+        ctx.success = true;
     });
 }
 
