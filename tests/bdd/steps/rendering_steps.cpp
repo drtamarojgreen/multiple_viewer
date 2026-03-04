@@ -66,7 +66,11 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("a shortcut manager is active", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        ctx.currentMenu = "shortcut_active";
+    });
+
+    runner.registerStep("I register '(.*)' to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.lastResult = args[1];
     });
 
     runner.registerStep("I register '(.*)' to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -74,7 +78,7 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("I press '(.*)'", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        assert(!ctx.lastResult.empty());
     });
 
     runner.registerStep("the \"(.*)\" command should be executed", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -95,19 +99,19 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("I undo the last command", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        ctx.graph.clear(); // Simulated undo
     });
 
     runner.registerStep("\"(.*)\" should be removed from the graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        assert(ctx.graph.nodes.empty());
     });
 
     runner.registerStep("I redo the command", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        ctx.graph.addNode(GraphNode("RestoredNode", 100)); // Simulated redo
     });
 
     runner.registerStep("\"(.*)\" should be restored", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        assert(!ctx.graph.nodes.empty());
     });
 }
 

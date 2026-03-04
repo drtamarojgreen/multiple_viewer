@@ -75,8 +75,10 @@ void registerBrainAdvancedSteps() {
     });
 
     runner.registerStep("the probability for \"(.*)\" should be (.*)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // Mocked check for now
-        ctx.success = true;
+        float expected = std::stof(args[1]);
+        // If we stored 70% as panX = 70
+        float actual = (float)ctx.viewContext.panX / 100.0f;
+        assert(std::abs(actual - expected) < 0.01f);
     });
 
     // Capabilities

@@ -123,6 +123,7 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("a graph with nodes \"([^\"]*)\", \"([^\"]*)\", \"([^\"]*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.clear();
         ctx.graph.addNode(GraphNode(args[0], 0, {}, 1, 0));
         ctx.graph.addNode(GraphNode(args[1], 1, {}, 1, 0));
         ctx.graph.addNode(GraphNode(args[2], 2, {}, 1, 0));
