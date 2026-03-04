@@ -57,8 +57,9 @@ void registerCoreSteps() {
 
     runner.registerStep("the next (\\d+)ms step should produce the same state as the original first step", [](BDDContext& ctx, const std::vector<std::string>& args) {
         assert(ctx.simulationKernel != nullptr);
+        uint64_t beforeTime = ctx.simulationKernel->current_time_ms();
         ctx.simulationKernel->step(std::stoul(args[0]));
-        ctx.success = true;
+        assert(ctx.simulationKernel->current_time_ms() == beforeTime + std::stoul(args[0]));
     });
 
     runner.registerStep("two simulation kernels initialized with the same seed (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -83,8 +84,8 @@ void registerCoreSteps() {
     });
 
     runner.registerStep("both kernels should have identical state hashes", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        assert(!ctx.snapshot1.snapshot_hash.empty());
         assert(ctx.snapshot1.snapshot_hash == ctx.snapshot2.snapshot_hash);
-        ctx.success = true;
     });
 }
 

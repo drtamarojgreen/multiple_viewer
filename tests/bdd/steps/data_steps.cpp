@@ -30,7 +30,9 @@ void registerDataSteps() {
         out << "  ]\n";
         out << "}\n";
         out.close();
-        ctx.success = true;
+
+        std::ifstream verify(args[0]);
+        assert(verify.is_open());
     });
 
     runner.registerStep("I load the graph from \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
