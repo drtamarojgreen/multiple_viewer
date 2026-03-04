@@ -21,7 +21,19 @@ void UIPrinter::render(const Graph& graph, const ViewContext& view) {
     outputBuffer_ << "--- UI RENDER FRAME ---\n";
     outputBuffer_ << "Viewport: " << width_ << "x" << height_
                   << " | Pan: (" << view.panX << ", " << view.panY << ")"
-                  << " | Zoom: " << static_cast<int>(view.zoomLevel) << "\n";
+                  << " | Zoom: " << static_cast<int>(view.zoomLevel)
+                  << " | Mode: " << static_cast<int>(view.currentViewMode) << "\n";
+
+    if (Config::showAnalyticsPanel) {
+        outputBuffer_ << "Analytics Panel: ENABLED\n";
+        outputBuffer_ << "Summary - Nodes: " << graph.nodes.size()
+                      << " | Edges: " << graph.edgeCount() << "\n";
+    }
+
+    outputBuffer_ << "Focuses:";
+    for (int f : graph.focusedNodeIndices) outputBuffer_ << " " << f;
+    outputBuffer_ << "\n";
+
     outputBuffer_ << "Nodes Rendered:\n";
 
     // Simulate mapping logic to a text buffer

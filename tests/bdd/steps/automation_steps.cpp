@@ -14,7 +14,7 @@ void registerAutomationSteps() {
     auto& runner = BDDRunner::getInstance();
 
     runner.registerStep("the scripting runtime is initialized", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        ctx.currentMenu = "script_init";
     });
 
     runner.registerStep("I execute the Lua script \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -77,7 +77,7 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("I attach it to a cluster", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        assert(!ctx.hypothesisAnnotation.empty());
     });
 
     runner.registerStep("the cluster should store the annotation metadata", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -114,7 +114,7 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("the Web Server is running on port (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.success = true;
+        ctx.currentMenu = "server_running_" + args[0];
     });
 
     runner.registerStep("I send a GET request to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {

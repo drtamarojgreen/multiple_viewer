@@ -1,78 +1,78 @@
-# CBT Graph Viewer
+# CBT Graph Viewer & Brain Modeling Suite
 
-The CBT Graph Viewer is a console-based graph visualization and exploration tool tailored for structured node-link data. It features zoomable rendering, analytic overlays, and advanced node labeling with support for focus cycling and wrapped text.
+The CBT Graph Viewer is a high-performance console-based visualization and exploration tool for structured node-link data, now extended with a comprehensive Brain Modeling and Simulation suite. It features deterministic simulation kernels, hierarchical region mapping, and advanced interactive layouts.
 
-## Features
+## Key Features
 
-- **Graph Rendering**
-  - Displays nodes as square blocks (size based on zoom level)
-  - Labels are wrapped and aligned beneath each node
-  - Edge connections rendered with Bresenham-style ASCII lines
-  - Z-buffering ensures proper depth visibility
+- **Advanced Graph Rendering**
+  - **Dynamic Zoom & Pan:** Smooth canvas navigation with adaptive node sizing and label wrapping.
+  - **Layered Visibility:** Independent control over surface, node, edge, and overlay layers.
+  - **Z-Buffering:** Ensures correct depth occlusion in complex topologies.
+
+- **Brain Modeling Suite**
+  - **Hierarchical Regions:** Support for multi-level brain region definitions (Lobe -> Region -> Sub-region).
+  - **Simulation Kernel:** A perfectly deterministic simulation engine with snapshot and restore capabilities.
+  - **Temporal Engine:** Playback and interpolation of time-series brain activity data.
+  - **ROI Queries:** Spatial queries for nodes within specific Regions of Interest using an Octree-indexed spatial catalog.
 
 - **Interactive Navigation**
-  - Arrow keys or IJKL for panning the canvas
-  - `Z` / `X` to zoom in and out
-  - `TAB` cycles through focused nodes
-  - `/` enables label-based keyword search
-  - `F` / `O` to add/remove focused nodes
-  - `T` to set max render depth
+  - **Standard View:** Traditional graph exploration.
+  - **Book View:** Hierarchical subject-based organization (Hotkey: `B`).
+  - **Cycle Layouts:** Switch between various visualization strategies (Hotkey: `N`).
+  - **Search & Focus:** Keyword-based search and multi-node focus management.
 
 - **Graph Analytics**
-  - `[P]` toggles full analytics overlay:
-    - Node/edge counts
-    - Connectivity status
-    - Average degree and isolation stats
-    - Topic weights and top/least connected nodes
-    - Render and load performance metrics
-
-- **Multiple Interactive Views**
-  - Cycle through different layouts using the `N` key.
-  - `[B]` switches directly to the interactive "Book View," which organizes nodes by subject and depth.
-  - `[E]` displays full metadata and neighbors for a specific node.
+  Real-time computation of clustering coefficients, diameter, density, and betweenness centrality.
 
 - **Data Operations**
-  - `[S]` saves graph as CSV
-  - `[U]` loads graph from CSV
-  - Adds new nodes with `[A]` and removes with `[R]`
+  Robust CSV and JSON loading/saving. Multi-format export, including SVG snapshots.
 
-## Display Configuration
+## Project Structure
 
-- Optimized for PowerShell or external terminals supporting `system("cls")`
-- 80x25 console dimensions assumed by default
-- Supports ANSI-based soft clearing for alternate terminals
+- `apps/viewer/`: Primary interactive application entry point.
+- `src/`: Core library logic, including rendering, simulation, and graph theory components.
+- `tests/`: Extensive testing suite:
+  - `unit/`: Granular logic verification.
+  - `bdd/`: Behavioral scenarios using Gherkin syntax (GIVEN/WHEN/THEN).
+- `docs/`: Technical guides, API documentation, and research findings.
 
-## Development Status
+## Build and Installation
 
-- Label wrapping, zoom sizing, and rendering logic fully implemented
-- Search, analytics panel, and view modes now interactive and functional
-- Panning logic corrected to properly shift the graph relative to viewport
-- Menu reflects current hotkey mappings and available commands
-
-## Planned Improvements
-
-- Optional mouse or pointer navigation
-- Export snapshot to file with layout preview
-- Custom glyph styling for weighted or highlighted nodes
-
-## Build and Test
-
-To build the application, run the following command:
+The project uses a standard `Makefile` for compilation.
 
 ```bash
-g++ -std=c++17 src/*.cpp -o main
+# Build all targets (Viewer, Unit Tests, BDD Tests)
+make all
+
+# Clean build artifacts
+make clean
 ```
 
-To run the built-in test suite, execute the compiled application with the `--test` flag:
+## Running the Application
+
+### Interactive Mode
+```bash
+./build/viewer
+```
+
+### Headless / CLI Mode
+The viewer supports several automation flags:
+```bash
+./build/viewer --load-graph data.csv --get-node-details 42
+```
+
+## Testing
+
+A comprehensive test suite is included to ensure system stability across updates.
 
 ```bash
-./main --test
+# Run Unit Tests
+./build/unit_tests
+
+# Run BDD Scenarios
+./build/bdd_tests
 ```
-
-## Usage
-
-Compile and run the application in a terminal. Use interactive hotkeys to explore graph data, manage focus, and reveal structural analytics.
 
 ---
 
-Maintained by Tamaro. For feedback, improvements, or enhancement ideas, reach out directly or submit patches via your development workflow.
+Maintained by Tamaro. This project is a foundational tool for brain-wide activity mapping and structural connectivity research.
