@@ -30,6 +30,8 @@ void UIPrinter::render(const Graph& graph, const ViewContext& view) {
                       << " | Edges: " << graph.edgeCount() << "\n";
     }
 
+    outputBuffer_ << "Minimap: " << (view.width < 50 ? "OFF" : "ON") << "\n";
+
     outputBuffer_ << "Focuses:";
     for (int f : graph.focusedNodeIndices) outputBuffer_ << " " << f;
     outputBuffer_ << "\n";
@@ -57,6 +59,15 @@ void UIPrinter::render(const Graph& graph, const ViewContext& view) {
         outputBuffer_ << "[Node: " << id << " | Name: " << node.label
                       << " | ScreenCoord: (" << drawX << ", " << drawY << ")"
                       << " | Color: " << color << "]\n";
+    }
+
+    outputBuffer_ << "Edges Rendered:\n";
+    for (const auto& node : graph.nodes) {
+        for (int neighbor_id : node.neighbors) {
+            if (node.index < neighbor_id) { // Avoid duplicate edges in undirected graph
+                outputBuffer_ << "[Edge: " << node.index << " -> " << neighbor_id << "]\n";
+            }
+        }
     }
 }
 

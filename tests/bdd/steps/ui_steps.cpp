@@ -2,7 +2,9 @@
 #include <iostream>
 #include <cassert>
 #include <memory>
+#include <sstream>
 #include "../print/UIPrinter.h" // Corrected include path
+#include "search_logic.h"
 
 namespace bdd {
 
@@ -179,10 +181,87 @@ void registerUISteps() {
         if (!ctx.uiPrinter) {
              ctx.uiPrinter = std::make_unique<UIPrinter>();
              ctx.uiPrinter->initialize(80, 25);
-             ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
         }
+        ctx.uiPrinter->clear();
+        ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
         std::string output = ctx.uiPrinter->getPrintedOutput();
         EXPECT(output.find(args[0]) != std::string::npos, ctx, "UI output mismatch. Missing: " + args[0]);
+    });
+
+    runner.registerStep("a graph with nodes \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.clear();
+        std::stringstream ss(args[0]);
+        std::string label;
+        int index = 0;
+        while (std::getline(ss, label, ',')) {
+            // Trim whitespace
+            label.erase(0, label.find_first_not_of(" "));
+            label.erase(label.find_last_not_of(" ") + 1);
+            ctx.graph.addNode(GraphNode(label, index++));
+        }
+    });
+
+    runner.registerStep("I search for \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        std::vector<int> matches = findSimilarTopics(ctx.graph, args[0]);
+        ctx.graph.clearFocuses();
+        for (int idx : matches) ctx.graph.addFocus(idx);
+    });
+
+    runner.registerStep("\"(.*)\" should be the focused node", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        int focusId = -1;
+        for (const auto& pair : ctx.graph.nodeMap) {
+            if (pair.second.label == args[0]) {
+                focusId = pair.first;
+                break;
+            }
+        }
+        EXPECT(ctx.graph.isNodeFocused(focusId), ctx, args[0] + " is not focused");
+    });
+
+    runner.registerStep("I switch to \"(.*)\" mode", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        if (args[0] == "Book View") ctx.viewContext.currentViewMode = VM_BOOK_VIEW;
+        else if (args[0] == "Nexus Flow") ctx.viewContext.currentViewMode = VM_NEXUS_FLOW;
+        else if (args[0] == "Perspective") ctx.viewContext.currentViewMode = VM_PERSPECTIVE;
+    });
+
+    runner.registerStep("multi-focus is enabled", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        Config::allowMultiFocus = true;
+    });
+
+    runner.registerStep("I add \"(.*)\" to focus", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        int id = -1;
+        for (const auto& pair : ctx.graph.nodeMap) {
+            if (pair.second.label == args[0]) {
+                id = pair.first;
+                break;
+            }
+        }
+        ctx.graph.addFocus(id);
+    });
+
+    runner.registerStep("both \"(.*)\" and \"(.*)\" should be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        int id1 = -1, id2 = -1;
+        for (const auto& pair : ctx.graph.nodeMap) {
+            if (pair.second.label == args[0]) id1 = pair.first;
+            if (pair.second.label == args[1]) id2 = pair.first;
+        }
+        EXPECT(ctx.graph.isNodeFocused(id1), ctx, args[0] + " is not focused");
+        EXPECT(ctx.graph.isNodeFocused(id2), ctx, args[1] + " is not focused");
+    });
+
+    runner.registerStep("I cycle focus", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.cycleFocus();
+    });
+
+    runner.registerStep("\"(.*)\" should be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        int id = -1;
+        for (const auto& pair : ctx.graph.nodeMap) {
+            if (pair.second.label == args[0]) {
+                id = pair.first;
+                break;
+            }
+        }
+        EXPECT(ctx.graph.isNodeFocused(id), ctx, args[0] + " is not focused");
     });
 }
 
