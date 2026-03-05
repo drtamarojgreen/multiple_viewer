@@ -1,78 +1,111 @@
-# CBT Graph Viewer & Brain Modeling Suite
+# Multiple Viewer (CBT Graph Viewer + Brain Modeling Sandbox)
 
-The CBT Graph Viewer is a high-performance console-based visualization and exploration tool for structured node-link data, now extended with a comprehensive Brain Modeling and Simulation suite. It features deterministic simulation kernels, hierarchical region mapping, and advanced interactive layouts.
+Multiple Viewer is a C++17 console application for exploring graph data and experimenting with brain-model overlays. It combines interactive navigation, graph analytics, headless CLI workflows, and a deterministic model/simulation core used by domain plugins and BDD scenarios.
 
-## Key Features
+## What it does
 
-- **Advanced Graph Rendering**
-  - **Dynamic Zoom & Pan:** Smooth canvas navigation with adaptive node sizing and label wrapping.
-  - **Layered Visibility:** Independent control over surface, node, edge, and overlay layers.
-  - **Z-Buffering:** Ensures correct depth occlusion in complex topologies.
+- Interactive terminal graph viewer/editor with pan/zoom, focus tools, search, multiple layout modes, and save/load flows.
+- Headless CLI operations for loading graphs, saving graphs, and printing node metadata.
+- Brain-model data loading for atlas, labels, and overlay mappings.
+- Extended architecture modules for analytics, scripting runtime, IO management, layout, and UI helpers.
+- Test coverage across unit-style logic checks and BDD feature scenarios (core kernel, UI, data, rendering, domain behavior).
 
-- **Brain Modeling Suite**
-  - **Hierarchical Regions:** Support for multi-level brain region definitions (Lobe -> Region -> Sub-region).
-  - **Simulation Kernel:** A perfectly deterministic simulation engine with snapshot and restore capabilities.
-  - **Temporal Engine:** Playback and interpolation of time-series brain activity data.
-  - **ROI Queries:** Spatial queries for nodes within specific Regions of Interest using an Octree-indexed spatial catalog.
+## Repository layout
 
-- **Interactive Navigation**
-  - **Standard View:** Traditional graph exploration.
-  - **Book View:** Hierarchical subject-based organization (Hotkey: `B`).
-  - **Cycle Layouts:** Switch between various visualization strategies (Hotkey: `N`).
-  - **Search & Focus:** Keyword-based search and multi-node focus management.
+- `apps/viewer/` — main application entrypoint (`viewer`).
+- `src/` — core graph/viewer logic and extension modules.
+  - `src/model/` — brain model entities, repository, deterministic kernel/event bus, and domain plugins.
+  - `src/render/`, `src/input/`, `src/layout/`, `src/analytics/`, `src/io/`, `src/scripting/`, `src/ui/`.
+- `tests/` — unit-style and BDD test harnesses + step definitions.
+- `docs/` — guides, architecture notes, and analysis documents.
 
-- **Graph Analytics**
-  Real-time computation of clustering coefficients, diameter, density, and betweenness centrality.
+## Build instructions (current)
 
-- **Data Operations**
-  Robust CSV and JSON loading/saving. Multi-format export, including SVG snapshots.
+This repository is built via the top-level `Makefile`.
 
-## Project Structure
+### Prerequisites
 
-- `apps/viewer/`: Primary interactive application entry point.
-- `src/`: Core library logic, including rendering, simulation, and graph theory components.
-- `tests/`: Extensive testing suite:
-  - `unit/`: Granular logic verification.
-  - `bdd/`: Behavioral scenarios using Gherkin syntax (GIVEN/WHEN/THEN).
-- `docs/`: Technical guides, API documentation, and research findings.
+- `g++` with C++17 support
+- `make`
 
-## Build and Installation
-
-The project uses a standard `Makefile` for compilation.
+### Build everything
 
 ```bash
-# Build all targets (Viewer, Unit Tests, BDD Tests)
 make all
+```
 
-# Clean build artifacts
+This generates:
+
+- `build/viewer`
+- `build/unit_tests`
+- `build/bdd_tests`
+
+### Clean artifacts
+
+```bash
 make clean
 ```
 
-## Running the Application
+### Build and run tests in one command
 
-### Interactive Mode
+```bash
+make test
+```
+
+## Running the viewer
+
+### Interactive mode
+
 ```bash
 ./build/viewer
 ```
 
-### Headless / CLI Mode
-The viewer supports several automation flags:
+### Interactive mode with initial graph/model inputs
+
 ```bash
-./build/viewer --load-graph data.csv --get-node-details 42
+./build/viewer \
+  --load-graph graph_input.csv \
+  --load-atlas atlas.brn \
+  --load-labels labels.txt \
+  --load-overlay overlay.txt
+```
+
+### Show CLI help
+
+```bash
+./build/viewer --help
+```
+
+## Headless CLI workflows
+
+Load a graph and print details for one node:
+
+```bash
+./build/viewer --load-graph graph_input.csv --get-node-details 42
+```
+
+Load and re-save a graph:
+
+```bash
+./build/viewer --load-graph graph_input.csv --save-graph out.csv
 ```
 
 ## Testing
 
-A comprehensive test suite is included to ensure system stability across updates.
+After building (`make all`) you can run test binaries directly:
 
 ```bash
-# Run Unit Tests
 ./build/unit_tests
-
-# Run BDD Scenarios
 ./build/bdd_tests
 ```
 
----
+Or run both through the Make target:
 
-Maintained by Tamaro. This project is a foundational tool for brain-wide activity mapping and structural connectivity research.
+```bash
+make test
+```
+
+## Notes
+
+- A legacy `CMakeLists.txt` exists, but the actively maintained build flow in this repository is the `Makefile` targets above.
+- The viewer is terminal-first; no GUI/web frontend is required for core usage.

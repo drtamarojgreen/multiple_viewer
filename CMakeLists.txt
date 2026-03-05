@@ -4,96 +4,70 @@ project(MultipleViewer)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Define project root for resource path handling
-add_definitions(-DPROJECT_ROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+add_compile_definitions(PROJECT_ROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
-# Include directories
-include_directories(src)
-include_directories(tests)
-
-# Explicitly list source files to avoid GLOB shortcuts and preserve structure visibility in IDEs
-set(CORE_SOURCES
-    src/main.cpp
-    src/map_logic.cpp
-    src/viewer_logic.cpp
-    src/file_logic.cpp
-    src/search_logic.cpp
-    src/cmd_line_parser.cpp
+# Include directories mirrored from Makefile flags.
+include_directories(
+    src
+    tests
+    tests/bdd
 )
 
-set(MODEL_SOURCES
-    src/model/brain_model.cpp
-    src/model/brain_label.cpp
-    src/model/brain_overlay.cpp
-    src/model/model_repository.cpp
+# Source directories for core logic (mirrors Makefile CORE_DIRS).
+set(CORE_DIRS
+    src
+    src/model
+    src/model/core
+    src/model/app
+    src/render
+    src/input
+    src/io
+    src/analytics
+    src/scripting
+    src/layout
+    src/ui
 )
 
-set(RENDER_SOURCES
-    src/render/console_renderer.cpp
-    src/render/sdl_renderer.cpp
-    src/render/camera.cpp
-    src/render/minimap_renderer.cpp
-    src/render/visual_mapper.cpp
+set(CORE_SOURCES)
+foreach(dir ${CORE_DIRS})
+    file(GLOB DIR_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")
+    list(APPEND CORE_SOURCES ${DIR_SOURCES})
+endforeach()
+
+# Test source files excluding test mains (mirrors Makefile TEST_CORE_FILES).
+file(GLOB TEST_PREFIX_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tests/test*.cpp")
+file(GLOB BDD_STEP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tests/bdd/steps/*.cpp")
+file(GLOB PRINT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tests/print/*.cpp")
+
+set(TEST_CORE_SOURCES
+    ${TEST_PREFIX_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/dynamic_graph_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/bdd/bdd_runner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/bdd/bdd_test_main.cpp
+    ${BDD_STEP_SOURCES}
+    ${PRINT_SOURCES}
 )
 
-set(INPUT_SOURCES
-    src/input/input_manager.cpp
-    src/input/shortcut_manager.cpp
-    src/input/command_stack.cpp
-)
+set(VIEWER_MAIN ${CMAKE_CURRENT_SOURCE_DIR}/apps/viewer/main.cpp)
+set(UNIT_TEST_MAIN ${CMAKE_CURRENT_SOURCE_DIR}/tests/unit_main.cpp)
+set(BDD_TEST_MAIN ${CMAKE_CURRENT_SOURCE_DIR}/tests/bdd/bdd_main.cpp)
 
-# New Enhancement Modules (Architectural Foundations)
-set(EXT_SOURCES
-    src/io/io_manager.cpp
-    src/analytics/analytics_engine_ext.cpp
-    src/analytics/temporal_manager.cpp
-    src/scripting/script_runtime.cpp
-    src/scripting/plugin_manager.cpp
-    src/layout/layout_manager.cpp
-    src/ui/help_system.cpp
-    src/ui/benchmark_runner.cpp
-    src/render/spatial_index.cpp
-)
-
-set(TEST_SOURCES
-    tests/test_logic.cpp
-    tests/testsuite2_logic.cpp
-    tests/testsuite3_logic.cpp
-    tests/dynamic_graph_tests.cpp
-)
-
-set(BDD_SOURCES
-    tests/bdd/bdd_runner.cpp
-    tests/bdd/bdd_test_main.cpp
-    tests/bdd/steps/brain_steps.cpp
-    tests/bdd/steps/rendering_steps.cpp
-    tests/bdd/steps/data_steps.cpp
-    tests/bdd/steps/automation_steps.cpp
-    tests/bdd/steps/original_steps.cpp
-)
-
-# Combine all sources
-set(ALL_SOURCES
+# Targets aligned with Makefile outputs.
+add_executable(viewer
+    ${VIEWER_MAIN}
     ${CORE_SOURCES}
-    ${MODEL_SOURCES}
-    ${RENDER_SOURCES}
-    ${INPUT_SOURCES}
-    ${EXT_SOURCES}
-    ${TEST_SOURCES}
-    ${BDD_SOURCES}
 )
 
-add_executable(multiple_viewer ${ALL_SOURCES})
-
-# Target-specific include directories
-target_include_directories(multiple_viewer PRIVATE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+add_executable(unit_tests
+    ${UNIT_TEST_MAIN}
+    ${CORE_SOURCES}
+    ${TEST_CORE_SOURCES}
 )
 
-# Future dependencies
-# find_package(SDL2 REQUIRED)
-# target_link_libraries(multiple_viewer SDL2::SDL2)
+add_executable(bdd_tests
+    ${BDD_TEST_MAIN}
+    ${CORE_SOURCES}
+    ${TEST_CORE_SOURCES}
+)
 
-# Installation logic
-install(TARGETS multiple_viewer RUNTIME DESTINATION bin)
+install(TARGETS viewer unit_tests bdd_tests RUNTIME DESTINATION bin)
