@@ -30,7 +30,11 @@ void UIPrinter::render(const Graph& graph, const ViewContext& view) {
                       << " | Edges: " << graph.edgeCount() << "\n";
     }
 
-    outputBuffer_ << "Minimap: " << (view.width < 50 ? "OFF" : "ON") << "\n";
+    outputBuffer_ << "Minimap: " << (view.showMinimap ? "ON" : "OFF") << "\n";
+    if (view.showMinimap) {
+        // Output viewport box for testing purposes
+        outputBuffer_ << "Viewport Box: [x=" << view.panX << ", y=" << view.panY << ", w=" << width_ << ", h=" << height_ << "]\n";
+    }
 
     outputBuffer_ << "Focuses:";
     for (int f : graph.focusedNodeIndices) outputBuffer_ << " " << f;
@@ -38,16 +42,10 @@ void UIPrinter::render(const Graph& graph, const ViewContext& view) {
 
     outputBuffer_ << "Nodes Rendered:\n";
 
-    // Simulate mapping logic to a text buffer
     for (const auto& pair : graph.nodeMap) {
         int id = pair.first;
         const auto& node = pair.second;
 
-        // Simulate basic panning offset check
-        // In actual UI, layout engine would do this. We capture the logical position
-        // shifted by the panning context so tests can assert on the output string coordinates.
-
-        // Base coordinate (mock for UI testing, based on index layout)
         int layoutX = (id * 10);
         int layoutY = (id * 5);
 
@@ -64,19 +62,15 @@ void UIPrinter::render(const Graph& graph, const ViewContext& view) {
     outputBuffer_ << "Edges Rendered:\n";
     for (const auto& node : graph.nodes) {
         for (int neighbor_id : node.neighbors) {
-            if (node.index < neighbor_id) { // Avoid duplicate edges in undirected graph
+            if (node.index < neighbor_id) {
                 outputBuffer_ << "[Edge: " << node.index << " -> " << neighbor_id << "]\n";
             }
         }
     }
 }
 
-void UIPrinter::present() {
-    // In headless testing, 'present' means we finished the frame recording
-}
-
-void UIPrinter::shutdown() {
-}
+void UIPrinter::present() {}
+void UIPrinter::shutdown() {}
 
 std::string UIPrinter::getPrintedOutput() const {
     return outputBuffer_.str();

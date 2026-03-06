@@ -73,6 +73,7 @@ void Graph::addEdge(int from, int to) {
 void Graph::clear() {
     nodes.clear();
     nodeMap.clear();
+    nodePos.clear();
     focusedNodeIndices.clear();
     summary = GraphSummary{};
     needsLayoutReset = true;

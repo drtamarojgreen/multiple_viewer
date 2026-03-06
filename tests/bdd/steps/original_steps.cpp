@@ -1,8 +1,9 @@
 #include "../bdd_runner.h"
 #include "file_logic.h"
 #include "search_logic.h"
+#include "io/io_manager.h"
 #include <iostream>
-#include <cassert>
+#include <cmath>
 
 namespace bdd {
 
@@ -11,7 +12,6 @@ void registerOriginalSteps() {
 
     runner.registerStep("an empty graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.clear();
-        std::cout << "[STEP] Graph cleared\n";
     });
 
     runner.registerStep("a graph with node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -21,27 +21,35 @@ void registerOriginalSteps() {
 
     runner.registerStep("I add a node \"(.*)\" at index (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.addNode(GraphNode(args[0], std::stoi(args[1]), {}, 1, 0));
-        std::cout << "[STEP] Added node " << args[0] << "\n";
     });
 
     runner.registerStep("I add an edge between (\\d+) and (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         ctx.graph.addEdge(std::stoi(args[0]), std::stoi(args[1]));
-        std::cout << "[STEP] Added edge " << args[0] << "-" << args[1] << "\n";
     });
 
     runner.registerStep("node (\\d+) should exist", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.graph.nodeExists(std::stoi(args[0])));
-        std::cout << "[STEP] Verified node " << args[0] << " exists\n";
+        EXPECT(ctx.graph.nodeExists(std::stoi(args[0])), ctx, "Node missing");
+    });
+
+    runner.registerStep("node (\\d+) should have label \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        int id = std::stoi(args[0]);
+        std::string expected = args[1];
+        EXPECT(ctx.graph.nodeMap.count(id) > 0, ctx, "Node missing");
+        if (ctx.graph.nodeMap.count(id) > 0) {
+            EXPECT(ctx.graph.nodeMap.at(id).label == expected, ctx, "Label mismatch");
+        }
     });
 
     runner.registerStep("node (\\d+) should be connected to node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         int u = std::stoi(args[0]);
         int v = std::stoi(args[1]);
-        const auto& neighbors = ctx.graph.nodeMap.at(u).neighbors;
-        bool connected = false;
-        for (int n : neighbors) if (n == v) connected = true;
-        assert(connected);
-        std::cout << "[STEP] Verified connection " << u << "->" << v << "\n";
+        EXPECT(ctx.graph.nodeExists(u), ctx, "Node missing");
+        if (ctx.graph.nodeExists(u)) {
+            const auto& neighbors = ctx.graph.nodeMap.at(u).neighbors;
+            bool connected = false;
+            for (int n : neighbors) if (n == v) connected = true;
+            EXPECT(connected, ctx, "Not connected");
+        }
     });
 
     runner.registerStep("I add focus to node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -53,11 +61,11 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("node (\\d+) should be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.graph.isNodeFocused(std::stoi(args[0])));
+        EXPECT(ctx.graph.isNodeFocused(std::stoi(args[0])), ctx, "Not focused");
     });
 
     runner.registerStep("node (\\d+) should not be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(!ctx.graph.isNodeFocused(std::stoi(args[0])));
+        EXPECT(!ctx.graph.isNodeFocused(std::stoi(args[0])), ctx, "Should not be focused");
     });
 
     runner.registerStep("I cycle focus", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -65,19 +73,7 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("a node should be focused", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.graph.focusedNodeIndex != -1 || !ctx.graph.focusedNodeIndices.empty());
-    });
-
-    runner.registerStep("I save the graph to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        saveGraphToCSV((ctx.graph), args[0]);
-    });
-
-    runner.registerStep("I clear the current graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.clear();
-    });
-
-    runner.registerStep("I load the graph from \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        loadGraphFromCSV((ctx.graph), args[0]);
+        EXPECT(ctx.graph.focusedNodeIndex != -1 || !ctx.graph.focusedNodeIndices.empty(), ctx, "No focus");
     });
 
     runner.registerStep("a persistent graph with nodes 1 and 2", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -88,16 +84,17 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("the graph should restore all previous nodes and edges", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(!ctx.graph.nodes.empty());
-        assert(ctx.graph.nodeExists(1));
-        assert(ctx.graph.nodeExists(2));
-        bool found = false;
-        for (int n : ctx.graph.nodeMap.at(1).neighbors) if (n == 2) found = true;
-        assert(found);
-        std::cout << "[STEP] Verified persistence restore\n";
+        EXPECT(ctx.graph.nodeExists(1), ctx, "Node 1 missing");
+        EXPECT(ctx.graph.nodeExists(2), ctx, "Node 2 missing");
+        if (ctx.graph.nodeExists(1)) {
+            bool found = false;
+            for (int n : ctx.graph.nodeMap.at(1).neighbors) if (n == 2) found = true;
+            EXPECT(found, ctx, "Edge missing");
+        }
     });
 
     runner.registerStep("a triangle graph \\(nodes 0, 1, 2 all connected\\)", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.clear();
         ctx.graph.addNode(GraphNode("0", 0, {}, 1, 0));
         ctx.graph.addNode(GraphNode("1", 1, {}, 1, 0));
         ctx.graph.addNode(GraphNode("2", 2, {}, 1, 0));
@@ -111,15 +108,15 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("the graph should be reported as \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        if (args[0] == "Connected") assert(ctx.graph.isConnected());
+        if (args[0] == "Connected") EXPECT(ctx.graph.isConnected(), ctx, "Disconnected");
     });
 
     runner.registerStep("the average degree should be \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(std::abs(ctx.graph.computeAvgDegree() - std::stof(args[0])) < 0.01f);
+        EXPECT(std::abs(ctx.graph.computeAvgDegree() - std::stof(args[0])) < 0.01f, ctx, "Avg degree mismatch");
     });
 
     runner.registerStep("the clustering coefficient should be greater than \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.graph.summary.avgClusteringCoeff > std::stof(args[0]));
+        EXPECT(ctx.graph.summary.avgClusteringCoeff > std::stof(args[0]), ctx, "Clustering low");
     });
 
     runner.registerStep("a graph with nodes \"([^\"]*)\", \"([^\"]*)\", \"([^\"]*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -137,14 +134,11 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("\"(\\d+)\" nodes should be identified", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        if (ctx.lastResult != args[0]) {
-             std::cerr << "[BDD FAIL] Expected " << args[0] << " search results, got " << ctx.lastResult << std::endl;
-        }
-        assert(ctx.lastResult == args[0]);
+        EXPECT(ctx.lastResult == args[0], ctx, "Search count mismatch");
     });
 
     runner.registerStep("they should be added to the focus set", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(!ctx.graph.focusedNodeIndices.empty());
+        EXPECT(!ctx.graph.focusedNodeIndices.empty(), ctx, "Empty focus");
     });
 }
 

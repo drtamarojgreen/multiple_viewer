@@ -1,6 +1,10 @@
 #include "io_manager.h"
 #include <fstream>
 #include <iostream>
+#include <set>
+#include <utility>
+#include <algorithm>
+#include <cctype>
 
 namespace io {
 
@@ -16,24 +20,35 @@ bool IOManager::loadJSON(Graph& graph, const std::string& filepath) {
         size_t start = l.find(":", pos);
         if (start == std::string::npos) return std::string("");
         start++; // Skip colon
-        while (start < l.size() && (std::isspace(l[start]) || l[start] == '\"')) start++;
+        while (start < l.size() && (std::isspace(static_cast<unsigned char>(l[start])) || l[start] == '\"')) start++;
         size_t end = start;
         while (end < l.size() && l[end] != '\"' && l[end] != ',' && l[end] != '}' && l[end] != ']') end++;
         // Trim trailing whitespace
         size_t actualEnd = end;
-        while (actualEnd > start && std::isspace(l[actualEnd - 1])) actualEnd--;
+        while (actualEnd > start && std::isspace(static_cast<unsigned char>(l[actualEnd - 1]))) actualEnd--;
         return l.substr(start, actualEnd - start);
     };
 
     while (std::getline(file, line)) {
         if (line.find("\"label\":") != std::string::npos) {
             std::string label = getVal(line, "\"label\"");
-            int index = std::stoi(getVal(line, "\"index\""));
-            graph.addNode(GraphNode(label, index));
+            std::string indexStr = getVal(line, "\"index\"");
+            if (!indexStr.empty()) {
+                try {
+                    int index = std::stoi(indexStr);
+                    graph.addNode(GraphNode(label, index));
+                } catch (...) {}
+            }
         } else if (line.find("\"source\":") != std::string::npos) {
-            int src = std::stoi(getVal(line, "\"source\""));
-            int dst = std::stoi(getVal(line, "\"target\""));
-            graph.addEdge(src, dst);
+            std::string srcStr = getVal(line, "\"source\"");
+            std::string dstStr = getVal(line, "\"target\"");
+            if (!srcStr.empty() && !dstStr.empty()) {
+                try {
+                    int src = std::stoi(srcStr);
+                    int dst = std::stoi(dstStr);
+                    graph.addEdge(src, dst);
+                } catch (...) {}
+            }
         }
     }
     return true;
@@ -49,7 +64,24 @@ bool IOManager::saveJSON(const Graph& graph, const std::string& filepath) {
         if (i < graph.nodes.size() - 1) file << ",";
         file << "\n";
     }
-    file << "  ]\n}\n";
+    file << "  ],\n  \"edges\": [\n";
+
+    std::set<std::pair<int, int>> exported;
+    bool firstEdge = true;
+    for (const auto& node : graph.nodes) {
+        for (int nbr : node.neighbors) {
+            int u = node.index;
+            int v = nbr;
+            if (u > v) std::swap(u, v);
+            if (exported.find({u, v}) == exported.end()) {
+                if (!firstEdge) file << ",\n";
+                file << "    {\"source\": " << u << ", \"target\": " << v << "}";
+                exported.insert({u, v});
+                firstEdge = false;
+            }
+        }
+    }
+    file << "\n  ]\n}\n";
     return true;
 }
 

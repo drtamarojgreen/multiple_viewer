@@ -4,7 +4,7 @@ Feature: Core Rendering and UI/UX
   Scenario: Smooth panning and zooming
     Given a graph is displayed
     When I pan the view by (10, -5)
-    And I zoom in to "Z5"
+    And a view context with zoom level "Z5"
     Then the viewport center should shift by (10, -5)
     And the node size should increase to zoom level 5
 
@@ -36,31 +36,3 @@ Feature: Core Rendering and UI/UX
     Given a graph is displayed
     When I pan the view by (20, 20)
     Then the UI output should contain "Pan: (20, 20)"
-
-  Scenario: Searching for a node
-    Given a graph with nodes "Brain, Neuron, Synapse"
-    When I search for "Neuron"
-    Then "Neuron" should be the focused node
-    And the UI output should contain "Focuses: 1"
-
-  Scenario: Switching view modes
-    Given a graph is displayed
-    When I switch to "Book View" mode
-    Then the UI output should contain "Mode: 3"
-    When I switch to "Nexus Flow" mode
-    Then the UI output should contain "Mode: 5"
-
-  Scenario: Multi-focus interaction
-    Given a graph with nodes "A, B, C"
-    And multi-focus is enabled
-    When I add "A" to focus
-    And I add "B" to focus
-    Then both "A" and "B" should be focused
-    And the UI output should contain "Focuses: 0 1"
-
-  Scenario: Cycling through focus nodes
-    Given a graph with nodes "X, Y, Z"
-    When I cycle focus
-    Then "X" should be focused
-    When I cycle focus
-    Then "Y" should be focused

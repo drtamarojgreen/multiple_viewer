@@ -10,6 +10,17 @@
 
 namespace bdd {
 
+#ifndef EXPECT
+#define EXPECT(condition, ctx, message) \
+    do { \
+        if (!(condition)) { \
+            std::cerr << "[BDD ERROR] Assertion failed: " << message << "\n"; \
+            (ctx).success = false; \
+            return; \
+        } \
+    } while (0)
+#endif
+
 void registerAutomationSteps() {
     auto& runner = BDDRunner::getInstance();
 
@@ -26,7 +37,7 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("a node named \"(.*)\" with index (\\d+) should exist", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.graph.nodeExists(std::stoi(args[1])));
+        EXPECT(ctx.graph.nodeExists(std::stoi(args[1])), ctx, "Lua node missing");
     });
 
     runner.registerStep("a valid plugin \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -39,13 +50,13 @@ void registerAutomationSteps() {
 
     runner.registerStep("\"(.*)\" should be called for the plugin", [](BDDContext& ctx, const std::vector<std::string>& args) {
         if (args[0] == "onInit") {
-            assert(ctx.pluginLoaded == true);
+            EXPECT(ctx.pluginLoaded == true, ctx, "onInit not called");
         }
     });
 
     runner.registerStep("the plugin should be active in the manager", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.pluginLoaded == true);
-        assert(!ctx.loadedPluginName.empty());
+        EXPECT(ctx.pluginLoaded == true, ctx, "Plugin not loaded");
+        EXPECT(!ctx.loadedPluginName.empty(), ctx, "No plugin name");
     });
 
     runner.registerStep("the graph state at timestamp (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -67,9 +78,9 @@ void registerAutomationSteps() {
 
     runner.registerStep("I should be able to retrieve the original state from timestamp (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
         const Graph* snapshotGraph = ctx.temporalManager.getSnapshot(std::stoi(args[0]));
-        assert(snapshotGraph != nullptr);
+        EXPECT(snapshotGraph != nullptr, ctx, "Snapshot missing");
         ctx.graph = *snapshotGraph;
-        assert(ctx.graph.nodes.size() == ctx.initialGraphNodeCount);
+        EXPECT((int)ctx.graph.nodes.size() == ctx.initialGraphNodeCount, ctx, "Snapshot restore failed");
     });
 
     runner.registerStep("a hypothesis annotation \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -77,11 +88,11 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("I attach it to a cluster", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(!ctx.hypothesisAnnotation.empty());
+        EXPECT(!ctx.hypothesisAnnotation.empty(), ctx, "No hypothesis");
     });
 
     runner.registerStep("the cluster should store the annotation metadata", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(!ctx.hypothesisAnnotation.empty());
+        EXPECT(!ctx.hypothesisAnnotation.empty(), ctx, "Annotation metadata missing");
     });
 
     runner.registerStep("a graph with (.*) nodes distributed in 3D", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -94,23 +105,23 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("an Octree spatial index is used", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.spatialIndex = render::OctreeIndex({-10000, -10000, -10000, 10000, 10000, 10000}, 8, 0);
+        ctx.spatialIndex = std::make_unique<OctreeIndex>(SpatialBounds{-10000, -10000, -10000, 10000, 10000, 10000}, 8, 0);
         for(const auto& node : ctx.graph.nodes) {
             auto pos = ctx.graph.nodePos[node.index];
-            ctx.spatialIndex.insert(node.index, pos.x, pos.y, pos.z);
+            ctx.spatialIndex->insert(node.index, pos.x, pos.y, pos.z);
         }
     });
 
     runner.registerStep("I query nodes within a \\((.*), (.*), (.*)\\) bounding box", [](BDDContext& ctx, const std::vector<std::string>& args) {
         float x = std::stof(args[0]), y = std::stof(args[1]), z = std::stof(args[2]);
         render::SpatialBounds queryBounds{ 0, 0, 0, x, y, z };
-        auto results = ctx.spatialIndex.queryRange(queryBounds);
+        auto results = ctx.spatialIndex->queryRange(queryBounds);
         ctx.queryResultCount = results.size();
         ctx.lastResult = "queried";
     });
 
     runner.registerStep("the query should be significantly faster than exhaustive search", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.queryResultCount > 0);
+        EXPECT(ctx.queryResultCount > 0, ctx, "Spatial query returned no results");
     });
 
     runner.registerStep("the Web Server is running on port (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -125,8 +136,8 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("the response should contain the correct node and edge counts", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.webServerResponse.find(R"("nodes": 100)") != std::string::npos);
-        assert(ctx.webServerResponse.find(R"("edges": 200)") != std::string::npos);
+        EXPECT(ctx.webServerResponse.find(R"("nodes": 100)") != std::string::npos, ctx, "Incorrect node count in response");
+        EXPECT(ctx.webServerResponse.find(R"("edges": 200)") != std::string::npos, ctx, "Incorrect edge count in response");
     });
 
     runner.registerStep("the user is in the \"(.*)\" menu", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -139,7 +150,7 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("the system should provide information about \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.helpMessage.find(args[0]) != std::string::npos);
+        EXPECT(ctx.helpMessage.find(args[0]) != std::string::npos, ctx, "Help info missing");
     });
 
     runner.registerStep("a standard benchmark suite", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -147,7 +158,7 @@ void registerAutomationSteps() {
     });
 
     runner.registerStep("I run the performance tests", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.benchmarkSuiteReady == true);
+        EXPECT(ctx.benchmarkSuiteReady == true, ctx, "Benchmark suite not ready");
         ctx.lastResult = "FPS: 60";
     });
 
@@ -155,7 +166,7 @@ void registerAutomationSteps() {
         size_t pos = ctx.lastResult.find("FPS: ");
         if (pos != std::string::npos) {
             int fps = std::stoi(ctx.lastResult.substr(pos + 5));
-            assert(fps > std::stoi(args[0]));
+            EXPECT(fps > std::stoi(args[0]), ctx, "FPS too low");
         }
     });
 }

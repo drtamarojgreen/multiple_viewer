@@ -8,6 +8,7 @@
 #include <regex>
 #include <utility>
 #include <memory>
+#include <iostream>
 #include "../../src/input/command_stack.h"
 #include "../../src/map_logic.h"
 #include "../../src/model/brain_model.h"
@@ -34,6 +35,18 @@ using namespace brain_model::app;
 using namespace brain_model::core::contracts;
 using namespace render;
 
+// Standard assertion macro for BDD steps
+#ifndef EXPECT
+#define EXPECT(condition, ctx, message) \
+    do { \
+        if (!(condition)) { \
+            std::cerr << "      [BDD ERROR] Assertion failed: " << message << "\n"; \
+            (ctx).success = false; \
+            return; \
+        } \
+    } while (0)
+#endif
+
 struct BDDContext {
     Graph graph;
     model::BrainModel brainModel;
@@ -49,17 +62,17 @@ struct BDDContext {
     std::string loadedPluginName;
     TemporalManager temporalManager;
     std::string hypothesisAnnotation;
-    int initialGraphNodeCount;
-    int modifiedGraphNodeCount;
-    OctreeIndex spatialIndex = OctreeIndex({-1000, -1000, -1000, 1000, 1000, 1000}, 8, 0);
-    int queryResultCount;
-    WebServerStub webServer;
+    int initialGraphNodeCount = 0;
+    int modifiedGraphNodeCount = 0;
+    std::unique_ptr<OctreeIndex> spatialIndex;
+    int queryResultCount = 0;
+    std::unique_ptr<WebServerStub> webServer;
     std::string webServerResponse;
     std::string currentMenu;
     std::string helpMessage;
     bool benchmarkSuiteReady = false;
 
-    // Core Simulation Components
+    // Simulation components
     std::unique_ptr<SimulationKernel> simulationKernel;
     std::unique_ptr<SimulationKernel> simulationKernel2;
     SimulationSnapshot snapshot1;
@@ -68,16 +81,16 @@ struct BDDContext {
     std::shared_ptr<IOverlayService> mockOverlayService;
     std::shared_ptr<ISimulationKernel> mockSimulationKernel;
 
-    // Concrete instances
-    brain_model::core::SimulationKernel kernel;
-    brain_model::core::OverlayService overlayService;
     model::TemporalEngine temporalEngine;
 
     std::unique_ptr<print::UIPrinter> uiPrinter;
     std::string lastResult;
     bool success = true;
 
-    BDDContext() = default;
+    BDDContext() {
+        spatialIndex = std::make_unique<OctreeIndex>(SpatialBounds{-1000, -1000, -1000, 1000, 1000, 1000}, 8, 0);
+        webServer = std::make_unique<WebServerStub>();
+    }
 };
 
 using StepFunc = std::function<void(BDDContext&, const std::vector<std::string>&)>;
@@ -100,11 +113,6 @@ private:
     bool executeLine(BDDContext& ctx, const std::string& line);
     std::string trim(const std::string& s);
 };
-
-// Macro for registration
-#define GIVEN(pattern, ctx, args) BDDRunner::getInstance().registerStep(pattern, [](BDDContext& ctx, const std::vector<std::string>& args)
-#define WHEN(pattern, ctx, args) BDDRunner::getInstance().registerStep(pattern, [](BDDContext& ctx, const std::vector<std::string>& args)
-#define THEN(pattern, ctx, args) BDDRunner::getInstance().registerStep(pattern, [](BDDContext& ctx, const std::vector<std::string>& args)
 
 } // namespace bdd
 

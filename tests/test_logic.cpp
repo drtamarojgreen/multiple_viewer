@@ -1,6 +1,7 @@
 #include "../src/map_logic.h"
 #include "../src/viewer_logic.h"
 #include "../src/file_logic.h"
+#include "../src/io/io_manager.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -78,16 +79,57 @@ void testZBufferOutOfBounds() {
 
 void testGraphSerialization() {
     Graph g;
-    g.addNode(GraphNode("Node0", 0, {1}, 1, 1));
-    g.addNode(GraphNode("Node1", 1, {0}, 1, 1));
+    g.addNode(GraphNode("Node A", 0, {1}, 1, 0));
+    g.addNode(GraphNode("Node B", 1, {0, 2}, 1, 0));
+    g.addNode(GraphNode("Node C", 2, {1}, 1, 1));
     g.addEdge(0, 1);
-    saveGraphToCSV(g, "test_graph.csv");
+    g.addEdge(1, 2);
+    saveGraphToCSV(g, "test_graph_tmp.csv");
 
     Graph g2;
-    bool ok = loadGraphFromCSV(g2, "test_graph.csv");
-    TEST("graph reload success", ok);
-    TEST("graph reload node count", g2.nodeMap.size() == 2);
-    TEST("graph reload edge count", g2.edgeCount() == 1);
+    bool ok = loadGraphFromCSV(g2, "test_graph_tmp.csv");
+    TEST("CSV reload success", ok);
+    TEST("CSV reload node count", g2.nodeMap.size() == 3);
+    TEST("CSV reload edge count", g2.edgeCount() == 2);
+    TEST("CSV node label", g2.nodeMap.at(0).label == "Node A");
+}
+
+void testGraphSerializationJSON() {
+    Graph g;
+    g.addNode(GraphNode("Node A", 0));
+    g.addNode(GraphNode("Node B", 1));
+    g.addEdge(0, 1);
+    io::IOManager::saveJSON(g, "test_graph_tmp.json");
+
+    Graph g2;
+    bool ok = io::IOManager::loadJSON(g2, "test_graph_tmp.json");
+    TEST("JSON reload success", ok);
+    TEST("JSON reload node count", g2.nodeMap.size() == 2);
+    TEST("JSON reload edge count", g2.edgeCount() == 1);
+}
+
+void testBaselinePersistence() {
+    // CSV Baseline
+    Graph g_csv;
+    bool ok_csv = loadGraphFromCSV(g_csv, "test_graph.csv");
+    TEST("Baseline CSV load success", ok_csv);
+    if (ok_csv) {
+        TEST("Baseline CSV node count", g_csv.nodes.size() == 2);
+        TEST("Baseline CSV edge count", g_csv.edgeCount() == 1);
+        TEST("Baseline CSV label check", g_csv.nodeMap.at(100).label == "CSVNode");
+        TEST("Baseline CSV weight check", g_csv.nodeMap.at(100).weight == 10);
+        TEST("Baseline CSV subject check", g_csv.nodeMap.at(100).subjectIndex == 1);
+    }
+
+    // JSON Baseline
+    Graph g_json;
+    bool ok_json = io::IOManager::loadJSON(g_json, "test_graph.json");
+    TEST("Baseline JSON load success", ok_json);
+    if (ok_json) {
+        TEST("Baseline JSON node count", g_json.nodes.size() == 2);
+        TEST("Baseline JSON edge count", g_json.edgeCount() == 1);
+        TEST("Baseline JSON label check", g_json.nodeMap.at(200).label == "JSONNode");
+    }
 }
 
 
@@ -237,7 +279,7 @@ void testComputeSummaryEnhancements() {
   g.addEdge(2,0);
   g.updateSummary();
   TEST("avgClustering >0", g.summary.avgClusteringCoeff > 0.0f);
-  TEST("diameter ==1", g.summary.diameter == 1);
+  TEST("diameter == 1", g.summary.diameter == 1);
 }
 
 
@@ -261,6 +303,8 @@ void runAllTests() {
       testEdgeAddition();
       testZBufferOutOfBounds();
       testGraphSerialization();
+      testGraphSerializationJSON();
+      testBaselinePersistence();
 
       int total = testsPassed + testsFailed;
       std::cout << "\nResults: " << testsPassed
@@ -274,7 +318,6 @@ void runAllTests() {
 
       if (testsFailed > 0) {
         std::cerr << "Failed Tests: " << testsFailed << " test(s) failed. Review above results.\n";
-        // continue gracefully without terminating
       } else {
         std::cout << "All tests passed. You're good to go.\n";
       }
