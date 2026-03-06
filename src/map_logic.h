@@ -50,6 +50,7 @@ struct ViewContext {
     int maxRenderDistance = 3;
     int width = DEFAULT_CONSOLE_WIDTH;
     int height = DEFAULT_CONSOLE_HEIGHT;
+    bool showMinimap = true;
 
     void zoomIn();
     void zoomOut();
@@ -195,7 +196,7 @@ struct BookChapter {
 
 // Free helper functions
 // Book-based structure
-std::vector<BookChapter> createBookStructure(const Graph& graph);
+std::vector<BookChapter> createBookStructure(const Graph& g, const ViewContext& view);
 
 // Grid-based layering
 int getGridLayer(int nodeIndex, int layerCount);
@@ -217,5 +218,3 @@ int getAdaptiveLabelLength(int depth, ZoomLevel zoom, int baseLen = 10);
 int calculateNodeSize(int depth, ZoomLevel zoom);
 
 #endif // MAP_LOGIC_H
-
-

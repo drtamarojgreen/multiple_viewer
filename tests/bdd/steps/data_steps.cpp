@@ -4,7 +4,6 @@
 #include "analytics/analytics_engine_ext.h"
 #include "viewer_logic.h"
 #include <iostream>
-#include <cassert>
 #include <fstream>
 
 namespace bdd {
@@ -32,31 +31,51 @@ void registerDataSteps() {
         out.close();
 
         std::ifstream verify(args[0]);
-        assert(verify.is_open());
+        EXPECT(verify.is_open(), ctx, "Failed to create JSON file " + args[0]);
     });
 
     runner.registerStep("I load the graph from \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        bool ok = false;
         if (args[0].find(".json") != std::string::npos) {
-             io::IOManager::loadJSON(ctx.graph, args[0]);
+             ok = io::IOManager::loadJSON(ctx.graph, args[0]);
         } else {
-             loadGraphFromCSV(ctx.graph, args[0]);
+             ok = loadGraphFromCSV(ctx.graph, args[0]);
         }
+        EXPECT(ok, ctx, "Failed to load graph from " + args[0]);
         ctx.lastResult = std::to_string(ctx.graph.nodes.size());
-        std::cout << "[STEP] I load the graph from " << args[0] << " Result count: " << ctx.lastResult << std::endl;
+    });
+
+    runner.registerStep("I load the graph from \"(.*)\" in JSON format", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        bool ok = io::IOManager::loadJSON(ctx.graph, args[0]);
+        EXPECT(ok, ctx, "Failed to load JSON graph from " + args[0]);
+        ctx.lastResult = std::to_string(ctx.graph.nodes.size());
+    });
+
+    runner.registerStep("I save the graph to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        bool ok = saveGraphToCSV(ctx.graph, args[0]);
+        EXPECT(ok, ctx, "Failed to save CSV graph to " + args[0]);
+    });
+
+    runner.registerStep("I save the graph to \"(.*)\" in JSON format", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        bool ok = io::IOManager::saveJSON(ctx.graph, args[0]);
+        EXPECT(ok, ctx, "Failed to save JSON graph to " + args[0]);
+    });
+
+    runner.registerStep("I clear the current graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.clear();
     });
 
     runner.registerStep("a populated graph with nodes and edges", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.clear();
         ctx.graph.addNode(GraphNode("A", 0, {}, 1, 0));
         ctx.graph.addNode(GraphNode("B", 1, {}, 1, 0));
         ctx.graph.addEdge(0, 1);
     });
 
     runner.registerStep("the graph should contain \"(.*)\" nodes and \"(.*)\" edges", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        assert(ctx.graph.nodes.size() == std::stoul(args[0]));
-        assert(ctx.graph.edgeCount() == std::stoul(args[1]));
+        EXPECT(ctx.graph.nodes.size() == std::stoul(args[0]), ctx, "Node count mismatch");
+        EXPECT(ctx.graph.edgeCount() == std::stoul(args[1]), ctx, "Edge count mismatch");
     });
-
-
 
     runner.registerStep("I export the graph as SVG to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         io::IOManager::exportSVG(ctx.graph, args[0]);
@@ -66,9 +85,9 @@ void registerDataSteps() {
 
     runner.registerStep("the file \"(.*)\" should be created and contain \"<svg\" tags", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::ifstream in(args[0]);
-        assert(in.is_open());
+        EXPECT(in.is_open(), ctx, "SVG file " + args[0] + " was not created");
         std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-        assert(content.find("<svg") != std::string::npos);
+        EXPECT(content.find("<svg") != std::string::npos, ctx, "SVG tags missing in " + args[0]);
     });
 
     runner.registerStep("a graph with three distinct clusters", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -89,15 +108,14 @@ void registerDataSteps() {
     });
 
     runner.registerStep("it should identify \"(.*)\" communities", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        std::cout << "[DEBUG] Expected: " << args[0] << ", Actual: " << ctx.lastResult << std::endl;
-        assert(ctx.lastResult == args[0]);
+        EXPECT(ctx.lastResult == args[0], ctx, "Community count mismatch");
     });
 
     runner.registerStep("the file \"(.*)\" should be created and contain \"(.*)\" tags", [](BDDContext& ctx, const std::vector<std::string>& args) {
         std::ifstream in(args[0]);
-        assert(in.is_open());
+        EXPECT(in.is_open(), ctx, "File " + args[0] + " was not created");
         std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-        assert(content.find(args[1]) != std::string::npos);
+        EXPECT(content.find(args[1]) != std::string::npos, ctx, "Tag missing");
     });
 
     runner.registerStep("a star-topology graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
@@ -110,6 +128,7 @@ void registerDataSteps() {
     });
 
     runner.registerStep("a populated graph", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.clear();
         ctx.graph.addNode(GraphNode("N1", 0, {}, 1, 0));
         ctx.graph.addNode(GraphNode("N2", 1, {}, 1, 0));
         ctx.graph.addEdge(0, 1);
@@ -126,7 +145,7 @@ void registerDataSteps() {
     });
 
     runner.registerStep("the center node should have the \"(.*)\" centrality score", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        if(args[0] == "HIGHEST") assert(ctx.lastResult == "0");
+        if(args[0] == "HIGHEST") EXPECT(ctx.lastResult == "0", ctx, "Centrality mismatch");
     });
 }
 

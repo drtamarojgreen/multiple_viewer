@@ -124,24 +124,28 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
 
     // Second pass: convert neighbor tokens to ints and add edges symmetrically
     for (size_t i = 0; i < loadedNodeIds.size(); ++i) {
+        if (i >= neighborTokens.size()) break;
         int from = loadedNodeIds[i];
-        if (i >= neighborTokens.size()) continue;
+        if (!graph.nodeExists(from)) continue;
+
         for (const auto& tok : neighborTokens[i]) {
             try {
+                if (tok.empty()) continue;
                 int to = std::stoi(tok);
                 // To avoid duplicate edges in undirected graph loading,
                 // only add if from < to OR if the other node hasn't been added yet
-                if (graph.nodeExists(to)) {
+                if (graph.nodeExists(to) && from != to) {
                     bool alreadyExists = false;
-                    for (int nbr : graph.nodeMap[from].neighbors) {
+                    const auto& fromNode = graph.nodeMap.at(from);
+                    for (int nbr : fromNode.neighbors) {
                         if (nbr == to) { alreadyExists = true; break; }
                     }
                     if (!alreadyExists) {
                         graph.addEdge(from, to);
                     }
                 }
-            } catch (...) {
-                std::cerr << "[WARN] Failed to parse neighbor token: '" << tok << "' for node " << from << "\n";
+            } catch (const std::exception& e) {
+                std::cerr << "[WARN] Failed to parse neighbor token: '" << tok << "' for node " << from << ": " << e.what() << "\n";
             }
         }
     }

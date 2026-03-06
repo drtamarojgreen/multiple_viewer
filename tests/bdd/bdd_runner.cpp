@@ -22,7 +22,6 @@ bool BDDRunner::executeLine(BDDContext& ctx, const std::string& line) {
     std::string trimmed = trim(line);
     if (trimmed.empty() || trimmed[0] == '#') return true;
 
-    // Remove Gherkin keywords
     std::vector<std::string> keywords = {"Given ", "When ", "Then ", "And ", "But "};
     std::string action = "";
     bool found = false;
@@ -34,36 +33,37 @@ bool BDDRunner::executeLine(BDDContext& ctx, const std::string& line) {
         }
     }
 
-    if (!found) return true; // Ignore lines that don't start with a keyword (descriptions, etc.)
+    if (!found) return true;
 
-    // Matcher: iterate through registered regexes
+    std::cout << "      [STEP] " << action << std::endl;
+
     for (const auto& step : steps_) {
         std::smatch match;
         if (std::regex_match(action, match, step.first)) {
             std::vector<std::string> args;
-            for (size_t i = 1; i < match.size(); ++i) {
+            for (size_t i = 1; i < (size_t)match.size(); ++i) {
                 args.push_back(match[i].str());
             }
             try {
                 step.second(ctx, args);
                 if (!ctx.success) {
-                    std::cerr << "[BDD ERROR] Step failed assertions: " << action << "\n";
+                    std::cerr << "      [FAIL] " << action << std::endl;
                     return false;
                 }
                 return true;
             } catch (const std::exception& e) {
-                std::cerr << "[BDD ERROR] Step threw exception: " << action << " - " << e.what() << "\n";
+                std::cerr << "      [EXCP] " << action << " : " << e.what() << std::endl;
                 ctx.success = false;
                 return false;
             } catch (...) {
-                std::cerr << "[BDD ERROR] Step threw unknown exception: " << action << "\n";
+                std::cerr << "      [EXCP] " << action << " : unknown" << std::endl;
                 ctx.success = false;
                 return false;
             }
         }
     }
 
-    std::cerr << "[BDD WARNING] No step match found for: " << action << "\n";
+    std::cerr << "      [MISS] " << action << std::endl;
     ctx.success = false;
     return false;
 }
@@ -75,55 +75,41 @@ bool BDDRunner::runFeature(const std::string& filepath) {
         return false;
     }
 
-    auto ctx = std::make_unique<BDDContext>();
     std::string line;
     std::cout << "[BDD] Running feature: " << filepath << "\n";
     
+    std::unique_ptr<BDDContext> ctx = nullptr;
     bool featureSuccess = true;
+
     while (std::getline(file, line)) {
         std::string t = trim(line);
+        if (t.empty()) continue;
+
         if (t.compare(0, 8, "Feature:") == 0) {
             std::cout << "  " << t << "\n";
             continue;
         }
+
         if (t.compare(0, 9, "Scenario:") == 0) {
             std::cout << "    " << t << "\n";
-            // Reset context for each scenario
-            ctx->graph.clear();
-            ctx->brainModel.clear();
-            ctx->overlay = model::BrainOverlay();
-            ctx->commandStack = CommandStack();
-            ctx->viewContext = ViewContext();
-            ctx->minimapVisible = false;
-            ctx->minimapFocusArea = "";
-            ctx->saveGraphCommandExecuted = false;
-            ctx->svgExported = false;
-            ctx->centralityMetrics = CentralityMetrics();
-            ctx->pluginLoaded = false;
-            ctx->loadedPluginName = "";
-            ctx->temporalManager = TemporalManager();
-            ctx->hypothesisAnnotation = "";
-            ctx->initialGraphNodeCount = 0;
-            ctx->modifiedGraphNodeCount = 0;
-            ctx->spatialIndex = OctreeIndex({-1000, -1000, -1000, 1000, 1000, 1000}, 8, 0);
-            ctx->queryResultCount = 0;
-            ctx->webServer = WebServerStub();
-            ctx->webServerResponse = "";
-            ctx->currentMenu = "";
-            ctx->helpMessage = "";
-            ctx->benchmarkSuiteReady = false;
-            ctx->simulationKernel.reset();
-            ctx->simulationKernel2.reset();
-            ctx->integratedBrainModel.reset();
-            ctx->mockOverlayService.reset();
-            ctx->mockSimulationKernel.reset();
-            ctx->lastResult = "";
-            ctx->success = true;
+            ctx = std::make_unique<BDDContext>();
             continue;
         }
         
-        if (!executeLine(*ctx, line)) {
-            featureSuccess = false;
+        if (ctx) {
+            // std::cout << "DEBUG: line=[" << line << "]" << std::endl;
+            if (!executeLine(*ctx, line)) {
+                featureSuccess = false;
+                // Skip rest of scenario
+                while (std::getline(file, line)) {
+                    t = trim(line);
+                    if (t.compare(0, 9, "Scenario:") == 0) {
+                        std::cout << "    " << t << "\n";
+                        ctx = std::make_unique<BDDContext>();
+                        break;
+                    }
+                }
+            }
         }
     }
     

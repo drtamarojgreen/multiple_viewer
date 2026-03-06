@@ -4,7 +4,7 @@ Feature: Core Rendering and UI/UX
   Scenario: Smooth panning and zooming
     Given a graph is displayed
     When I pan the view by (10, -5)
-    And I zoom in to "Z5"
+    And a view context with zoom level "Z5"
     Then the viewport center should shift by (10, -5)
     And the node size should increase to zoom level 5
 
