@@ -75,6 +75,8 @@ struct BDDContext {
     // Simulation components
     std::shared_ptr<ISimulationKernel> kernel;
     std::shared_ptr<IOverlayService> overlayService;
+    std::unique_ptr<SimulationKernel> simulationKernel;
+    std::unique_ptr<SimulationKernel> simulationKernel2;
     SimulationSnapshot snapshot1;
     SimulationSnapshot snapshot2;
     std::unique_ptr<IntegratedBrainModel> integratedBrainModel;
