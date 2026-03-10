@@ -48,7 +48,7 @@ void drawViewerMenu() {
     std::cout << "[↑↓←→/IJKL] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist  [/] Search\n";
     std::cout << "[TAB] Cycle Focus [B] Book View [N] Next View [E] Page View [V] Page Cycle [Z] Zoom In   [X] Zoom Out\n";
     std::cout << "[M] Multi Foci Toggle\n";
-    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [U] Load  [ESC] Exit\n";
+    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [Y] Minimap  [S] Save  [U] Load  [ESC] Exit\n";
     std::cout << "==============================\n\n";
 }
 
@@ -526,6 +526,7 @@ void runEditor(Graph& graph, bool runTests) {
         renderNodePage(graph, idx);
     });
     shortcutManager.registerShortcut('M', [&]() { Config::allowMultiFocus = !Config::allowMultiFocus; });
+    shortcutManager.registerShortcut('Y', [&]() { view.showMinimap = !view.showMinimap; });
     shortcutManager.registerShortcut('\t', [&]() { graph.cycleFocus(); });
     shortcutManager.registerShortcut('N', [&]() {
         int current = (static_cast<int>(view.currentViewMode) + 1) % (static_cast<int>(VM_COUNT));

@@ -112,8 +112,25 @@ void registerUISteps() {
 
     runner.registerStep("a minimap should be visible in the corner", [](BDDContext& ctx, const std::vector<std::string>& args) {
         if (ctx.uiPrinter) {
+            ctx.uiPrinter->clear();
+            ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
             std::string output = ctx.uiPrinter->getPrintedOutput();
             EXPECT(output.find("Minimap: ON") != std::string::npos, ctx, "Minimap OFF");
+        }
+    });
+
+    runner.registerStep("the minimap is \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        if (args[0] == "ON") ctx.viewContext.showMinimap = true;
+        else ctx.viewContext.showMinimap = false;
+    });
+
+    runner.registerStep("the minimap should be \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        if (ctx.uiPrinter) {
+            ctx.uiPrinter->clear();
+            ctx.uiPrinter->render(ctx.graph, ctx.viewContext);
+            std::string output = ctx.uiPrinter->getPrintedOutput();
+            std::string expected = "Minimap: " + args[0];
+            EXPECT(output.find(expected) != std::string::npos, ctx, "Minimap status mismatch");
         }
     });
 
@@ -134,6 +151,7 @@ void registerUISteps() {
 
     runner.registerStep("I press '(.*)'", [](BDDContext& ctx, const std::vector<std::string>& args) {
         if (args[0] == "Ctrl+S") ctx.saveGraphCommandExecuted = true;
+        if (args[0] == "Y") ctx.viewContext.showMinimap = !ctx.viewContext.showMinimap;
     });
 
     runner.registerStep("the \"(.*)\" command should be executed", [](BDDContext& ctx, const std::vector<std::string>& args) {

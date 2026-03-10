@@ -83,6 +83,9 @@ struct BDDContext {
     std::shared_ptr<IOverlayService> mockOverlayService;
     std::shared_ptr<ISimulationKernel> mockSimulationKernel;
 
+    std::shared_ptr<ISimulationKernel> kernel;
+    std::shared_ptr<IOverlayService> overlayService;
+
     model::TemporalEngine temporalEngine;
 
     std::unique_ptr<print::UIPrinter> uiPrinter;
@@ -92,6 +95,8 @@ struct BDDContext {
     BDDContext() {
         spatialIndex = std::make_unique<OctreeIndex>(SpatialBounds{-1000, -1000, -1000, 1000, 1000, 1000}, 8, 0);
         webServer = std::make_unique<WebServerStub>();
+        kernel = std::make_shared<SimulationKernel>();
+        overlayService = std::make_shared<OverlayService>();
     }
 };
 
