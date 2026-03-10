@@ -526,6 +526,7 @@ void runEditor(Graph& graph, bool runTests) {
         renderNodePage(graph, idx);
     });
     shortcutManager.registerShortcut('M', [&]() { Config::allowMultiFocus = !Config::allowMultiFocus; });
+    shortcutManager.registerShortcut('H', [&]() { view.showHelp = !view.showHelp; });
     shortcutManager.registerShortcut('\t', [&]() { graph.cycleFocus(); });
     shortcutManager.registerShortcut('N', [&]() {
         int current = (static_cast<int>(view.currentViewMode) + 1) % (static_cast<int>(VM_COUNT));

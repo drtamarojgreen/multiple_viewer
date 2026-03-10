@@ -80,6 +80,8 @@ void LayoutManager::applyHierarchical(Graph& graph) {
 }
 
 void LayoutManager::applyPerspectiveBFS(Graph& graph, ViewContext& view) {
+    if (!graph.layoutDirty && !graph.layoutPositions.empty()) return;
+
     // Moved from ConsoleRenderer::render / viewer_logic.cpp renderGraph
     graph.layoutPositions.clear();
     graph.nodePos.clear();

@@ -40,6 +40,8 @@ void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
     } else if (view.currentViewMode == VM_NEXUS_FLOW) {
         layout::LayoutManager::applyForceDirected(mutableGraph, mutableView);
         frameBuffer_->setTitle("CBT Graph Viewer (Nexus Flow)");
+    } else if (view.currentViewMode == VM_BOOK_VIEW) {
+        frameBuffer_->setTitle("CBT Graph Viewer (Book View)");
     }
 
     // Render Edges
@@ -79,6 +81,31 @@ void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
 
         // Label
         frameBuffer_->drawString(static_cast<int>(p.x + size / 2 + 1), static_cast<int>(p.y + size / 2 + 1), node.label, static_cast<float>(depth));
+    }
+
+    if (view.currentViewMode == VM_BOOK_VIEW) {
+        auto chapters = createBookStructure(graph, view);
+        int y = 2;
+        for (const auto& ch : chapters) {
+            frameBuffer_->drawString(2, y++, "-- " + ch.chapterTitle + " (Depth " + std::to_string(ch.chapterDepth) + ") --", -1.0f);
+            for (int nodeId : ch.nodeIds) {
+                bool isFocused = graph.isNodeFocused(nodeId);
+                frameBuffer_->drawString(4, y++, (isFocused ? "> [" : "  [") + graph.nodeMap.at(nodeId).label + "]", -1.0f);
+            }
+            y++;
+        }
+    }
+
+    if (view.showHelp) {
+        int y = 2;
+        frameBuffer_->drawRect(5, 1, 70, 12, '+', -1.0f);
+        frameBuffer_->drawString(7, y++, "=== CBT Graph Viewer Menu ===", -1.0f);
+        frameBuffer_->drawString(7, y++, "[↑↓←→/IJKL] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus", -1.0f);
+        frameBuffer_->drawString(7, y++, "[T] Set Dist  [/] Search  [TAB] Cycle Focus  [B] Book View", -1.0f);
+        frameBuffer_->drawString(7, y++, "[N] Next View [E] Page View [V] Page Cycle [Z] Zoom In [X] Zoom Out", -1.0f);
+        frameBuffer_->drawString(7, y++, "[M] Multi Foci Toggle  [H] Toggle Help", -1.0f);
+        frameBuffer_->drawString(7, y++, "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [U] Load", -1.0f);
+        frameBuffer_->drawString(7, y++, "[ESC] Exit", -1.0f);
     }
 }
 
