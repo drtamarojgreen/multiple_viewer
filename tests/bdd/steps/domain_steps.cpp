@@ -7,6 +7,7 @@
 namespace bdd {
 
 using namespace brain_model::app;
+using namespace brain_model::core; // Add this line
 using namespace brain_model::core::contracts;
 
 // Mock IOverlayService
