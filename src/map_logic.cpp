@@ -171,6 +171,7 @@ void Graph::addFocus(int idx) {
         focusedNodeIndices.insert(idx);
         focusedNodeIndex = idx;
     }
+    layoutDirty = true;
 }
 
 void Graph::removeFocus(int idx) {

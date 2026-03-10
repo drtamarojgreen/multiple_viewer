@@ -31,9 +31,9 @@ void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
     viewport_->setPan(view.panX, view.panY);
 
     if (view.currentViewMode == VM_PERSPECTIVE) {
-        frameBuffer_->setTitle("CBT Graph Viewer (Full Layout)");
+        frameBuffer_->setTitle("Full Layout");
     } else if (view.currentViewMode == VM_NEXUS_FLOW) {
-        frameBuffer_->setTitle("CBT Graph Viewer (Nexus Flow)");
+        frameBuffer_->setTitle("Nexus Flow");
     } else if (view.currentViewMode == VM_BOOK_VIEW) {
         frameBuffer_->setTitle("CBT Graph Viewer (Book View)");
     }
@@ -78,6 +78,7 @@ void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
     }
 
     if (view.currentViewMode == VM_BOOK_VIEW) {
+        frameBuffer_->setTitle("Book View");
         auto chapters = createBookStructure(graph, view);
         int y = 2;
         for (const auto& ch : chapters) {

@@ -38,7 +38,9 @@ void runBDDTests() {
         root + "/tests/bdd/features/original_functionality.feature",
         root + "/tests/bdd/features/brain_model.feature",
         root + "/tests/bdd/features/rendering_ui.feature",
-        root + "/tests/bdd/features/data_analytics.feature"
+        root + "/tests/bdd/features/data_analytics.feature",
+        root + "/tests/bdd/features/layout_stability.feature",
+        root + "/tests/bdd/features/menu_functionality.feature"
     };
 
     for (const auto& feature : features) {

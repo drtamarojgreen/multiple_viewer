@@ -27,7 +27,7 @@ std::vector<int> findSimilarTopics(const Graph& graph, const std::string& search
 
         bool allTokensMatch = true;
         for (const auto& t : tokens) {
-            if (l.find(t) == std::string::npos) {
+            if (lowerLabel.find(t) == std::string::npos) {
                 // Also check subject index or other attributes as a fallback scope
                 std::string subjectStr = std::to_string(node.subjectIndex);
                 if (subjectStr.find(t) == std::string::npos) {

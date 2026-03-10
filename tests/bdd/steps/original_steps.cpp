@@ -15,7 +15,6 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("a graph with node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.clear();
         ctx.graph.addNode(GraphNode("", std::stoi(args[0]), {}, 1, 0));
     });
 

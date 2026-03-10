@@ -166,6 +166,7 @@ void LayoutManager::applyPerspectiveBFS(Graph& graph, ViewContext& view) {
         }
     }
     graph.layoutDirty = false;
+    graph.needsLayoutReset = false;
 }
 
 } // namespace layout
