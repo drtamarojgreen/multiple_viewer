@@ -49,11 +49,25 @@ void drawViewerMenu() {
     std::cout << "[↑↓←→/IJKL] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist  [/] Search\n";
     std::cout << "[TAB] Cycle Focus [B] Book View [N] Next View [E] Page View [V] Page Cycle [Z] Zoom In   [X] Zoom Out\n";
     std::cout << "[M] Multi Foci Toggle\n";
-    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [U] Load  [ESC] Exit\n";
-    std::cout << "==============================\n\n";
+    std::cout << "[G] Analytics  [D] DepthScale  [W] Weights  [Y] Minimap  [S] Save  [U] Load  [ESC] Exit\n";
+    std::cout << "==============================\n";
 }
 
-void renderNexusFlow(Graph& graph, NexusPhysicsState& physics) {
+void drawStatusBar(const SearchState& search) {
+    if (search.isActive) {
+        std::cout << " SEARCH: " << search.keyword << "_";
+        if (search.lastSearchHadNoResults) {
+            std::cout << " [No Results]";
+        } else if (!search.matches.empty()) {
+            std::cout << " [" << (search.activeMatchIndex + 1) << "/" << search.matches.size() << "]";
+        }
+    } else {
+        std::cout << " [Mode: Navigation]";
+    }
+    std::cout << "\n\n";
+}
+
+void renderNexusFlow(Graph& graph, NexusPhysicsState& physics, const SearchState& search) {
     // --- Constants for Force-Directed Layout ---
     const float k_repel = 2000.0f;  // Repulsive force strength
     const float k_attract = 0.05f; // Attractive force (spring)
@@ -164,7 +178,12 @@ void renderNexusFlow(Graph& graph, NexusPhysicsState& physics) {
         int r = physics.positions[node.index].y;
         int c = physics.positions[node.index].x;
         if (r >= 0 && r < DEFAULT_CONSOLE_HEIGHT && c >= 0 && c < DEFAULT_CONSOLE_WIDTH) {
-             char glyph = (graph.isNodeFocused(node.index)) ? 'O' : 'X';
+            char glyph = 'X';
+            if (search.isActive && std::find(search.matches.begin(), search.matches.end(), node.index) != search.matches.end()) {
+                glyph = (search.getActiveMatchNodeId() == node.index) ? 'S' : 's';
+            } else if (graph.isNodeFocused(node.index)) {
+                glyph = 'O';
+            }
             screen[r][c] = glyph;
         }
     }
@@ -174,8 +193,9 @@ void renderNexusFlow(Graph& graph, NexusPhysicsState& physics) {
     for (const auto& row : screen) {
         cout << row << "\n";
     }
-    cout << "[O: focused, X: node, .: edge]" << endl;
+    cout << "[O: focused, S/s: search, X: node, .: edge]" << endl;
     drawViewerMenu();
+    drawStatusBar(search);
 }
 
 void renderMindMap(const Graph& graph) {
@@ -197,7 +217,7 @@ void renderMindMap(const Graph& graph) {
     std::cout << "\n";
 }
 
-void renderGraph(const Graph& graph, const ViewContext& view) {
+void renderGraph(const Graph& graph, const ViewContext& view, const SearchState& search) {
     std::cout << "[DBG] panX=" << view.panX << "  panY=" << view.panY << "\n";
     std::cout << "\n=== CBT Graph Render (Full Layout) ===\n";
 
@@ -302,6 +322,10 @@ void renderGraph(const Graph& graph, const ViewContext& view) {
                     node.subjectIndex % 4 == 1 ? '#' :
                     node.subjectIndex % 4 == 2 ? 'O' : 'X');
 
+        if (search.isActive && std::find(search.matches.begin(), search.matches.end(), node.index) != search.matches.end()) {
+            glyph = (search.getActiveMatchNodeId() == node.index) ? 'S' : 's';
+        }
+
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
                 int r = wr + i - size / 2 + view.panY;
@@ -373,9 +397,10 @@ void renderGraph(const Graph& graph, const ViewContext& view) {
     for (const auto& row : screen) {
         cout << row << "\n";
     }
-    cout << "[X: node  .: edge]" << endl;
+    cout << "[S/s: search results, X/@/#/O: nodes, .: edge]" << endl;
     render::MinimapRenderer::render(graph, view);
     drawViewerMenu();
+    drawStatusBar(search);
 }
 
 void panView(Direction dir) {
@@ -415,7 +440,7 @@ void handleKeyPress(char key, input::ShortcutManager& shortcutManager) {
     shortcutManager.handleKey(std::toupper(key));
 }
 
-void renderBookView(Graph& graph, const ViewContext& view) {
+void renderBookView(Graph& graph, const ViewContext& view, const SearchState& search) {
     clearScreen();
     cout << "=== CBT Graph Viewer (Book View) ===\n";
 
@@ -430,12 +455,21 @@ void renderBookView(Graph& graph, const ViewContext& view) {
         for (int nodeId : ch.nodeIds) {
             if (row >= view.height - 1) break;
             bool isFocused = graph.isNodeFocused(nodeId);
-            cout << (isFocused ? " > " : "   ") << "[" << graph.nodeMap.at(nodeId).label << "]\n";
+            bool isMatch = search.isActive && std::find(search.matches.begin(), search.matches.end(), nodeId) != search.matches.end();
+            bool isActiveMatch = search.getActiveMatchNodeId() == nodeId;
+
+            if (isActiveMatch) std::cout << " >>";
+            else if (isMatch) std::cout << "  >";
+            else if (isFocused) std::cout << "  o";
+            else std::cout << "   ";
+
+            cout << "[" << graph.nodeMap.at(nodeId).label << "]\n";
             row++;
         }
     }
 
     drawViewerMenu();
+    drawStatusBar(search);
 }
 
 #include "console_logic.h"
@@ -456,6 +490,7 @@ void runEditor(Graph& graph, bool runTests) {
     ViewContext view;
     input::CommandStack commandStack;
     input::ShortcutManager shortcutManager;
+    SearchState searchState;
 
     auto renderer = render::RendererFactory::createRenderer(render::RendererType::CONSOLE);
     renderer->initialize(view.width, view.height + 10);
@@ -512,6 +547,8 @@ void runEditor(Graph& graph, bool runTests) {
                 renderer->setStatusMessage("No matches found.");
             }
         }
+        searchState.isActive = true;
+        // Don't clear existing keyword, allow editing
     });
     shortcutManager.registerShortcut('Z', [&]() { view.zoomIn(); });
     shortcutManager.registerShortcut('X', [&]() { view.zoomOut(); });
@@ -541,6 +578,17 @@ void runEditor(Graph& graph, bool runTests) {
             layout::LayoutManager::applyPerspectiveBFS(graph, view);
         } else if (view.currentViewMode == VM_NEXUS_FLOW) {
             layout::LayoutManager::applyForceDirected(graph, view);
+        switch (view.currentViewMode) {
+            case VM_NEXUS_FLOW:
+                renderNexusFlow(graph, nexusPhysics, searchState);
+                break;
+            case VM_BOOK_VIEW:
+                renderBookView(graph, view, searchState);
+                break;
+            case VM_PERSPECTIVE:
+            default:
+                renderGraph(graph, view, searchState);
+                break;
         }
 
         renderer->clear();
@@ -552,23 +600,67 @@ void runEditor(Graph& graph, bool runTests) {
         int key = get_char_non_blocking();
 
         if (key != -1) {
-            if (key == 27) { // ESC key
-                int next_key = get_char_non_blocking();
-                if (next_key == -1) { // A single ESC press
-                    std::cout << "[Viewer] Exiting viewer mode\n";
-                    break;
-                }
-                if (next_key == '[') {
-                    int arrow_key = get_char_non_blocking();
-                    switch (arrow_key) {
-                        case 'A': view.pan(0, -1); break; // Up
-                        case 'B': view.pan(0, 1); break;  // Down
-                        case 'C': view.pan(1, 0); break;  // Right
-                        case 'D': view.pan(-1, 0); break; // Left
+            if (searchState.isActive) {
+                if (key == 27) { // ESC or Arrow start
+                    int next_key = get_char_non_blocking();
+                    if (next_key == -1) { // Cancel search
+                        searchState.isActive = false;
+                    } else if (next_key == '[') {
+                        int arrow_key = get_char_non_blocking();
+                        // Cycle through results with arrows? Or just pan?
+                        // Let's use arrows for result navigation in search mode
+                        if (!searchState.matches.empty()) {
+                            if (arrow_key == 'A' || arrow_key == 'D') { // Up or Left -> Previous
+                                searchState.activeMatchIndex = (searchState.activeMatchIndex - 1 + searchState.matches.size()) % searchState.matches.size();
+                            } else if (arrow_key == 'B' || arrow_key == 'C') { // Down or Right -> Next
+                                searchState.activeMatchIndex = (searchState.activeMatchIndex + 1) % searchState.matches.size();
+                            }
+                            // Auto-focus the active match
+                            if (searchState.activeMatchIndex != -1) {
+                                graph.clearFocuses();
+                                graph.addFocus(searchState.matches[searchState.activeMatchIndex]);
+                            }
+                        }
+                    }
+                } else if (key == 10 || key == 13) { // Enter
+                    searchState.isActive = false;
+                } else if (key == 127 || key == 8) { // Backspace
+                    if (!searchState.keyword.empty()) {
+                        searchState.keyword.pop_back();
+                        searchState.matches = findSimilarTopics(graph, searchState.keyword);
+                        searchState.lastSearchHadNoResults = !searchState.keyword.empty() && searchState.matches.empty();
+                        searchState.activeMatchIndex = searchState.matches.empty() ? -1 : 0;
+                    }
+                } else if (isprint(key)) {
+                    searchState.keyword += static_cast<char>(key);
+                    searchState.matches = findSimilarTopics(graph, searchState.keyword);
+                    searchState.lastSearchHadNoResults = searchState.matches.empty();
+                    searchState.activeMatchIndex = searchState.matches.empty() ? -1 : 0;
+
+                    if (!searchState.matches.empty()) {
+                        graph.clearFocuses();
+                        graph.addFocus(searchState.matches[0]);
                     }
                 }
             } else {
-                handleKeyPress(static_cast<char>(key), shortcutManager);
+                if (key == 27) { // ESC key
+                    int next_key = get_char_non_blocking();
+                    if (next_key == -1) { // A single ESC press
+                        std::cout << "[Viewer] Exiting viewer mode\n";
+                        break;
+                    }
+                    if (next_key == '[') {
+                        int arrow_key = get_char_non_blocking();
+                        switch (arrow_key) {
+                            case 'A': view.pan(0, -1); break; // Up
+                            case 'B': view.pan(0, 1); break;  // Down
+                            case 'C': view.pan(1, 0); break;  // Right
+                            case 'D': view.pan(-1, 0); break; // Left
+                        }
+                    }
+                } else {
+                    handleKeyPress(static_cast<char>(key), shortcutManager);
+                }
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS

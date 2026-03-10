@@ -1,21 +1,43 @@
 #include "search_logic.h"
 #include <algorithm>
 #include <string>
+#include <sstream>
 #include <cctype>
 
 // Function to search for nodes by topic label
 std::vector<int> findSimilarTopics(const Graph& graph, const std::string& searchTerm) {
-    std::vector<int> results;
-    if (searchTerm.empty()) return results;
+    if (searchTerm.empty()) return {};
 
-    std::string s = searchTerm;
-    for (auto &c : s) c = std::tolower((unsigned char)c);
+    std::vector<int> results;
+
+    // Split search term into tokens for "AND" search
+    std::vector<std::string> tokens;
+    std::stringstream ss(searchTerm);
+    std::string token;
+    while (ss >> token) {
+        std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+        tokens.push_back(token);
+    }
+
+    if (tokens.empty()) return {};
 
     for (const auto& node : graph.nodes) {
         std::string l = node.label;
         for (auto &c : l) c = std::tolower((unsigned char)c);
 
-        if (l.find(s) != std::string::npos) {
+        bool allTokensMatch = true;
+        for (const auto& t : tokens) {
+            if (lowerLabel.find(t) == std::string::npos) {
+                // Also check subject index or other attributes as a fallback scope
+                std::string subjectStr = std::to_string(node.subjectIndex);
+                if (subjectStr.find(t) == std::string::npos) {
+                    allTokensMatch = false;
+                    break;
+                }
+            }
+        }
+
+        if (allTokensMatch) {
             results.push_back(node.index);
         }
     }
