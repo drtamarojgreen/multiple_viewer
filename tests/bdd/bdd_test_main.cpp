@@ -12,6 +12,7 @@ namespace bdd {
     void registerUISteps();
     void registerBrainAPISteps();
     void registerBrainAdvancedSteps();
+    void registerQuantaGliaSteps();
 }
 
 #ifndef PROJECT_ROOT_DIR
@@ -30,6 +31,7 @@ void runBDDTests() {
     bdd::registerDomainSteps();
     bdd::registerBrainAPISteps();
     bdd::registerBrainAdvancedSteps();
+    bdd::registerQuantaGliaSteps();
     
     bool allSuccess = true;
     std::string root = PROJECT_ROOT_DIR;
@@ -38,7 +40,8 @@ void runBDDTests() {
         root + "/tests/bdd/features/original_functionality.feature",
         root + "/tests/bdd/features/brain_model.feature",
         root + "/tests/bdd/features/rendering_ui.feature",
-        root + "/tests/bdd/features/data_analytics.feature"
+        root + "/tests/bdd/features/data_analytics.feature",
+        root + "/tests/bdd/features/quanta_glia_config.feature"
     };
 
     for (const auto& feature : features) {
