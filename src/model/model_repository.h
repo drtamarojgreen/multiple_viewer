@@ -13,10 +13,8 @@ namespace model {
 
 class ModelRepository {
 public:
-    static ModelRepository& getInstance() {
-        static ModelRepository instance;
-        return instance;
-    }
+    ModelRepository();
+    ~ModelRepository() = default;
 
     // Load and reload (Requirement 10)
     bool loadAtlas(const std::string& filepath);
@@ -45,17 +43,18 @@ public:
 
     void clearAll();
 
+    // Delegation to BrainModel (Req. Extension)
+    void addRegion(const BrainRegion& region) { model_.addRegion(region); }
+    void addPathway(const BrainPathway& pathway) { model_.addPathway(pathway); }
+
 
 private:
-    ModelRepository();
-    ~ModelRepository() = default;
-    
-    std::string currentAtlasPath_;
-
-
     // Explicitly non-copyable
     ModelRepository(const ModelRepository&) = delete;
     ModelRepository& operator=(const ModelRepository&) = delete;
+
+    std::string currentAtlasPath_;
+
 
     BrainModel model_;
     std::unordered_map<RegionID, int> regionToSubjectMap_;

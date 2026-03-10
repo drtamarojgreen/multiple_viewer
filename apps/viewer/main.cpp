@@ -15,6 +15,7 @@
 #include <vector>
 #include "cmd_line_parser.h"
 #include "model/model_repository.h"
+#include "model/quanta_glia.h"
 
 #ifdef _WIN32
 #include <conio.h>
@@ -61,14 +62,17 @@ void runInteractiveSession(const CmdLineParser& parser) {
     }
 
     // Load brain model if specified
-    if (parser.hasOption("load-atlas")) {
-        model::ModelRepository::getInstance().loadAtlas(parser.getOption("load-atlas"));
-    }
-    if (parser.hasOption("load-labels")) {
-        model::ModelRepository::getInstance().loadLabels(parser.getOption("load-labels"));
-    }
-    if (parser.hasOption("load-overlay")) {
-        model::ModelRepository::getInstance().loadOverlay(parser.getOption("load-overlay"));
+    if (parser.hasOption("load-atlas") || parser.hasOption("load-labels") || parser.hasOption("load-overlay")) {
+        auto repo = model::QuantaGlia::getInstance().createRepository("default");
+        if (parser.hasOption("load-atlas")) {
+            repo->loadAtlas(parser.getOption("load-atlas"));
+        }
+        if (parser.hasOption("load-labels")) {
+            repo->loadLabels(parser.getOption("load-labels"));
+        }
+        if (parser.hasOption("load-overlay")) {
+            repo->loadOverlay(parser.getOption("load-overlay"));
+        }
     }
 
     // Run viewer/editor session
