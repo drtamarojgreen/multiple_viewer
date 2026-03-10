@@ -29,4 +29,3 @@ Feature: View Mode Management
         And the graph viewer is in "Book View" mode
         When the screen is rendered
         Then the text "=== CBT Node Page View ===" should not be visible
-
