@@ -1,6 +1,7 @@
 #include "viewer_logic.h"
 #include "analysis_logic.h"
 #include "render/minimap_renderer.h"
+#include "render/renderer_factory.h"
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
@@ -448,12 +449,15 @@ void runEditor(Graph& graph, bool runTests) {
 
     init_terminal();
     initClearScreen();
-    drawViewerMenu();
+    // drawViewerMenu(); // Removed direct menu draw, should be handled by status or overlay
 
-    NexusPhysicsState nexusPhysics;
+    // NexusPhysicsState nexusPhysics; // Decoupled
     ViewContext view;
     input::CommandStack commandStack;
     input::ShortcutManager shortcutManager;
+
+    auto renderer = render::RendererFactory::createRenderer(render::RendererType::CONSOLE);
+    renderer->initialize(view.width, view.height);
 
     // Register all standard shortcuts
     shortcutManager.registerShortcut('A', [&]() {
@@ -472,11 +476,29 @@ void runEditor(Graph& graph, bool runTests) {
     shortcutManager.registerShortcut('G', [&]() { Config::viewerOverlayMode = !Config::viewerOverlayMode; });
     shortcutManager.registerShortcut('D', [&]() { Config::autoScaleDepth = !Config::autoScaleDepth; });
     shortcutManager.registerShortcut('W', [&]() { Config::showTopicWeights = !Config::showTopicWeights; });
-    shortcutManager.registerShortcut('F', [&]() { promptFocusAdd(graph); });
-    shortcutManager.registerShortcut('O', [&]() { promptFocusRemove(graph); });
-    shortcutManager.registerShortcut('T', [&]() { promptSetDistance(view); });
+    shortcutManager.registerShortcut('F', [&]() {
+        renderer->setStatusMessage("Enter node index to ADD as focus: ");
+        renderer->present();
+        int idx; std::cin >> idx; std::cin.ignore(1000, '\n');
+        graph.addFocus(idx);
+        renderer->setStatusMessage("Focused node " + std::to_string(idx));
+    });
+    shortcutManager.registerShortcut('O', [&]() {
+        renderer->setStatusMessage("Enter focus index to REMOVE: ");
+        renderer->present();
+        int idx; std::cin >> idx; std::cin.ignore(1000, '\n');
+        graph.removeFocus(idx);
+        renderer->setStatusMessage("Unfocused node " + std::to_string(idx));
+    });
+    shortcutManager.registerShortcut('T', [&]() {
+        renderer->setStatusMessage("Enter new max render distance: ");
+        renderer->present();
+        int d; std::cin >> d; std::cin.ignore(1000, '\n');
+        view.maxRenderDistance = d;
+    });
     shortcutManager.registerShortcut('/', [&]() {
-        std::cout << "Enter search keyword: ";
+        renderer->setStatusMessage("Enter search keyword: ");
+        renderer->present();
         std::string keyword;
         std::getline(std::cin, keyword);
         if (!keyword.empty()) {
@@ -484,9 +506,11 @@ void runEditor(Graph& graph, bool runTests) {
             if (!matches.empty()) {
                 graph.clearFocuses();
                 for (int idx : matches) graph.addFocus(idx);
+                renderer->setStatusMessage("Found " + std::to_string(matches.size()) + " matches.");
+            } else {
+                renderer->setStatusMessage("No matches found.");
             }
         }
-        graph.pause();
     });
     shortcutManager.registerShortcut('Z', [&]() { view.zoomIn(); });
     shortcutManager.registerShortcut('X', [&]() { view.zoomOut(); });
@@ -496,7 +520,8 @@ void runEditor(Graph& graph, bool runTests) {
     shortcutManager.registerShortcut('L', [&]() { view.pan(1, 0); });
     shortcutManager.registerShortcut('B', [&]() { view.currentViewMode = VM_BOOK_VIEW; });
     shortcutManager.registerShortcut('E', [&]() {
-        std::cout << "Enter node index: ";
+        renderer->setStatusMessage("Enter node index for Page View: ");
+        renderer->present();
         int idx; std::cin >> idx; std::cin.ignore();
         renderNodePage(graph, idx);
     });
@@ -510,18 +535,10 @@ void runEditor(Graph& graph, bool runTests) {
     });
 
     while (true) {
-        switch (view.currentViewMode) {
-            case VM_NEXUS_FLOW:
-                renderNexusFlow(graph, nexusPhysics);
-                break;
-            case VM_BOOK_VIEW:
-                renderBookView(graph, view);
-                break;
-            case VM_PERSPECTIVE:
-            default:
-                renderGraph(graph, view);
-                break;
-        }
+        renderer->clear();
+        renderer->render(graph, view);
+        renderer->present();
+
         if (Config::viewerOverlayMode) AnalyticsEngine::drawAnalyticsPanelOverlay(graph);
 
         int key = get_char_non_blocking();

@@ -12,8 +12,12 @@ public:
     void registerShortcut(char key, std::function<void()> action);
     void handleKey(char key);
 
+    void setInputMode(bool enabled) { inputMode_ = enabled; }
+    bool isInputMode() const { return inputMode_; }
+
 private:
     std::map<char, std::function<void()>> shortcuts_;
+    bool inputMode_ = false;
 };
 
 } // namespace input

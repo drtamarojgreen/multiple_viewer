@@ -1,18 +1,21 @@
 #include "search_logic.h"
 #include <algorithm>
 #include <string>
+#include <cctype>
 
 // Function to search for nodes by topic label
 std::vector<int> findSimilarTopics(const Graph& graph, const std::string& searchTerm) {
     std::vector<int> results;
-    std::string lowerSearchTerm = searchTerm;
-    std::transform(lowerSearchTerm.begin(), lowerSearchTerm.end(), lowerSearchTerm.begin(), ::tolower);
+    if (searchTerm.empty()) return results;
+
+    std::string s = searchTerm;
+    for (auto &c : s) c = std::tolower((unsigned char)c);
 
     for (const auto& node : graph.nodes) {
-        std::string lowerLabel = node.label;
-        std::transform(lowerLabel.begin(), lowerLabel.end(), lowerLabel.begin(), ::tolower);
+        std::string l = node.label;
+        for (auto &c : l) c = std::tolower((unsigned char)c);
 
-        if (lowerLabel.find(lowerSearchTerm) != std::string::npos) {
+        if (l.find(s) != std::string::npos) {
             results.push_back(node.index);
         }
     }

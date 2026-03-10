@@ -71,6 +71,9 @@ void UIPrinter::render(const Graph& graph, const ViewContext& view) {
 
 void UIPrinter::present() {}
 void UIPrinter::shutdown() {}
+void UIPrinter::setStatusMessage(const std::string& message) {
+    outputBuffer_ << "STATUS_MESSAGE: " << message << "\n";
+}
 
 std::string UIPrinter::getPrintedOutput() const {
     return outputBuffer_.str();

@@ -7,10 +7,11 @@ namespace layout {
 
 class LayoutManager {
 public:
-    static void applyForceDirected(Graph& graph);
+    static void applyForceDirected(Graph& graph, ViewContext& view);
     static void applyCircular(Graph& graph);
     static void applyRadial(Graph& graph);
     static void applyHierarchical(Graph& graph);
+    static void applyPerspectiveBFS(Graph& graph, ViewContext& view);
 };
 
 } // namespace layout

@@ -71,6 +71,8 @@ struct BDDContext {
     std::string currentMenu;
     std::string helpMessage;
     bool benchmarkSuiteReady = false;
+    SimulationKernel kernel;
+    OverlayService overlayService;
 
     // Simulation components
     std::unique_ptr<SimulationKernel> simulationKernel;
