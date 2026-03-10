@@ -486,7 +486,7 @@ void runEditor(Graph& graph, bool runTests) {
     initClearScreen();
     // drawViewerMenu(); // Removed direct menu draw, should be handled by status or overlay
 
-    // NexusPhysicsState nexusPhysics; // Decoupled
+    NexusPhysicsState nexusPhysics;
     ViewContext view;
     input::CommandStack commandStack;
     input::ShortcutManager shortcutManager;
@@ -578,6 +578,19 @@ void runEditor(Graph& graph, bool runTests) {
             layout::LayoutManager::applyPerspectiveBFS(graph, view);
         } else if (view.currentViewMode == VM_NEXUS_FLOW) {
             layout::LayoutManager::applyForceDirected(graph, view);
+        }
+
+        switch (view.currentViewMode) {
+            case VM_NEXUS_FLOW:
+                renderNexusFlow(graph, nexusPhysics, searchState);
+                break;
+            case VM_BOOK_VIEW:
+                renderBookView(graph, view, searchState);
+                break;
+            case VM_PERSPECTIVE:
+            default:
+                renderGraph(graph, view, searchState);
+                break;
         }
 
         renderer->clear();

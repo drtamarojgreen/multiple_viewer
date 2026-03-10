@@ -22,8 +22,8 @@ std::vector<int> findSimilarTopics(const Graph& graph, const std::string& search
     if (tokens.empty()) return {};
 
     for (const auto& node : graph.nodes) {
-        std::string l = node.label;
-        for (auto &c : l) c = std::tolower((unsigned char)c);
+        std::string lowerLabel = node.label;
+        for (auto &c : lowerLabel) c = std::tolower((unsigned char)c);
 
         bool allTokensMatch = true;
         for (const auto& t : tokens) {
