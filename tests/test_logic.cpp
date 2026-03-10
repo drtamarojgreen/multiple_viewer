@@ -268,6 +268,36 @@ void testDensityStrategy() {
 }
 
 // Test 13: computeSummary enhancements (clustering, diameter)
+void testRefinedSearch() {
+    Graph g;
+    g.addNode(GraphNode("Brain Stem", 0, {}, 1, 1));
+    g.addNode(GraphNode("Cerebellum", 1, {}, 1, 1));
+    g.addNode(GraphNode("Frontal Lobe", 2, {}, 1, 2));
+
+    // Case-insensitivity
+    auto r1 = findSimilarTopics(g, "BRAIN");
+    TEST("Search case-insensitive", r1.size() == 1 && r1[0] == 0);
+
+    // Partial matching
+    auto r2 = findSimilarTopics(g, "bel");
+    TEST("Search partial match", r2.size() == 1 && r2[0] == 1);
+
+    // Multi-token (AND search)
+    auto r3 = findSimilarTopics(g, "Frontal Lobe");
+    TEST("Search multi-token", r3.size() == 1 && r3[0] == 2);
+
+    auto r4 = findSimilarTopics(g, "Lobe Frontal");
+    TEST("Search multi-token unordered", r4.size() == 1 && r4[0] == 2);
+
+    // Subject index fallback search
+    auto r5 = findSimilarTopics(g, "2");
+    TEST("Search subject index fallback", r5.size() == 1 && r5[0] == 2);
+
+    // No results
+    auto r6 = findSimilarTopics(g, "NonExistent");
+    TEST("Search no results", r6.empty());
+}
+
 void testComputeSummaryEnhancements() {
   Graph g;
   // create triangle for clustering test
@@ -298,6 +328,7 @@ void runAllTests() {
       testAdaptiveSpacing();
       testDensityStrategy();
       testComputeSummaryEnhancements();
+      testRefinedSearch();
       testFocusManagement();
       testEmptyGraphBehavior();
       testEdgeAddition();
