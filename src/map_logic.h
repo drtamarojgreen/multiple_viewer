@@ -51,7 +51,7 @@ struct ViewContext {
     int width = DEFAULT_CONSOLE_WIDTH;
     int height = DEFAULT_CONSOLE_HEIGHT;
     bool showMinimap = true;
-    bool showHelp = false;
+    bool showHelp = true;
 
     void zoomIn();
     void zoomOut();

@@ -2,6 +2,7 @@
 #include "analysis_logic.h"
 #include "render/minimap_renderer.h"
 #include "render/renderer_factory.h"
+#include "layout/layout_manager.h"
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
@@ -457,7 +458,7 @@ void runEditor(Graph& graph, bool runTests) {
     input::ShortcutManager shortcutManager;
 
     auto renderer = render::RendererFactory::createRenderer(render::RendererType::CONSOLE);
-    renderer->initialize(view.width, view.height);
+    renderer->initialize(view.width, view.height + 10);
 
     // Register all standard shortcuts
     shortcutManager.registerShortcut('A', [&]() {
@@ -536,6 +537,12 @@ void runEditor(Graph& graph, bool runTests) {
     });
 
     while (true) {
+        if (view.currentViewMode == VM_PERSPECTIVE) {
+            layout::LayoutManager::applyPerspectiveBFS(graph, view);
+        } else if (view.currentViewMode == VM_NEXUS_FLOW) {
+            layout::LayoutManager::applyForceDirected(graph, view);
+        }
+
         renderer->clear();
         renderer->render(graph, view);
         renderer->present();

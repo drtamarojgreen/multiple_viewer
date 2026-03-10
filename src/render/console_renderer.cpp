@@ -28,17 +28,11 @@ void ConsoleRenderer::clear() {
 void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
     if (!frameBuffer_ || !viewport_) return;
 
-    Graph& mutableGraph = const_cast<Graph&>(graph);
-    ViewContext& mutableView = const_cast<ViewContext&>(view);
-
     viewport_->setPan(view.panX, view.panY);
-    // Note: Zoom handling might need adjustment if viewport zoom is float and graph zoom is enum
 
     if (view.currentViewMode == VM_PERSPECTIVE) {
-        layout::LayoutManager::applyPerspectiveBFS(mutableGraph, mutableView);
         frameBuffer_->setTitle("CBT Graph Viewer (Full Layout)");
     } else if (view.currentViewMode == VM_NEXUS_FLOW) {
-        layout::LayoutManager::applyForceDirected(mutableGraph, mutableView);
         frameBuffer_->setTitle("CBT Graph Viewer (Nexus Flow)");
     } else if (view.currentViewMode == VM_BOOK_VIEW) {
         frameBuffer_->setTitle("CBT Graph Viewer (Book View)");
@@ -97,15 +91,14 @@ void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
     }
 
     if (view.showHelp) {
-        int y = 2;
-        frameBuffer_->drawRect(5, 1, 70, 12, '+', -1.0f);
-        frameBuffer_->drawString(7, y++, "=== CBT Graph Viewer Menu ===", -1.0f);
-        frameBuffer_->drawString(7, y++, "[↑↓←→/IJKL] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus", -1.0f);
-        frameBuffer_->drawString(7, y++, "[T] Set Dist  [/] Search  [TAB] Cycle Focus  [B] Book View", -1.0f);
-        frameBuffer_->drawString(7, y++, "[N] Next View [E] Page View [V] Page Cycle [Z] Zoom In [X] Zoom Out", -1.0f);
-        frameBuffer_->drawString(7, y++, "[M] Multi Foci Toggle  [H] Toggle Help", -1.0f);
-        frameBuffer_->drawString(7, y++, "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [U] Load", -1.0f);
-        frameBuffer_->drawString(7, y++, "[ESC] Exit", -1.0f);
+        int y = view.height + 1;
+        frameBuffer_->drawString(0, y++, "================================================================================", -1.0f);
+        frameBuffer_->drawString(0, y++, "=== CBT Graph Viewer Menu ===", -1.0f);
+        frameBuffer_->drawString(0, y++, "[↑↓←→/IJKL] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist", -1.0f);
+        frameBuffer_->drawString(0, y++, "[/] Search  [TAB] Cycle Focus  [B] Book View  [N] Next View [E] Page View", -1.0f);
+        frameBuffer_->drawString(0, y++, "[V] Page Cycle [Z] Zoom In [X] Zoom Out [M] Multi Foci Toggle [H] Toggle Help", -1.0f);
+        frameBuffer_->drawString(0, y++, "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [U] Load  [ESC] Exit", -1.0f);
+        frameBuffer_->drawString(0, y++, "================================================================================", -1.0f);
     }
 }
 

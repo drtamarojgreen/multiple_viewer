@@ -78,9 +78,11 @@ void FrameBuffer::setStatusMessage(const std::string& message) {
 
 void FrameBuffer::present() const {
 #ifdef _WIN32
+    // For Windows, we might want to use a more efficient way to avoid flicker
     system("cls");
 #else
-    system("clear");
+    // ANSI escape code to move cursor to top-left (0,0) and clear screen
+    std::cout << "\033[H\033[J";
 #endif
 
     if (!title_.empty()) {
