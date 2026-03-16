@@ -1,0 +1,8 @@
+Situation: Default
+Is platform = linux
+Is network_available = true
+
+Situation: LowResources
+Is platform = linux
+Is disk_space = low
+Is network_available = false

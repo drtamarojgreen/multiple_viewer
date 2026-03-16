@@ -1,0 +1,6 @@
+Is platform = linux
+Is compiler = g++
+Is network_available = false
+
+# Pre-existing observations
+Results filesystem_create_file_operational = true

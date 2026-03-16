@@ -1,0 +1,5 @@
+Situation: Default
+Is keyword_target = fox
+Is keyword_text = The quick brown fox.
+Is citation_min_count = 2
+Is citation_text = See ref [1] and [2].

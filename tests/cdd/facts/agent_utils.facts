@@ -1,0 +1,3 @@
+Situation: Default
+Is log_file_path = chai_agent_test.log
+Is test_message = CHAI Logging Test Message

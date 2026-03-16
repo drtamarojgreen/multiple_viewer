@@ -1,0 +1,6 @@
+Situation: Default
+Is max_repos = 10
+Is custom_config_path = tests/bdd/custom_config.yaml
+Is repo_prefix = chai_test_repo
+Is cache_dir = chai_cache
+Is clone_src = chai_src_repo
