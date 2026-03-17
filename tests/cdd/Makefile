@@ -6,10 +6,8 @@ BUILD_DIR = ../../build
 BIN_DIR = bin
 
 # Automatically find all core objects built by the main Makefile
-# This assumes the main Makefile has been run and objects are in $(BUILD_DIR)/src/...
-CORE_DIRS = src src/model src/model/core src/model/app src/render src/input src/io src/analytics src/scripting src/layout src/ui
-CORE_FILES = $(foreach dir,$(CORE_DIRS),$(wildcard ../../$(dir)/*.cpp))
-CORE_OBJS = $(patsubst ../../%.cpp,$(BUILD_DIR)/%.o,$(CORE_FILES))
+# This recursive search ensures all nested objects (like model/core/*.o) are included
+CORE_OBJS = $(shell find $(BUILD_DIR)/src -name "*.o")
 
 # CDD Cards
 CARDS = cards/LoggingClass.cpp \
