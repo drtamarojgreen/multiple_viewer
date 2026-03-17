@@ -1,9 +1,2 @@
 Situation: Default
-Is usage_weight = 0.5
-Is age_weight = 0.2
-Is redundancy_weight = 0.2
-Is ethics_risk_weight = 0.1
 Is delete_threshold = 0.9
-Is archive_threshold = 0.7
-Is review_threshold = 0.5
-Is max_age_days = 365

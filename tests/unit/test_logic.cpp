@@ -1,7 +1,7 @@
-#include "../src/map_logic.h"
-#include "../src/viewer_logic.h"
-#include "../src/file_logic.h"
-#include "../src/io/io_manager.h"
+#include "map_logic.h"
+#include "viewer_logic.h"
+#include "file_logic.h"
+#include "io/io_manager.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>

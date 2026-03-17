@@ -5,11 +5,11 @@
 #include "viewer_logic.h"
 #include "search_logic.h"
 #include <iostream>
-#include "test_logic.h"
-#include "testsuite2_logic.h"
-#include "testsuite3_logic.h"
-#include "dynamic_graph_tests.h"
-#include "bdd/bdd_test_main.h"
+#include "unit/test_logic.h"
+#include "unit/testsuite2_logic.h"
+#include "unit/testsuite3_logic.h"
+#include "unit/dynamic_graph_tests.h"
+#include "tests/bdd/bdd_test_main.h"
 #include "file_logic.h" // Explicitly include for file operations
 #include <string>
 #include <vector>
