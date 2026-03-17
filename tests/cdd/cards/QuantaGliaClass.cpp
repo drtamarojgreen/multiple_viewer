@@ -43,9 +43,8 @@ void max_repos_limit_verification_card(const std::map<std::string, std::string>&
 }
 
 int main(int argc, char* argv[]) {
-    auto facts = FactReader::readFacts("../facts/quanta_glia.facts");
+    auto facts = FactReader::readFacts("quanta_glia.facts");
     if (facts.empty()) {
-        std::cerr << "Error: Could not read facts from ../facts/quanta_glia.facts" << std::endl;
         return 1;
     }
 

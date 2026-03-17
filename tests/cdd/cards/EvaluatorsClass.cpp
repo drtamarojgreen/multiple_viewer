@@ -37,9 +37,8 @@ void citation_validator_verification_card(const std::map<std::string, std::strin
 }
 
 int main(int argc, char* argv[]) {
-    auto facts = FactReader::readFacts("../facts/evaluators.facts");
+    auto facts = FactReader::readFacts("evaluators.facts");
     if (facts.empty()) {
-        std::cerr << "Error: Could not read facts from ../facts/evaluators.facts" << std::endl;
         return 1;
     }
 

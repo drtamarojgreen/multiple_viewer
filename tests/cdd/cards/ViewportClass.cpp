@@ -26,7 +26,7 @@ void viewport_pan_card(const std::map<std::string, std::string>& facts) {
 }
 
 int main(int argc, char* argv[]) {
-    auto facts = FactReader::readFacts("../facts/viewport.facts");
+    auto facts = FactReader::readFacts("viewport.facts");
     if (argc > 1) {
         std::string arg = argv[1];
         if (arg == "pan") viewport_pan_card(facts);

@@ -7,6 +7,8 @@
 #include <map>
 #include <algorithm>
 #include <filesystem>
+#include <vector>
+#include <cstdlib>
 
 namespace fs = std::filesystem;
 
@@ -27,24 +29,42 @@ inline std::string trim(const std::string& s) {
 
 class FactReader {
 public:
-    static std::map<std::string, std::string> readFacts(const std::string& filepath) {
+    static std::map<std::string, std::string> readFacts(const std::string& filename) {
         std::map<std::string, std::string> facts;
 
-        std::string target_path = filepath;
-        if (!fs::exists(target_path)) {
-            // Try relative to bin if execution is from tests/cdd
-            if (filepath.find("../facts/") == 0) {
-                std::string alt = "facts/" + filepath.substr(9);
-                if (fs::exists(alt)) target_path = alt;
-            } else if (filepath.find("facts/") == 0) {
-                std::string alt = "../" + filepath;
-                if (fs::exists(alt)) target_path = alt;
+        std::string target_path = "";
+
+        // 1. Check environment variable
+        const char* env_dir = std::getenv("CHAI_FACTS_DIR");
+        if (env_dir) {
+            fs::path p = fs::path(env_dir) / filename;
+            if (fs::exists(p)) target_path = p.string();
+        }
+
+        // 2. Search heuristic if not found via env
+        if (target_path.empty()) {
+            std::vector<std::string> search_dirs = {
+                "facts",
+                "../facts",
+                "../../facts",
+                "tests/cdd/facts"
+            };
+
+            for (const auto& dir : search_dirs) {
+                fs::path p = fs::path(dir) / filename;
+                if (fs::exists(p)) {
+                    target_path = p.string();
+                    break;
+                }
             }
         }
 
+        // 3. Fallback to direct path if still empty
+        if (target_path.empty()) target_path = filename;
+
         std::ifstream file(target_path);
         if (!file.is_open()) {
-             std::cerr << "Error: Could not read facts from " << filepath << " (checked: " << target_path << ")" << std::endl;
+             std::cerr << "Error: Could not read facts for '" << filename << "' (checked: " << target_path << ")" << std::endl;
              std::cerr << "Current path: " << fs::current_path() << std::endl;
              return facts;
         }
@@ -55,7 +75,7 @@ public:
             if (trimmed.empty() || trimmed[0] == '#' || trimmed.find("Situation:") == 0) continue;
 
             size_t space_pos = trimmed.find(' ');
-            if (space_pos == std::string::npos) continue;
+            if (space_pos == std::npos) continue;
 
             std::string rest = trim(trimmed.substr(space_pos + 1));
             size_t eq_pos = rest.find('=');
