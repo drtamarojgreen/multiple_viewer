@@ -33,9 +33,9 @@ void pruner_logic_verification_card(const std::map<std::string, std::string>& fa
 }
 
 int main() {
-    auto facts = FactReader::readFacts("tests/cdd/facts/pruner.facts");
+    auto facts = FactReader::readFacts("../facts/pruner.facts");
     if (facts.empty()) {
-        std::cerr << "Error: Could not read facts from tests/cdd/facts/pruner.facts" << std::endl;
+        std::cerr << "Error: Could not read facts from ../facts/pruner.facts" << std::endl;
         return 1;
     }
     pruner_logic_verification_card(facts);
