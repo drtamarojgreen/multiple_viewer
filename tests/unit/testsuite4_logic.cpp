@@ -1,7 +1,7 @@
 #include "testsuite4_logic.h"
-#include "../src/model/brain_model.h"
-#include "../src/render/spatial_index.h"
-#include "../src/model/model_repository.h"
+#include "model/brain_model.h"
+#include "render/spatial_index.h"
+#include "model/model_repository.h"
 #include <iostream>
 #include <cassert>
 #include <fstream>
