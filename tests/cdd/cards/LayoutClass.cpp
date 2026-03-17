@@ -16,8 +16,8 @@ void layout_circular_card(const std::map<std::string, std::string>& facts) {
     LayoutManager::applyCircular(g);
 
     // In a circular layout of 2 nodes, they should be at some distance from each other
-    Point3D p0 = g.nodePos[0];
-    Point3D p1 = g.nodePos[1];
+    Coord3 p0 = g.nodePos[0];
+    Coord3 p1 = g.nodePos[1];
 
     bool operational = (p0.x != p1.x || p0.y != p1.y);
     std::cout << "layout_circular_operational = " << (operational ? "true" : "false") << std::endl;

@@ -36,4 +36,4 @@
 -   **CDD Test Automation:** Created a Makefile to manage CDD card compilation and execution.
     -   *Artifacts:* `tests/cdd/Makefile`
     -   *Observation:* `cdd_makefile_created = true`
-    -   *Notes:* Updated to recursively include all core objects from the build directory to resolve deep linker dependencies.
+    -   *Notes:* Updated to recursively include all core objects from the build directory to resolve deep linker dependencies. Fixed type mismatch in `LayoutClass.cpp`.
