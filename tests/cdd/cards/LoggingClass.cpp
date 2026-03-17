@@ -33,9 +33,9 @@ void logging_setup_verification_card(const std::map<std::string, std::string>& f
 }
 
 int main() {
-    auto facts = FactReader::readFacts("tests/cdd/facts/agent_utils.facts");
+    auto facts = FactReader::readFacts("../facts/agent_utils.facts");
     if (facts.empty()) {
-        std::cerr << "Error: Could not read facts from tests/cdd/facts/agent_utils.facts" << std::endl;
+        std::cerr << "Error: Could not read facts from ../facts/agent_utils.facts" << std::endl;
         return 1;
     }
     logging_setup_verification_card(facts);

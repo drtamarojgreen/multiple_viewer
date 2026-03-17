@@ -10,3 +10,4 @@
 - cdd_makefile_deps_sip: Updated `tests/cdd/Makefile` to include all core objects for proper linking.
 - cdd_makefile_recursive_sip: Refined `tests/cdd/Makefile` to recursively link all core objects, resolving nested dependency issues.
 - layout_card_fix_sip: Fixed type mismatch in `LayoutClass.cpp` (Coord3 vs Point3D).
+- cdd_runtime_fix_sip: Fixed fact file paths and adjusted layout test for current stubbed implementation.
