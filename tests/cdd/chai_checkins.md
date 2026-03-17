@@ -9,3 +9,4 @@
 - cdd_makefile_sip: Created `tests/cdd/Makefile` to automate CDD test compilation and execution.
 - cdd_makefile_deps_sip: Updated `tests/cdd/Makefile` to include all core objects for proper linking.
 - cdd_makefile_recursive_sip: Refined `tests/cdd/Makefile` to recursively link all core objects, resolving nested dependency issues.
+- layout_card_fix_sip: Fixed type mismatch in `LayoutClass.cpp` (Coord3 vs Point3D).
