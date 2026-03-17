@@ -12,3 +12,4 @@
 - layout_card_fix_sip: Fixed type mismatch in `LayoutClass.cpp` (Coord3 vs Point3D).
 - cdd_runtime_fix_sip: Fixed fact file paths and adjusted layout test for current stubbed implementation.
 - fact_loading_robustness_sip: Enhanced `FactReader` with automatic path redirection to handle different execution contexts.
+- fact_loading_configurable_sip: Implemented `CHAI_FACTS_DIR` env support and heuristic search for fact files.

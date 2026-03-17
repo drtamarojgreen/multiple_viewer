@@ -36,4 +36,4 @@
 -   **CDD Test Automation:** Created a Makefile to manage CDD card compilation and execution.
     -   *Artifacts:* `tests/cdd/Makefile`
     -   *Observation:* `cdd_makefile_created = true`
-    -   *Notes:* Updated to recursively include all core objects from the build directory to resolve deep linker dependencies. Fixed type mismatch in `LayoutClass.cpp`. Corrected fact file paths for runtime execution and adjusted layout test for stubbed implementation. Enhanced FactReader utility for robust path resolution across execution environments.
+    -   *Notes:* Updated to recursively include all core objects from the build directory to resolve deep linker dependencies. Fixed type mismatch in `LayoutClass.cpp`. Corrected fact file paths for runtime execution and adjusted layout test for stubbed implementation. Enhanced FactReader utility for robust path resolution across execution environments, supporting `CHAI_FACTS_DIR` and automatic heuristic search.

@@ -25,7 +25,7 @@ void layout_circular_card(const std::map<std::string, std::string>& facts) {
 }
 
 int main() {
-    auto facts = FactReader::readFacts("../facts/layout.facts");
+    auto facts = FactReader::readFacts("layout.facts");
     layout_circular_card(facts);
     return 0;
 }

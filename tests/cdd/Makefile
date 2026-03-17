@@ -6,7 +6,6 @@ BUILD_DIR = ../../build
 BIN_DIR = bin
 
 # Automatically find all core objects built by the main Makefile
-# This recursive search ensures all nested objects (like model/core/*.o) are included
 CORE_OBJS = $(shell find $(BUILD_DIR)/src -name "*.o")
 
 # CDD Cards
@@ -19,6 +18,9 @@ CARDS = cards/LoggingClass.cpp \
 
 BINS = $(patsubst cards/%.cpp, $(BIN_DIR)/%, $(CARDS))
 
+# Optional facts directory (can be overridden on command line)
+FACTS_DIR ?= ../../facts
+
 all: $(BINS)
 
 $(BIN_DIR)/%: cards/%.cpp
@@ -29,10 +31,10 @@ clean:
 	rm -rf $(BIN_DIR)
 
 test: all
-	@echo "Running CDD Tests..."
+	@echo "Running CDD Tests with CHAI_FACTS_DIR=$(FACTS_DIR)..."
 	@for bin in $(BINS); do \
 		echo "Executing $$bin..."; \
-		./$$bin; \
+		CHAI_FACTS_DIR=$(FACTS_DIR) ./$$bin; \
 	done
 
 .PHONY: all clean test
