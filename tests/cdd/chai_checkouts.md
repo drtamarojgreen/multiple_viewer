@@ -32,3 +32,7 @@
 -   **Layout Verification (multiple_viewer):** Tests `LayoutManager` circular layout algorithm.
     -   *Artifacts:* `tests/cdd/cards/LayoutClass.cpp`, `tests/cdd/facts/layout.facts`
     -   *Observation:* `layout_card_integrated = true`
+
+-   **CDD Test Automation:** Created a Makefile to manage CDD card compilation and execution.
+    -   *Artifacts:* `tests/cdd/Makefile`
+    -   *Observation:* `cdd_makefile_created = true`
