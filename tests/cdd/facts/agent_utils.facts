@@ -1,3 +1,2 @@
 Situation: Default
-Is log_file_path = chai_agent_test.log
-Is test_message = CHAI Logging Test Message
+Is test_message = [INFO] Test message for multiple_viewer

@@ -1,6 +1,6 @@
 #include "dynamic_graph_tests.h"
-#include "../src/map_logic.h"
-#include "../src/analysis_logic.h"
+#include "map_logic.h"
+#include "analysis_logic.h"
 #include "testsuite2_logic.h"
 #include <iostream>
 #include <vector>

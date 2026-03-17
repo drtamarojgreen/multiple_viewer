@@ -1,4 +1,8 @@
 # CHAI Checkins - Converted Tests Workspace
 
-- quanta_glia_extraction_sip: Compile and execute `quanta_glia_extraction_card.cpp` to verify extraction logic.
-- pruner_logic_sip: Compile and execute `pruner_logic_card.cpp` to verify pruning decision logic.
+- quanta_glia_extraction_sip: Compile and execute `QuantaGliaClass.cpp` to verify graph IO logic. (Converted to multiple_viewer)
+- pruner_logic_sip: Compile and execute `PrunerClass.cpp` to verify graph analytics logic. (Converted to multiple_viewer)
+- logging_setup_sip: Compile and execute `LoggingClass.cpp` to verify C++ Logger logic. (Converted to multiple_viewer)
+- evaluator_logic_sip: Compile and execute `EvaluatorsClass.cpp` to verify search logic. (Converted to multiple_viewer)
+- viewport_verification_sip: Compile and execute `ViewportClass.cpp` to verify navigation logic. (New for multiple_viewer)
+- layout_verification_sip: Compile and execute `LayoutClass.cpp` to verify layout algorithm logic. (New for multiple_viewer)

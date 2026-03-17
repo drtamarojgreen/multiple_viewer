@@ -9,8 +9,8 @@ CORE_FILES = $(foreach dir,$(CORE_DIRS),$(wildcard $(dir)/*.cpp))
 CORE_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CORE_FILES))
 
 # Test source directories (excluding mains)
-TEST_CORE_DIRS = tests tests/bdd tests/bdd/steps
-TEST_CORE_FILES = $(wildcard tests/test*.cpp) tests/dynamic_graph_tests.cpp tests/bdd/bdd_runner.cpp tests/bdd/bdd_test_main.cpp $(wildcard tests/bdd/steps/*.cpp) $(wildcard tests/print/*.cpp)
+TEST_CORE_DIRS = tests tests/unit tests/bdd tests/bdd/steps
+TEST_CORE_FILES = $(wildcard tests/unit/test*.cpp) tests/unit/dynamic_graph_tests.cpp tests/bdd/bdd_runner.cpp tests/bdd/bdd_test_main.cpp $(wildcard tests/bdd/steps/*.cpp) $(wildcard tests/print/*.cpp)
 TEST_CORE_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(TEST_CORE_FILES))
 
 # Targets
@@ -26,7 +26,7 @@ $(VIEWER_TARGET): $(BUILD_DIR)/apps/viewer/main.o $(CORE_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Unit Tests executable
-$(UNIT_TESTS_TARGET): $(BUILD_DIR)/tests/unit_main.o $(CORE_OBJS) $(TEST_CORE_OBJS)
+$(UNIT_TESTS_TARGET): $(BUILD_DIR)/tests/unit/unit_main.o $(CORE_OBJS) $(TEST_CORE_OBJS)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
