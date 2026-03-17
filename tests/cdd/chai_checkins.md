@@ -6,3 +6,4 @@
 - evaluator_logic_sip: Compile and execute `EvaluatorsClass.cpp` to verify search logic. (Converted to multiple_viewer)
 - viewport_verification_sip: Compile and execute `ViewportClass.cpp` to verify navigation logic. (New for multiple_viewer)
 - layout_verification_sip: Compile and execute `LayoutClass.cpp` to verify layout algorithm logic. (New for multiple_viewer)
+- cdd_makefile_sip: Created `tests/cdd/Makefile` to automate CDD test compilation and execution.
