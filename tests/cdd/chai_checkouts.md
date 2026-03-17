@@ -36,3 +36,4 @@
 -   **CDD Test Automation:** Created a Makefile to manage CDD card compilation and execution.
     -   *Artifacts:* `tests/cdd/Makefile`
     -   *Observation:* `cdd_makefile_created = true`
+    -   *Notes:* Updated to include all core objects to resolve linker errors.
