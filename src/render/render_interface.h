@@ -16,6 +16,7 @@ public:
     virtual void shutdown() = 0;
 
     virtual bool isWindowOpen() const = 0;
+    virtual void setStatusMessage(const std::string& message) = 0;
 };
 
 } // namespace render

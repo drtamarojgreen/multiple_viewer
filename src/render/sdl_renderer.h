@@ -17,6 +17,7 @@ public:
     void shutdown() override;
 
     bool isWindowOpen() const override { return isRunning_; }
+    void setStatusMessage(const std::string& message) override;
 
 private:
     bool isRunning_ = false;

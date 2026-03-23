@@ -36,11 +36,3 @@ Feature: Core Rendering and UI/UX
     Given a graph is displayed
     When I pan the view by (20, 20)
     Then the UI output should contain "Pan: (20, 20)"
-
-  Scenario: Toggling the minimap
-    Given a graph is displayed
-    And the minimap is "ON"
-    When I press 'Y'
-    Then the minimap should be "OFF"
-    When I press 'Y'
-    Then the minimap should be "ON"

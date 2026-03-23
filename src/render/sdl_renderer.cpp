@@ -26,4 +26,8 @@ void SDLRenderer::shutdown() {
     isRunning_ = false;
 }
 
+void SDLRenderer::setStatusMessage(const std::string& message) {
+    // SDL status message stub
+}
+
 } // namespace render

@@ -15,7 +15,6 @@ void registerOriginalSteps() {
     });
 
     runner.registerStep("a graph with node (\\d+)", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        ctx.graph.clear();
         ctx.graph.addNode(GraphNode("", std::stoi(args[0]), {}, 1, 0));
     });
 
@@ -129,7 +128,9 @@ void registerOriginalSteps() {
     runner.registerStep("I search for nodes containing \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
         auto results = findSimilarTopics((ctx.graph), args[0]);
         ctx.graph.clearFocuses();
-        for (int id : results) ctx.graph.addFocus(id);
+        for (int id : results) {
+            ctx.graph.addFocus(id);
+        }
         ctx.lastResult = std::to_string(results.size());
     });
 

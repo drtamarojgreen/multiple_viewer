@@ -20,6 +20,7 @@ public:
     void shutdown() override;
 
     bool isWindowOpen() const override { return true; }
+    void setStatusMessage(const std::string& message) override;
 
     std::string getPrintedOutput() const;
 

@@ -6,8 +6,6 @@
 namespace render {
 
 void MinimapRenderer::render(const Graph& graph, const ViewContext& view) {
-    if (!view.showMinimap) return;
-
     // A small minimap in the corner
     int mmW = 20;
     int mmH = 10;

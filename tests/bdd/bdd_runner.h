@@ -73,6 +73,8 @@ struct BDDContext {
     bool benchmarkSuiteReady = false;
 
     // Simulation components
+    std::shared_ptr<ISimulationKernel> kernel;
+    std::shared_ptr<IOverlayService> overlayService;
     std::unique_ptr<SimulationKernel> simulationKernel;
     std::unique_ptr<SimulationKernel> simulationKernel2;
     SimulationSnapshot snapshot1;
@@ -80,9 +82,6 @@ struct BDDContext {
     std::unique_ptr<IntegratedBrainModel> integratedBrainModel;
     std::shared_ptr<IOverlayService> mockOverlayService;
     std::shared_ptr<ISimulationKernel> mockSimulationKernel;
-
-    std::shared_ptr<ISimulationKernel> kernel;
-    std::shared_ptr<IOverlayService> overlayService;
 
     model::TemporalEngine temporalEngine;
 

@@ -2,6 +2,7 @@
 #define VIEWER_LOGIC_H
 #include "map_logic.h"
 #include "console_logic.h"
+#include "search_logic.h"
 #include "input/command_stack.h"
 #include "input/shortcut_manager.h"
 
@@ -36,9 +37,11 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename);      // parses
 
 // Viewer Engine (optional)
 void runEditor(Graph& graph, bool runTests = false);                     // main viewer loop with menu+analytics
-void renderGraph(const Graph& graph, const ViewContext& view);                   // renders visual graph content
-void renderNexusFlow(Graph& graph, NexusPhysicsState& physics);               // renders force-directed layout
-void renderBookView(Graph& graph, const ViewContext& view);                // renders book view layout
+void renderGraph(const Graph& graph, const ViewContext& view, const SearchState& search = {});                   // renders visual graph content
+void renderNexusFlow(Graph& graph, NexusPhysicsState& physics, const SearchState& search = {});               // renders force-directed layout
+void renderBookView(Graph& graph, const ViewContext& view, const SearchState& search = {});                // renders book view layout
+
+void drawStatusBar(const SearchState& search);
 
 void promptFocusAdd(Graph& graph);
 void promptFocusRemove(Graph& graph);

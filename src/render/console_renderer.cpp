@@ -1,4 +1,5 @@
 #include "console_renderer.h"
+#include "layout/layout_manager.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -13,175 +14,108 @@ namespace render {
 bool ConsoleRenderer::initialize(int width, int height) {
     width_ = width;
     height_ = height;
+    frameBuffer_ = std::make_unique<FrameBuffer>(width, height);
+    viewport_ = std::make_unique<Viewport>(width, height);
     return true;
 }
 
 void ConsoleRenderer::clear() {
-    // For console, we often clear by printing empty lines or system("clear")
-    // In this app, it's done at the start of renderGraph usually.
+    if (frameBuffer_) {
+        frameBuffer_->clear();
+    }
 }
 
 void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
-    // Logic extracted from viewer_logic.cpp's renderGraph
-    std::map<int, Coord3> pos;
-    std::queue<std::tuple<int, int, int>> q;
+    if (!frameBuffer_ || !viewport_) return;
 
-    if (graph.focusedNodeIndices.empty() || graph.focusedNodeIndices.size() == 1) {
-        int focus = -1;
-        if (!graph.focusedNodeIndices.empty()) {
-            focus = *graph.focusedNodeIndices.begin();
-        } else if (!graph.nodes.empty()) {
-            focus = graph.nodes.front().index;
-        }
+    viewport_->setPan(view.panX, view.panY);
 
-        if (graph.nodeExists(focus)) {
-            float baseRow = (height_ - 1) / 2.0f;
-            float baseCol = (width_ - 1) / 2.0f;
-            pos[focus] = { baseRow, baseCol, 0.0f };
-            q.push({ focus, static_cast<int>(baseRow), static_cast<int>(baseCol) });
-        }
-    } else {
-        const auto& focused_nodes = graph.focusedNodeIndices;
-        int num_focused = focused_nodes.size();
-        int spacing = width_ / (num_focused + 1);
-        int i = 1;
-        for (int focus_id : focused_nodes) {
-            if (graph.nodeExists(focus_id)) {
-                float row = height_ / 2.0f;
-                float col = static_cast<float>(i * spacing);
-                pos[focus_id] = { row, col, 0.0f };
-                q.push({ focus_id, static_cast<int>(row), static_cast<int>(col) });
-                i++;
-            }
+    if (view.currentViewMode == VM_PERSPECTIVE) {
+        frameBuffer_->setTitle("Full Layout");
+    } else if (view.currentViewMode == VM_NEXUS_FLOW) {
+        frameBuffer_->setTitle("Nexus Flow");
+    } else if (view.currentViewMode == VM_BOOK_VIEW) {
+        frameBuffer_->setTitle("CBT Graph Viewer (Book View)");
+    }
+
+    // Render Edges
+    for (const auto& node : graph.nodes) {
+        if (graph.layoutPositions.count(node.index) == 0) continue;
+        Point2D p1 = viewport_->worldToScreen(graph.layoutPositions.at(node.index).x, graph.layoutPositions.at(node.index).y);
+
+        for (int neighbor_id : node.neighbors) {
+            if (graph.layoutPositions.count(neighbor_id) == 0) continue;
+            Point2D p2 = viewport_->worldToScreen(graph.layoutPositions.at(neighbor_id).x, graph.layoutPositions.at(neighbor_id).y);
+
+            frameBuffer_->drawLine(static_cast<int>(p1.x), static_cast<int>(p1.y),
+                                   static_cast<int>(p2.x), static_cast<int>(p2.y), '.', 1.0f);
         }
     }
 
-    if (q.empty()) return;
+    // Render Nodes
+    for (const auto& node : graph.nodes) {
+        if (graph.layoutPositions.count(node.index) == 0) continue;
+        Point2D p = viewport_->worldToScreen(graph.layoutPositions.at(node.index).x, graph.layoutPositions.at(node.index).y);
 
-    int maxDist = view.maxRenderDistance;
+        int depth = 0;
+        if (graph.nodePos.count(node.index)) {
+            depth = static_cast<int>(graph.nodePos.at(node.index).z);
+        }
 
-    while (!q.empty()) {
-        auto [u, wr, wc] = q.front(); q.pop();
-        int dz = pos[u].z;
-        if (dz >= maxDist) continue;
+        int size = graph.calculateNodeSize(depth, view.zoomLevel);
+        char glyph = (graph.isNodeFocused(node.index)) ? 'O' :
+                     (node.subjectIndex % 4 == 0 ? '@' :
+                      node.subjectIndex % 4 == 1 ? '#' : 'X');
 
-        const auto& u_node = graph.nodeMap.at(u);
-        const std::vector<std::pair<int, int>> directions = {
-            {0, 1}, {1, 0}, {0, -1}, {-1, 0},
-            {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
-        };
-        int dir_idx = 0;
+        if (size <= 1) {
+            frameBuffer_->drawChar(static_cast<int>(p.x), static_cast<int>(p.y), glyph, static_cast<float>(depth));
+        } else {
+            frameBuffer_->drawRect(static_cast<int>(p.x - size / 2), static_cast<int>(p.y - size / 2), size, size, glyph, static_cast<float>(depth));
+        }
 
-        for (int v : u_node.neighbors) {
-            if (pos.count(v)) continue;
-            if (dir_idx >= (int)directions.size()) break;
+        // Label
+        frameBuffer_->drawString(static_cast<int>(p.x + size / 2 + 1), static_cast<int>(p.y + size / 2 + 1), node.label, static_cast<float>(depth));
+    }
 
-            auto [dr, dc] = directions[dir_idx++];
-            int nz = dz + 1;
-            if (nz > maxDist) continue;
-
-            int parent_size = graph.calculateNodeSize(dz, view.zoomLevel);
-            int child_size = graph.calculateNodeSize(nz, view.zoomLevel);
-            int step = (parent_size / 2) + (child_size / 2) + 1 + 2; // Node padding hardcoded for now or use Config
-            int nr = wr + dr * step;
-            int nc = wc + dc * step;
-
-            bool collision = false;
-            for (const auto& [other_id, other_pos] : pos) {
-                int other_node_size = graph.calculateNodeSize(other_pos.z, view.zoomLevel);
-                if (std::abs(nr - other_pos.x) * 2 < (child_size + other_node_size) &&
-                    std::abs(nc - other_pos.y) * 2 < (child_size + other_node_size)) {
-                    collision = true;
-                    break;
-                }
+    if (view.currentViewMode == VM_BOOK_VIEW) {
+        frameBuffer_->setTitle("Book View");
+        auto chapters = createBookStructure(graph, view);
+        int y = 2;
+        for (const auto& ch : chapters) {
+            frameBuffer_->drawString(2, y++, "-- " + ch.chapterTitle + " (Depth " + std::to_string(ch.chapterDepth) + ") --", -1.0f);
+            for (int nodeId : ch.nodeIds) {
+                bool isFocused = graph.isNodeFocused(nodeId);
+                frameBuffer_->drawString(4, y++, (isFocused ? "> [" : "  [") + graph.nodeMap.at(nodeId).label + "]", -1.0f);
             }
-            if (collision) continue;
-
-            pos[v] = { static_cast<float>(nr), static_cast<float>(nc), static_cast<float>(nz) };
-            q.push({ v, nr, nc });
+            y++;
         }
     }
 
-    std::vector<std::string> screen(height_, std::string(width_, ' '));
-    std::vector<std::vector<float>> zbuf(height_, std::vector<float>(width_, std::numeric_limits<float>::infinity()));
-
-    for (const auto& [nid, coord] : pos) {
-        const auto& node = graph.nodeMap.at(nid);
-        int d = static_cast<int>(coord.z);
-        int wr = static_cast<int>(coord.x), wc = static_cast<int>(coord.y);
-        int size = graph.calculateNodeSize(d, view.zoomLevel);
-        char glyph = (node.subjectIndex % 4 == 0 ? '@' :
-                    node.subjectIndex % 4 == 1 ? '#' :
-                    node.subjectIndex % 4 == 2 ? 'O' : 'X');
-
-        for (int i = 0; i < size; ++i) {
-            for (int j = 0; j < size; ++j) {
-                int r = wr + i - size / 2 + view.panY;
-                int c = wc + j - size / 2 + view.panX;
-                if (r < 0 || r >= height_ || c < 0 || c >= width_) continue;
-                float depthVal = static_cast<float>(d);
-                if (depthVal < zbuf[r][c]) {
-                    screen[r][c] = glyph;
-                    zbuf[r][c] = depthVal;
-                }
-            }
-        }
-
-        int labelRow = wr + size / 2 + view.panY + 1;
-        int labelCol = wc + size / 2 + view.panX + 1;
-        if (labelRow >= 0 && labelRow < height_) {
-            const std::string& lbl = node.label;
-            for (int i = 0; i < (int)lbl.size(); ++i) {
-                int col = labelCol + i;
-                if (col >= 0 && col < width_) {
-                    screen[labelRow][col] = lbl[i];
-                }
-            }
-        }
-    }
-
-    for (const auto& [nid, coord] : pos) {
-        for (int v : graph.nodeMap.at(nid).neighbors) {
-            if (!pos.count(v)) continue;
-
-            int r1 = static_cast<int>(coord.x) + view.panY, c1 = static_cast<int>(coord.y) + view.panX;
-            int r2 = static_cast<int>(pos[v].x) + view.panY, c2 = static_cast<int>(pos[v].y) + view.panX;
-
-            int dr = std::abs(r2 - r1), dc = std::abs(c2 - c1);
-            int sr = (r1 < r2) ? 1 : -1;
-            int sc = (c1 < c2) ? 1 : -1;
-            int err = dr - dc;
-
-            int rr = r1;
-            int cc = c1;
-
-            int maxSteps = std::max(dr, dc) + 1;
-
-            for (int step = 0; step < maxSteps; ++step) {
-                if (rr >= 0 && rr < height_ && cc >= 0 && cc < width_ && screen[rr][cc] == ' ') {
-                    screen[rr][cc] = '.';
-                }
-                if (rr == r2 && cc == c2) break;
-                int e2 = 2 * err;
-                if (e2 > -dc) { err -= dc; rr += sr; }
-                if (e2 < dr)  { err += dr; cc += sc; }
-            }
-        }
-    }
-
-    // Print to stdout
-    // In a real multi-backend system, we might buffer this or use a clearScreen call
-    std::cout << "\n=== CBT Graph Viewer (Full Layout) ===\n";
-    for (const auto& row : screen) {
-        std::cout << row << "\n";
+    if (view.showHelp) {
+        int y = view.height + 1;
+        frameBuffer_->drawString(0, y++, "================================================================================", -1.0f);
+        frameBuffer_->drawString(0, y++, "=== CBT Graph Viewer Menu ===", -1.0f);
+        frameBuffer_->drawString(0, y++, "[↑↓←→/IJKL] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist", -1.0f);
+        frameBuffer_->drawString(0, y++, "[/] Search  [TAB] Cycle Focus  [B] Book View  [N] Next View [E] Page View", -1.0f);
+        frameBuffer_->drawString(0, y++, "[V] Page Cycle [Z] Zoom In [X] Zoom Out [M] Multi Foci Toggle [H] Toggle Help", -1.0f);
+        frameBuffer_->drawString(0, y++, "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [U] Load  [ESC] Exit", -1.0f);
+        frameBuffer_->drawString(0, y++, "================================================================================", -1.0f);
     }
 }
 
 void ConsoleRenderer::present() {
-    // No-op for console usually, or we could handle the final flush here.
+    if (frameBuffer_) {
+        frameBuffer_->present();
+    }
 }
 
 void ConsoleRenderer::shutdown() {
+}
+
+void ConsoleRenderer::setStatusMessage(const std::string& message) {
+    if (frameBuffer_) {
+        frameBuffer_->setStatusMessage(message);
+    }
 }
 
 } // namespace render

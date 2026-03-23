@@ -51,6 +51,7 @@ struct ViewContext {
     int width = DEFAULT_CONSOLE_WIDTH;
     int height = DEFAULT_CONSOLE_HEIGHT;
     bool showMinimap = true;
+    bool showHelp = true;
 
     void zoomIn();
     void zoomOut();
@@ -105,11 +106,17 @@ struct GraphSummary {
     double timeToRenderMs = 0;
 };
 
+// Simple 3D/2D point types for perspective projection
+struct Point3D { float x, y, z; };
+struct Point2D { float x, y; };
+
 class Graph {
 public:
     std::vector<GraphNode> nodes;
     std::unordered_map<int, GraphNode> nodeMap;
     std::map<int,Coord3>      nodePos;
+    std::map<int, Point2D>    layoutPositions;
+    bool                      layoutDirty = true;
     std::set<int> focusedNodeIndices;
     int focusedNodeIndex = 0;
     GraphSummary summary;
@@ -175,10 +182,6 @@ struct VanishingPoint {
     float focalLength;
     float viewDistance;
 };
-
-// Simple 3D/2D point types for perspective projection
-struct Point3D { float x, y, z; };
-struct Point2D { float x, y; };
 
 // Physics state for Nexus Flow layout
 struct NexusPhysicsState {
