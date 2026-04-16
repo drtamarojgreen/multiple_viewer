@@ -12,6 +12,7 @@ enum DisplayMode {
     DM_DOT,        // single '.' glyph
     DM_O,          // single 'O' glyph
     DM_TEXT_ONLY,  // no blocks, text labels only
+    DM_OVERLAY,    // overlay mode marker '#'
     DM_COUNT
 };
 
@@ -36,7 +37,7 @@ bool saveGraphToCSV(const Graph& graph, const std::string& filename);  // serial
 bool loadGraphFromCSV(Graph& graph, const std::string& filename);      // parses graph from file
 
 // Viewer Engine (optional)
-void runEditor(Graph& graph, bool runTests = false);                     // main viewer loop with menu+analytics
+void runEditor(Graph& graph, bool runTests = false, const std::vector<std::string>& overlayGraphPaths = {});                     // main viewer loop with menu+analytics
 void renderGraph(const Graph& graph, const ViewContext& view, const SearchState& search = {});                   // renders visual graph content
 void renderNexusFlow(Graph& graph, NexusPhysicsState& physics, const SearchState& search = {});               // renders force-directed layout
 void renderBookView(Graph& graph, const ViewContext& view, const SearchState& search = {});                // renders book view layout

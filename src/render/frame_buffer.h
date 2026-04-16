@@ -17,6 +17,9 @@ public:
     void drawLine(int x1, int y1, int x2, int y2, char c, float depth = 0.0f);
     void drawRect(int x, int y, int w, int h, char c, float depth = 0.0f);
 
+    void writeAt(int x, int y, char c);
+    char getChar(int x, int y) const;
+
     void setTitle(const std::string& title);
     void setStatusMessage(const std::string& message);
     void present() const;

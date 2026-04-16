@@ -10,6 +10,7 @@
 #include "map_logic.h"
 #include "file_logic.h"
 #include "layout/layout_manager.h"
+#include "model/overlay_manager.h"
 
 namespace bdd {
 
@@ -313,6 +314,30 @@ void registerUISteps() {
     runner.registerStep("the minimap visibility should be toggled", [](BDDContext& ctx, const std::vector<std::string>& args) {
         // Since we started at true (in BDDContext usually), it should be false now if we toggled once
         EXPECT(ctx.viewContext.showMinimap == false, ctx, "Minimap visibility not toggled");
+    });
+
+    runner.registerStep("a graph with node (\\d+) and label \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        ctx.graph.addNode(GraphNode(args[1], std::stoi(args[0])));
+    });
+
+    runner.registerStep("an external overlay graph with node (\\d+) and label \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        if (!ctx.overlayGraph) ctx.overlayGraph = std::make_unique<Graph>();
+        ctx.overlayGraph->addNode(GraphNode(args[1], std::stoi(args[0])));
+    });
+
+    runner.registerStep("I enable overlays", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        Config::showOverlays = true;
+        if (!ctx.overlayMgr) ctx.overlayMgr = std::make_unique<model::OverlayManager>(&ctx.graph);
+        if (ctx.overlayGraph) ctx.overlayMgr->addOverlay(1, ctx.overlayGraph.get());
+        ctx.lastResult = std::to_string(ctx.overlayMgr->buildMatches("bdd_overlay_cache.bin"));
+    });
+
+    runner.registerStep("node (\\d+) should be marked as an overlay node", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        EXPECT(ctx.overlayMgr && ctx.overlayMgr->isOverlayNode(std::stoi(args[0])), ctx, "Node not marked as overlay");
+    });
+
+    runner.registerStep("the console should show \"(.*)\" overlay match", [](BDDContext& ctx, const std::vector<std::string>& args) {
+        EXPECT(ctx.lastResult == args[0], ctx, "Match count mismatch");
     });
 }
 

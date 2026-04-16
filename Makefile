@@ -1,6 +1,6 @@
 CXX = g++
 BUILD_DIR = build
-CXXFLAGS = -std=c++17 -Isrc -Itests -Itests/bdd -DPROJECT_ROOT_DIR=\"$(shell pwd)\"
+CXXFLAGS = -std=c++17 -Isrc -Itests -Itests/unit -Itests/bdd -DPROJECT_ROOT_DIR=\"$(shell pwd)\"
 LDFLAGS = 
 
 # Source directories for core logic

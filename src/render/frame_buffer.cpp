@@ -68,6 +68,19 @@ void FrameBuffer::drawRect(int x, int y, int w, int h, char c, float depth) {
     }
 }
 
+void FrameBuffer::writeAt(int x, int y, char c) {
+    if (x >= 0 && x < width_ && y >= 0 && y < height_) {
+        buffer_[y][x] = c;
+    }
+}
+
+char FrameBuffer::getChar(int x, int y) const {
+    if (x >= 0 && x < width_ && y >= 0 && y < height_) {
+        return buffer_[y][x];
+    }
+    return ' ';
+}
+
 void FrameBuffer::setTitle(const std::string& title) {
     title_ = title;
 }

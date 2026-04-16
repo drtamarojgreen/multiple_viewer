@@ -16,6 +16,7 @@ bool ConsoleRenderer::initialize(int width, int height) {
     height_ = height;
     frameBuffer_ = std::make_unique<FrameBuffer>(width, height);
     viewport_ = std::make_unique<Viewport>(width, height);
+    overlayRenderer_ = std::make_unique<OverlayRenderer>();
     return true;
 }
 
@@ -75,6 +76,10 @@ void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
 
         // Label
         frameBuffer_->drawString(static_cast<int>(p.x + size / 2 + 1), static_cast<int>(p.y + size / 2 + 1), node.label, static_cast<float>(depth));
+    }
+
+    if (Config::showOverlays && overlayMgr_ && overlayRenderer_ && viewport_) {
+        overlayRenderer_->renderOverlays(*overlayMgr_, graph, *frameBuffer_, view, *viewport_);
     }
 
     if (view.currentViewMode == VM_BOOK_VIEW) {

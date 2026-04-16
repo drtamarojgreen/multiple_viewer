@@ -2,6 +2,7 @@
 #include "viewer_logic.h"
 #include "file_logic.h"
 #include "io/io_manager.h"
+#include "model/overlay_manager.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -268,6 +269,28 @@ void testDensityStrategy() {
 }
 
 // Test 13: computeSummary enhancements (clustering, diameter)
+void testOverlayLogic() {
+    Graph network;
+    GraphNode n1("Alpha", 0);
+    network.addNode(n1);
+
+    Graph overlay;
+    GraphNode o1("Alpha", 0);
+    overlay.addNode(o1);
+
+    model::OverlayManager mgr(&network);
+    mgr.addOverlay(1, &overlay);
+
+    int matches = mgr.buildMatches("test_overlay_cache.bin");
+    TEST("Overlay match count", matches == 1);
+    TEST("Overlay has match for node 0", mgr.isOverlayNode(0));
+
+    model::OverlayManager mgr2(&network);
+    bool loaded = mgr2.loadMatchCache("test_overlay_cache.bin");
+    TEST("Overlay cache reload", loaded);
+    TEST("Reloaded has match for node 0", mgr2.isOverlayNode(0));
+}
+
 void testRefinedSearch() {
     Graph g;
     g.addNode(GraphNode("Brain Stem", 0, {}, 1, 1));
@@ -336,6 +359,7 @@ void runAllTests() {
       testGraphSerialization();
       testGraphSerializationJSON();
       testBaselinePersistence();
+      testOverlayLogic();
 
       int total = testsPassed + testsFailed;
       std::cout << "\nResults: " << testsPassed
