@@ -23,6 +23,7 @@
 #include "../../src/model/core/contracts/ISimulationKernel.h"
 #include "../../src/model/core/OverlayService.h"
 #include "../../src/model/temporal_engine.h"
+#include "../../src/model/overlay_manager.h"
 #include "../print/UIPrinter.h"
 
 namespace bdd {
@@ -86,6 +87,8 @@ struct BDDContext {
     model::TemporalEngine temporalEngine;
 
     std::unique_ptr<print::UIPrinter> uiPrinter;
+    std::unique_ptr<Graph> overlayGraph;
+    std::unique_ptr<model::OverlayManager> overlayMgr;
     std::string lastResult;
     bool success = true;
 

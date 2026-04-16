@@ -377,3 +377,36 @@ void Graph::applyBrainOverlay(const model::BrainOverlay& overlay) {
         nodeMap[node.index].pathwayId = node.pathwayId;
     }
 }
+
+std::string Graph::getNodeLabel(int nodeId) const {
+    auto it = nodeMap.find(nodeId);
+    if (it == nodeMap.end()) {
+        return "";
+    }
+    return it->second.label;
+}
+
+std::vector<int> Graph::getAllNodeIds() const {
+    std::vector<int> ids;
+    ids.reserve(nodes.size());
+    for (const auto& node : nodes) {
+        ids.push_back(node.index);
+    }
+    return ids;
+}
+
+std::vector<int> Graph::getNeighbors(int nodeId) const {
+    auto it = nodeMap.find(nodeId);
+    if (it == nodeMap.end()) {
+        return std::vector<int>();
+    }
+    return it->second.neighbors;
+}
+
+Point2D Graph::getNodePosition(int nodeId) const {
+    auto it = layoutPositions.find(nodeId);
+    if (it == layoutPositions.end()) {
+        return {0.0f, 0.0f};
+    }
+    return it->second;
+}

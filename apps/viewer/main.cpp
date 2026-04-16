@@ -5,11 +5,11 @@
 #include "viewer_logic.h"
 #include "search_logic.h"
 #include <iostream>
-#include "unit/test_logic.h"
-#include "unit/testsuite2_logic.h"
-#include "unit/testsuite3_logic.h"
-#include "unit/dynamic_graph_tests.h"
-#include "tests/bdd/bdd_test_main.h"
+#include "test_logic.h"
+#include "testsuite2_logic.h"
+#include "testsuite3_logic.h"
+#include "dynamic_graph_tests.h"
+#include "bdd_test_main.h"
 #include "file_logic.h" // Explicitly include for file operations
 #include <string>
 #include <vector>
@@ -71,8 +71,13 @@ void runInteractiveSession(const CmdLineParser& parser) {
         model::ModelRepository::getInstance().loadOverlay(parser.getOption("load-overlay"));
     }
 
+    std::vector<std::string> overlayGraphs;
+    if (parser.hasOption("load-overlay-graph")) {
+        overlayGraphs.push_back(parser.getOption("load-overlay-graph"));
+    }
+
     // Run viewer/editor session
-    runEditor(graph, parser.hasOption("test"));
+    runEditor(graph, parser.hasOption("test"), overlayGraphs);
 }
 
 int runApplication(const CmdLineParser& parser) {
@@ -90,6 +95,7 @@ int runApplication(const CmdLineParser& parser) {
         std::cout << "  --load-atlas <file.brn>   Load brain atlas\n";
         std::cout << "  --load-labels <file.txt>  Load brain labels\n";
         std::cout << "  --load-overlay <file.txt> Load node-to-brain overlay\n";
+        std::cout << "  --load-overlay-graph <file.csv> Load external overlay graph\n";
         std::cout << "  --test-unit               Run unit tests\n";
         std::cout << "  --test-bdd                Run BDD tests\n";
         std::cout << "  --test                    Run all tests\n";

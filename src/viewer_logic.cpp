@@ -3,6 +3,8 @@
 #include "render/minimap_renderer.h"
 #include "render/renderer_factory.h"
 #include "layout/layout_manager.h"
+#include "model/overlay_manager.h"
+#include "render/console_renderer.h"
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
@@ -476,7 +478,7 @@ void renderBookView(Graph& graph, const ViewContext& view, const SearchState& se
 #include <thread>
 #include <chrono>
 
-void runEditor(Graph& graph, bool runTests) {
+void runEditor(Graph& graph, bool runTests, const std::vector<std::string>& overlayGraphPaths) {
     if (runTests) {
         std::cout << "Tests are now available via separate executables: unit_tests and bdd_tests\n";
         return;
@@ -571,6 +573,41 @@ void runEditor(Graph& graph, bool runTests) {
         if (static_cast<ViewMode>(current) == VM_BOOK_VIEW) current = (current + 1) % VM_COUNT;
         view.currentViewMode = static_cast<ViewMode>(current);
         graph.needsLayoutReset = true;
+    });
+
+    model::OverlayManager overlayMgr(&graph);
+
+    // Manage overlay graphs
+    std::vector<std::unique_ptr<Graph>> loadedOverlays;
+    for (size_t i = 0; i < overlayGraphPaths.size(); ++i) {
+        auto ovG = std::make_unique<Graph>();
+        if (loadGraphFromCSV(*ovG, overlayGraphPaths[i])) {
+            overlayMgr.addOverlay(static_cast<int>(i), ovG.get());
+            loadedOverlays.push_back(std::move(ovG));
+        }
+    }
+
+    std::string cachePath = model::OverlayManager::getTempFilePath();
+    if (overlayMgr.loadMatchCache(cachePath)) {
+        renderer->setStatusMessage("Loaded overlay cache.");
+    }
+
+    if (auto* consoleRend = dynamic_cast<render::ConsoleRenderer*>(renderer.get())) {
+        consoleRend->setOverlayManager(&overlayMgr);
+    }
+
+    shortcutManager.registerShortcut('V', [&]() {
+        Config::showOverlays = !Config::showOverlays;
+        if (Config::showOverlays) {
+            if (overlayMgr.getMatchesForNode(-1).empty() && !overlayMgr.loadMatchCache(cachePath)) {
+                int matches = overlayMgr.buildMatches(cachePath);
+                renderer->setStatusMessage("Overlays enabled. Matches: " + std::to_string(matches));
+            } else {
+                renderer->setStatusMessage("Overlays enabled (from cache).");
+            }
+        } else {
+            renderer->setStatusMessage("Overlays disabled.");
+        }
     });
 
     while (true) {

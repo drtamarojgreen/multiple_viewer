@@ -94,6 +94,10 @@ bool loadGraphFromCSV(Graph& graph, const std::string& filename) {
 
         GraphNode node;
         node.label = fields[0];
+        // Strip leading/trailing quotes from label if present
+        if (node.label.size() >= 2 && node.label.front() == '"' && node.label.back() == '"') {
+            node.label = node.label.substr(1, node.label.size() - 2);
+        }
         try {
             node.index        = std::stoi(fields[1]);
 

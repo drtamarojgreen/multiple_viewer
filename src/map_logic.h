@@ -26,6 +26,7 @@ namespace Config {
     inline float viewerZoom = 1.0f;
     inline int nodePadding = 1;
     inline bool quietMode = false;
+    inline bool showOverlays = false;
 }
 
 // Different visualization layouts (from viewer_logic.h)
@@ -168,6 +169,12 @@ public:
     bool isFocusOnlyView(ZoomLevel zoom) const;
     // 5) Proximity-based depth
     float getProximityDepth(int nodeId, int width = DEFAULT_CONSOLE_WIDTH, int height = DEFAULT_CONSOLE_HEIGHT) const;
+
+    // Overlay helpers
+    std::string getNodeLabel(int nodeId) const;
+    std::vector<int> getAllNodeIds() const;
+    std::vector<int> getNeighbors(int nodeId) const;
+    Point2D getNodePosition(int nodeId) const;
 
     // --- View Mode State ---
     bool needsLayoutReset = true;
