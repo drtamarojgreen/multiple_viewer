@@ -8,10 +8,6 @@ bdd_persist_test.csv
 test_graph.csv
 test_output.csv
 graph_output.csv
-*.bin
-*.svg
-test_graph_tmp.csv
-test_graph_tmp.json
 
 # IDEs
 .vscode/
