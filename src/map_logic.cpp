@@ -14,18 +14,26 @@ void Graph::addNode(const GraphNode& node) {
 void Graph::removeNode(int index) {
     if (!nodeExists(index)) return;
 
-    // Remove this node from neighbors of others
+    // 1. Remove this node from neighbors of others in the nodeMap
+    // We don't call updateNode here to avoid iterator invalidation
     for (auto& [otherIndex, otherNode] : nodeMap) {
         auto& nbrs = otherNode.neighbors;
         auto it = std::find(nbrs.begin(), nbrs.end(), index);
         if (it != nbrs.end()) {
             nbrs.erase(it);
-            // Sync with nodes vector
-            updateNode(otherIndex, otherNode);
         }
     }
 
-    // Remove from nodeMap and nodes vector
+    // 2. Sync the changes to the nodes vector
+    for (auto& node : nodes) {
+        auto& nbrs = node.neighbors;
+        auto it = std::find(nbrs.begin(), nbrs.end(), index);
+        if (it != nbrs.end()) {
+            nbrs.erase(it);
+        }
+    }
+
+    // 3. Remove the node itself from nodeMap and nodes vector
     nodeMap.erase(index);
     nodes.erase(std::remove_if(nodes.begin(), nodes.end(),
                 [index](const GraphNode& node) { return node.index == index; }),
@@ -42,44 +50,48 @@ bool Graph::nodeExists(int index) const {
 
 // Update a node in both nodes vector and nodeMap
 void Graph::updateNode(int index, const GraphNode& updatedNode) {
-    // Check if we are trying to update from ourselves
-    if (&nodeMap[index] == &updatedNode) {
-        // Redundant update, but let's ensure the vector is in sync
-    } else {
+    // 1. Update in nodeMap
+    // Handle self-assignment safely
+    if (nodeMap.count(index) && &nodeMap[index] != &updatedNode) {
+        nodeMap[index] = updatedNode;
+    } else if (!nodeMap.count(index)) {
         nodeMap[index] = updatedNode;
     }
 
-    // Update in nodes vector
-    auto it = std::find_if(nodes.begin(), nodes.end(),
-        [index](const GraphNode& n) { return n.index == index; });
-    if (it != nodes.end()) {
-        *it = nodeMap[index];
+    // 2. Sync to nodes vector
+    for (auto& n : nodes) {
+        if (n.index == index) {
+            n = nodeMap[index];
+            break;
+        }
     }
 }
 
 void Graph::addEdge(int from, int to) {
     if (!nodeExists(from) || !nodeExists(to)) return;
-    if (from == to) return; // Prevent self-loops for now
+    if (from == to) return;
 
-    // Check if edge already exists to avoid duplicates
-    auto& n1 = nodeMap[from].neighbors;
-    if (std::find(n1.begin(), n1.end(), to) == n1.end()) {
-        n1.push_back(to);
-
-        // Sync the nodes vector for the 'from' node
-        auto it1 = std::find_if(nodes.begin(), nodes.end(),
-            [from](const GraphNode& n) { return n.index == from; });
-        if (it1 != nodes.end()) *it1 = nodeMap[from];
+    // 1. Update nodeMap entries
+    bool addedToFrom = false;
+    auto& nbrs1 = nodeMap[from].neighbors;
+    if (std::find(nbrs1.begin(), nbrs1.end(), to) == nbrs1.end()) {
+        nbrs1.push_back(to);
+        addedToFrom = true;
     }
 
-    auto& n2 = nodeMap[to].neighbors;
-    if (std::find(n2.begin(), n2.end(), from) == n2.end()) {
-        n2.push_back(from);
+    bool addedToTo = false;
+    auto& nbrs2 = nodeMap[to].neighbors;
+    if (std::find(nbrs2.begin(), nbrs2.end(), from) == nbrs2.end()) {
+        nbrs2.push_back(from);
+        addedToTo = true;
+    }
 
-        // Sync the nodes vector for the 'to' node
-        auto it2 = std::find_if(nodes.begin(), nodes.end(),
-            [to](const GraphNode& n) { return n.index == to; });
-        if (it2 != nodes.end()) *it2 = nodeMap[to];
+    // 2. Update nodes vector
+    if (addedToFrom || addedToTo) {
+        for (auto& n : nodes) {
+            if (addedToFrom && n.index == from) n = nodeMap[from];
+            if (addedToTo && n.index == to) n = nodeMap[to];
+        }
     }
 }
 
