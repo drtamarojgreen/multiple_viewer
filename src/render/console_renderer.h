@@ -4,6 +4,7 @@
 #include "render_interface.h"
 #include "frame_buffer.h"
 #include "viewport.h"
+#include "../search_logic.h"
 #include <memory>
 
 namespace render {
