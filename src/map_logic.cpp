@@ -2,6 +2,7 @@
 #include "analysis_logic.h"
 #include <queue>
 #include <algorithm>
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 
@@ -269,6 +270,22 @@ float calculateAdaptiveNodeSpacing(const Graph& g) {
                : 1.0f);
     float compF= 1.0f + g.summary.components.size()*0.1f;
     return base * df * degF * compF;
+}
+
+void updateZBuffer(std::vector<std::vector<float>>& zbuf,
+                   Point2D center, int size, float depth) {
+    int half = size/2;
+    for (int dy=-half; dy<=half; ++dy) {
+        for (int dx=-half; dx<=half; ++dx) {
+            int r = static_cast<int>(center.y) + dy;
+            int c = static_cast<int>(center.x) + dx;
+            if (r>=0 && r< (int)zbuf.size() &&
+                c>=0 && c< (int)zbuf[0].size())
+            {
+                zbuf[r][c] = std::min(zbuf[r][c], depth);
+            }
+        }
+    }
 }
 
 // Density-based toggles (stub)

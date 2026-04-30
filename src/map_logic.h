@@ -190,17 +190,6 @@ struct NexusPhysicsState {
     bool initialized = false;
 };
 
-// Grouping for "Book­-Based" view
-struct BookChapter {
-    std::vector<int> nodeIds;
-    int              chapterDepth;
-    std::string      chapterTitle;
-};
-
-// Free helper functions
-// Book-based structure
-std::vector<BookChapter> createBookStructure(const Graph& g, const ViewContext& view);
-
 // Grid-based layering
 int getGridLayer(int nodeIndex, int layerCount);
 

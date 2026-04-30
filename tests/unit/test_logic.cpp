@@ -1,7 +1,7 @@
 #include "map_logic.h"
 #include "viewer_logic.h"
 #include "io/io_manager.h"
-#include "io/io_manager.h"
+#include "layout/book_view.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -194,7 +194,7 @@ void testBookStructure() {
     g.addNode(GraphNode("N"+std::to_string(i),i,{},i%2,i));
     g.nodePos[i] = {static_cast<float>(i%3), static_cast<float>(i%4), static_cast<float>(i%3)};  // z = i%3
   }
-  auto books = createBookStructure(g, v);
+  auto books = layout::BookView::createBookStructure(g, v);
   // expect at most 2 subjects * 3 depths = 6 chapters
   TEST("bookChapters <=6", books.size()<=6);
 }

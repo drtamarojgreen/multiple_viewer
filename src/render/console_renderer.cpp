@@ -1,5 +1,6 @@
 #include "console_renderer.h"
 #include "layout/layout_manager.h"
+#include "layout/book_view.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -79,7 +80,7 @@ void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
 
     if (view.currentViewMode == VM_BOOK_VIEW) {
         frameBuffer_->setTitle("Book View");
-        auto chapters = createBookStructure(graph, view);
+        auto chapters = layout::BookView::createBookStructure(graph, view);
         int y = 2;
         for (const auto& ch : chapters) {
             frameBuffer_->drawString(2, y++, "-- " + ch.chapterTitle + " (Depth " + std::to_string(ch.chapterDepth) + ") --", -1.0f);
