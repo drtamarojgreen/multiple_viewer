@@ -30,8 +30,11 @@ void FrameBuffer::drawChar(int x, int y, char c, float depth) {
 }
 
 void FrameBuffer::drawString(int x, int y, const std::string& str, float depth) {
+    if (y < 0 || y >= height_) return;
     for (size_t i = 0; i < str.length(); ++i) {
-        drawChar(x + static_cast<int>(i), y, str[i], depth);
+        if (x + (int)i >= 0 && x + (int)i < width_) {
+            drawChar(x + i, y, str[i], depth);
+        }
     }
 }
 

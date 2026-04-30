@@ -1,5 +1,6 @@
 // analysis_logic.cpp
 #include "analysis_logic.h"
+#include "map_logic.h"
 #include <iostream>
 #include <algorithm>
 #include <queue>

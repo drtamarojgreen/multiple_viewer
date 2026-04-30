@@ -234,12 +234,12 @@ void testVanishingProjection() {
 // Test 10: z-buffer occlusion logic
 void testZBuffer() {
   int H=DEFAULT_CONSOLE_HEIGHT, W=DEFAULT_CONSOLE_WIDTH;
-  std::vector<std::vector<float>> zb(H, std::vector<float>(W, INFINITY));
+  std::vector<std::vector<float>> zb(H, std::vector<float>(W, 1e9f));
   // first pixel at depth 5
   updateZBuffer(zb, {10,10}, 1, 5.0f);
   TEST("zBuffer update", zb[10][10] == 5.0f);
   // occlusion: deeper pixel (10) shouldn't overwrite 5
-  if (5.0f < INFINITY) {
+  if (zb[10][10] < 1e10f) {
     if (10.0f < zb[10][10])
       zb[10][10] = 10.0f;
   }

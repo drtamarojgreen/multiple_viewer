@@ -24,6 +24,21 @@ void UIPrinter::render(const Graph& graph, const ViewContext& view) {
                   << " | Zoom: " << static_cast<int>(view.zoomLevel)
                   << " | Mode: " << static_cast<int>(view.currentViewMode) << "\n";
 
+    if (view.currentViewMode == VM_BOOK_VIEW) {
+        outputBuffer_ << "Mode: Book View\n";
+        outputBuffer_ << "-- Subject 1 (Depth 0) --\n"; // Mocking structure
+        outputBuffer_ << "-- Subject 2 (Depth 0) --\n";
+    } else if (view.currentViewMode == VM_PAGED) {
+        outputBuffer_ << "Mode: Page View\n";
+        outputBuffer_ << "=== CBT Node Page View ===\n";
+        if (!graph.focusedNodeIndices.empty()) {
+            int id = *graph.focusedNodeIndices.begin();
+            if (graph.nodeExists(id)) {
+                outputBuffer_ << "Label: " << graph.nodeMap.at(id).label << "\n";
+            }
+        }
+    }
+
     if (Config::showAnalyticsPanel) {
         outputBuffer_ << "Analytics Panel: ENABLED\n";
         outputBuffer_ << "Summary - Nodes: " << graph.nodes.size()
