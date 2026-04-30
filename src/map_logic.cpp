@@ -42,31 +42,44 @@ bool Graph::nodeExists(int index) const {
 
 // Update a node in both nodes vector and nodeMap
 void Graph::updateNode(int index, const GraphNode& updatedNode) {
-    // Update in nodeMap
-    nodeMap[index] = updatedNode;
+    // Check if we are trying to update from ourselves
+    if (&nodeMap[index] == &updatedNode) {
+        // Redundant update, but let's ensure the vector is in sync
+    } else {
+        nodeMap[index] = updatedNode;
+    }
 
     // Update in nodes vector
     auto it = std::find_if(nodes.begin(), nodes.end(),
         [index](const GraphNode& n) { return n.index == index; });
     if (it != nodes.end()) {
-        *it = updatedNode;
+        *it = nodeMap[index];
     }
 }
 
 void Graph::addEdge(int from, int to) {
     if (!nodeExists(from) || !nodeExists(to)) return;
+    if (from == to) return; // Prevent self-loops for now
 
     // Check if edge already exists to avoid duplicates
     auto& n1 = nodeMap[from].neighbors;
     if (std::find(n1.begin(), n1.end(), to) == n1.end()) {
         n1.push_back(to);
-        updateNode(from, nodeMap[from]);
+
+        // Sync the nodes vector for the 'from' node
+        auto it1 = std::find_if(nodes.begin(), nodes.end(),
+            [from](const GraphNode& n) { return n.index == from; });
+        if (it1 != nodes.end()) *it1 = nodeMap[from];
     }
 
     auto& n2 = nodeMap[to].neighbors;
     if (std::find(n2.begin(), n2.end(), from) == n2.end()) {
         n2.push_back(from);
-        updateNode(to, nodeMap[to]);
+
+        // Sync the nodes vector for the 'to' node
+        auto it2 = std::find_if(nodes.begin(), nodes.end(),
+            [to](const GraphNode& n) { return n.index == to; });
+        if (it2 != nodes.end()) *it2 = nodeMap[to];
     }
 }
 
