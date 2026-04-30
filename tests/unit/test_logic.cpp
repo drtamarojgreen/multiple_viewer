@@ -116,9 +116,13 @@ void testBaselinePersistence() {
     if (ok_csv) {
         TEST("Baseline CSV node count", g_csv.nodes.size() == 2);
         TEST("Baseline CSV edge count", g_csv.edgeCount() == 1);
-        TEST("Baseline CSV label check", g_csv.nodeMap.at(100).label == "CSVNode");
-        TEST("Baseline CSV weight check", g_csv.nodeMap.at(100).weight == 10);
-        TEST("Baseline CSV subject check", g_csv.nodeMap.at(100).subjectIndex == 1);
+        if (g_csv.nodeExists(100)) {
+            TEST("Baseline CSV label check", g_csv.nodeMap.at(100).label == "CSVNode");
+            TEST("Baseline CSV weight check", g_csv.nodeMap.at(100).weight == 10);
+            TEST("Baseline CSV subject check", g_csv.nodeMap.at(100).subjectIndex == 1);
+        } else {
+            TEST("Baseline CSV node 100 exists", false);
+        }
     }
 
     // JSON Baseline

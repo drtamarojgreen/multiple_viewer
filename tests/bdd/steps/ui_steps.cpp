@@ -15,25 +15,6 @@ namespace bdd {
 
 using namespace print;
 
-class AddNodeCommand : public input::ICommand {
-public:
-    AddNodeCommand(Graph& graph, const std::string& label, int index)
-        : graph_(graph), label_(label), index_(index) {}
-
-    void execute() override {
-        graph_.addNode(GraphNode(label_, index_));
-    }
-
-    void undo() override {
-        graph_.removeNode(index_);
-    }
-
-private:
-    Graph& graph_;
-    std::string label_;
-    int index_;
-};
-
 void registerUISteps() {
     auto& runner = BDDRunner::getInstance();
 
@@ -146,7 +127,7 @@ void registerUISteps() {
     });
 
     runner.registerStep("I have added a node \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        auto cmd = std::make_unique<AddNodeCommand>(ctx.graph, args[0], 100);
+        auto cmd = std::make_unique<input::AddNodeCommand>(ctx.graph, GraphNode(args[0], 100));
         ctx.commandStack.pushAndExecute(std::move(cmd));
     });
 
