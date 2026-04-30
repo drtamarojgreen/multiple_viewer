@@ -5,6 +5,7 @@
 #include "layout/book_view.h"
 #include "layout/page_view.h"
 #include "render/renderer_factory.h"
+#include "render/console_renderer.h"
 #include "layout/layout_manager.h"
 #include "ui/main_menu.h"
 #include <cstdio>
@@ -65,9 +66,6 @@ void drawStatusBar(const SearchState& search) {
 }
 
 void renderGraph(const Graph& graph, const ViewContext& view, const SearchState& search) {
-    std::cout << "[DBG] panX=" << view.panX << "  panY=" << view.panY << "\n";
-    std::cout << "\n=== CBT Graph Render (Full Layout) ===\n";
-
     vector<string> screen(view.height, string(view.width, ' '));
     vector<vector<float>> zbuf(view.height, vector<float>(view.width, numeric_limits<float>::infinity()));
 
@@ -139,13 +137,6 @@ void renderGraph(const Graph& graph, const ViewContext& view, const SearchState&
         }
     }
 
-    clearScreen();
-    cout << "=== CBT Graph Viewer (Full Layout) ===\n";
-    for (const auto& row : screen) {
-        cout << row << "\n";
-    }
-    cout << "[S/s: search results, X/@/#/O: nodes, .: edge]" << endl;
-    render::MinimapRenderer::render(graph, view);
 }
 
 void panView(Direction dir) {
@@ -278,18 +269,18 @@ void runEditor(Graph& graph, bool runTests) {
     while (true) {
         if (view.currentViewMode == VM_PERSPECTIVE) {
             layout::LayoutManager::applyPerspectiveBFS(graph, view);
-            renderGraph(graph, view, searchState);
         } else if (view.currentViewMode == VM_NEXUS_FLOW) {
             layout::LayoutManager::applyForceDirected(graph, view);
-            clearScreen();
-            layout::NexusFlowView::render(graph, nexusPhysics, searchState);
-        } else if (view.currentViewMode == VM_BOOK_VIEW) {
-            clearScreen();
-            layout::BookView::render(graph, view, searchState);
         }
 
-        ui::MainMenu::draw(shortcutManager);
-        drawStatusBar(searchState);
+        renderer->clear();
+        auto consoleRenderer = dynamic_cast<render::ConsoleRenderer*>(renderer.get());
+        if (consoleRenderer) {
+            consoleRenderer->renderWithSearch(graph, view, searchState);
+        } else {
+            renderer->render(graph, view);
+        }
+        renderer->present();
 
         if (Config::viewerOverlayMode) AnalyticsEngine::drawAnalyticsPanelOverlay(graph);
 

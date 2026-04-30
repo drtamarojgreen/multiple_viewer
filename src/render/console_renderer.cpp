@@ -1,6 +1,7 @@
 #include "console_renderer.h"
 #include "layout/layout_manager.h"
 #include "layout/book_view.h"
+#include "layout/minimap_renderer.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -27,6 +28,10 @@ void ConsoleRenderer::clear() {
 }
 
 void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
+    renderWithSearch(graph, view, {});
+}
+
+void ConsoleRenderer::renderWithSearch(const Graph& graph, const ViewContext& view, const SearchState& search) {
     if (!frameBuffer_ || !viewport_) return;
 
     viewport_->setPan(view.panX, view.panY);
@@ -68,6 +73,10 @@ void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
                      (node.subjectIndex % 4 == 0 ? '@' :
                       node.subjectIndex % 4 == 1 ? '#' : 'X');
 
+        if (search.isActive && std::find(search.matches.begin(), search.matches.end(), node.index) != search.matches.end()) {
+            glyph = (search.getActiveMatchNodeId() == node.index) ? 'S' : 's';
+        }
+
         if (size <= 1) {
             frameBuffer_->drawChar(static_cast<int>(p.x), static_cast<int>(p.y), glyph, static_cast<float>(depth));
         } else {
@@ -86,10 +95,24 @@ void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
             frameBuffer_->drawString(2, y++, "-- " + ch.chapterTitle + " (Depth " + std::to_string(ch.chapterDepth) + ") --", -1.0f);
             for (int nodeId : ch.nodeIds) {
                 bool isFocused = graph.isNodeFocused(nodeId);
-                frameBuffer_->drawString(4, y++, (isFocused ? "> [" : "  [") + graph.nodeMap.at(nodeId).label + "]", -1.0f);
+                bool isMatch = search.isActive && std::find(search.matches.begin(), search.matches.end(), nodeId) != search.matches.end();
+                bool isActiveMatch = search.getActiveMatchNodeId() == nodeId;
+
+                std::string prefix = "  ";
+                if (isActiveMatch) prefix = ">>";
+                else if (isMatch) prefix = " >";
+                else if (isFocused) prefix = " o";
+
+                frameBuffer_->drawString(4, y++, prefix + "[" + graph.nodeMap.at(nodeId).label + "]", -1.0f);
             }
             y++;
         }
+    }
+
+    if (view.showMinimap && view.currentViewMode == VM_PERSPECTIVE) {
+        // NOTE: MinimapRenderer currently uses direct cout, which may cause flickering.
+        // It should ideally be refactored to use FrameBuffer.
+        MinimapRenderer::render(graph, view);
     }
 
     if (view.showHelp) {

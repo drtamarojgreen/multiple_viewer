@@ -1,0 +1,8 @@
+# Fact: Render Stability and Flicker Prevention
+# Situation: The rendering loop must follow a strict clear -> render -> present sequence.
+# Constraint: There should be no direct stdout/stderr output during the render loop that bypasses the FrameBuffer.
+
+FACT: ConsoleRenderer must call FrameBuffer::clear() at the start of a frame.
+FACT: ConsoleRenderer must call FrameBuffer::present() exactly once per frame.
+FACT: No direct std::cout or std::cerr calls allowed in src/viewer_logic.cpp within the runEditor loop.
+FACT: No direct std::cout or std::cerr calls allowed in src/render/console_renderer.cpp.

@@ -16,6 +16,7 @@ public:
     bool initialize(int width, int height) override;
     void clear() override;
     void render(const Graph& graph, const ViewContext& view) override;
+    void renderWithSearch(const Graph& graph, const ViewContext& view, const SearchState& search);
     void present() override;
     void shutdown() override;
 
