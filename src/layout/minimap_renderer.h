@@ -1,5 +1,5 @@
-#ifndef MINIMAP_RENDERER_H
-#define MINIMAP_RENDERER_H
+#ifndef LAYOUT_MINIMAP_RENDERER_H
+#define LAYOUT_MINIMAP_RENDERER_H
 
 #include "../map_logic.h"
 
@@ -12,4 +12,4 @@ public:
 
 } // namespace render
 
-#endif // MINIMAP_RENDERER_H
+#endif // LAYOUT_MINIMAP_RENDERER_H

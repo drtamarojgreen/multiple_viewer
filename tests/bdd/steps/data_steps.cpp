@@ -1,6 +1,6 @@
 #include "../bdd_runner.h"
 #include "io/io_manager.h"
-#include "../../src/file_logic.h"
+#include "../../src/io/io_manager.h"
 #include "analytics/analytics_engine_ext.h"
 #include "viewer_logic.h"
 #include <iostream>
@@ -39,7 +39,7 @@ void registerDataSteps() {
         if (args[0].find(".json") != std::string::npos) {
              ok = io::IOManager::loadJSON(ctx.graph, args[0]);
         } else {
-             ok = loadGraphFromCSV(ctx.graph, args[0]);
+             ok = io::IOManager::loadGraphFromCSV(ctx.graph, args[0]);
         }
         EXPECT(ok, ctx, "Failed to load graph from " + args[0]);
         ctx.lastResult = std::to_string(ctx.graph.nodes.size());
@@ -52,7 +52,7 @@ void registerDataSteps() {
     });
 
     runner.registerStep("I save the graph to \"(.*)\"", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        bool ok = saveGraphToCSV(ctx.graph, args[0]);
+        bool ok = io::IOManager::saveGraphToCSV(ctx.graph, args[0]);
         EXPECT(ok, ctx, "Failed to save CSV graph to " + args[0]);
     });
 

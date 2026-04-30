@@ -21,25 +21,15 @@ enum DisplayMode {
 // Directional Panning Enum
 enum class Direction { UP, DOWN, LEFT, RIGHT };
 
-// Menu Rendering & Input Handling
-void drawViewerMenu();                            // prints menu in terminal
-void handleKeyPress(char key, input::ShortcutManager& shortcutManager);      // handles input from viewer loop
-
 // Viewport Movement
 void panView(Direction dir);                      // shifts viewer offset
 
 // Analytics Overlay
 void drawAnalyticsPanelOverlay(const Graph& g);   // draws full-screen overlay if enabled
 
-// CSV Load/Save Trigger
-bool saveGraphToCSV(const Graph& graph, const std::string& filename);  // serializes to disk
-bool loadGraphFromCSV(Graph& graph, const std::string& filename);      // parses graph from file
-
 // Viewer Engine (optional)
 void runEditor(Graph& graph, bool runTests = false);                     // main viewer loop with menu+analytics
 void renderGraph(const Graph& graph, const ViewContext& view, const SearchState& search = {});                   // renders visual graph content
-void renderNexusFlow(Graph& graph, NexusPhysicsState& physics, const SearchState& search = {});               // renders force-directed layout
-void renderBookView(Graph& graph, const ViewContext& view, const SearchState& search = {});                // renders book view layout
 
 void drawStatusBar(const SearchState& search);
 
@@ -47,12 +37,9 @@ void promptFocusAdd(Graph& graph);
 void promptFocusRemove(Graph& graph);
 void promptSetDistance(ViewContext& view);
 
-std::vector<BookChapter> createBookStructure(const Graph& g, const ViewContext& view);
 int getGridLayer(int nodeIndex, int layerCount);
-void renderNodePage(const Graph& graph, int nodeId);
 
 // New function for executing commands from the CLI
 bool executeGraphCommand(Graph& graph, ViewContext& view, const std::string& command);
 
 #endif
-

@@ -2,7 +2,8 @@
 #include "testsuite2_logic.h"
 #include "map_logic.h"
 #include "viewer_logic.h"
-#include "file_logic.h"
+#include "io/io_manager.h"
+#include "layout/book_view.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -75,31 +76,6 @@ void TestRunner::clearResults() {
     results.clear();
     testsPassed = 0;
     testsFailed = 0;
-}
-
-// Helper function implementation
-std::set<int> parseNeighborsHelper(const std::string& neighborStr) {
-    std::set<int> neighbors;
-    if (neighborStr.empty() || neighborStr == "[]") {
-        return neighbors;
-    }
-    
-    std::string cleaned = neighborStr;
-    if (cleaned.front() == '[') cleaned = cleaned.substr(1);
-    if (cleaned.back() == ']') cleaned = cleaned.substr(0, cleaned.length() - 1);
-    
-    std::stringstream ss(cleaned);
-    std::string token;
-    while (std::getline(ss, token, ',')) {
-        if (!token.empty()) {
-            try {
-                neighbors.insert(std::stoi(token));
-            } catch (const std::exception&) {
-                // Skip invalid tokens
-            }
-        }
-    }
-    return neighbors;
 }
 
 // Test 1: Basic Graph Operations
@@ -176,12 +152,12 @@ void testFileOperations(TestRunner& runner) {
     graph.addEdge(1, 2);
     
     // Test saving to CSV
-    bool saveSuccess = saveGraphToCSV(graph, "test_output.csv");
+    bool saveSuccess = io::IOManager::saveGraphToCSV(graph, "test_output.csv");
     runner.runTest("Save Graph to CSV", saveSuccess, "Should successfully save graph to CSV");
     
     // Test loading from CSV
     Graph loadedGraph;
-    bool loadSuccess = loadGraphFromCSV(loadedGraph, "test_output.csv");
+    bool loadSuccess = io::IOManager::loadGraphFromCSV(loadedGraph, "test_output.csv");
     runner.runTest("Load Graph from CSV", loadSuccess, "Should successfully load graph from CSV");
     
     if (loadSuccess) {
@@ -202,17 +178,17 @@ void testFileOperations(TestRunner& runner) {
     
     // Test loading non-existent file
     Graph emptyGraph;
-    bool failLoad = loadGraphFromCSV(emptyGraph, "non_existent_file.csv");
+    bool failLoad = io::IOManager::loadGraphFromCSV(emptyGraph, "non_existent_file.csv");
     runner.runTest("Load Non-existent File", !failLoad, "Should fail to load non-existent file");
     
-    // Test parseNeighborsHelper helper function
-    auto neighbors1 = parseNeighborsHelper("[]");
+    // Test parseNeighbors helper function
+    auto neighbors1 = io::IOManager::parseNeighbors("[]");
     runner.runTest("Parse Empty Neighbors", neighbors1.empty(), "Empty neighbor list should be empty");
     
-    auto neighbors2 = parseNeighborsHelper("[1,2,3]");
+    auto neighbors2 = io::IOManager::parseNeighbors("[1,2,3]");
     runner.runTest("Parse Neighbors", neighbors2.size() == 3 && neighbors2.count(2) == 1, "Should parse neighbor list correctly");
     
-    auto neighbors3 = parseNeighborsHelper("[1,2,invalid,3]");
+    auto neighbors3 = io::IOManager::parseNeighbors("[1,2,invalid,3]");
     runner.runTest("Parse Invalid Neighbors", neighbors3.size() == 3, "Should skip invalid neighbor tokens");
 }
 
@@ -443,7 +419,7 @@ void testAdvancedFeatures(TestRunner& runner) {
     
     // Test book structure creation
     ViewContext viewContext;
-    auto bookStructure = createBookStructure(graph, viewContext);
+    auto bookStructure = layout::BookView::createBookStructure(graph, viewContext);
     runner.runTest("Book Structure Created", !bookStructure.empty(), "Should create book structure");
     
     // Test grid layer assignment
@@ -548,13 +524,13 @@ void testEdgeCases(TestRunner& runner) {
     // Test loading malformed CSV files
     Graph malformedGraph;
     createTestFile("malformed.csv", "index,label,weight,neighbors\n1,A,10,[2\n");
-    runner.runTest("Load Malformed CSV (Bracket)", !loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with syntax error");
+    runner.runTest("Load Malformed CSV (Bracket)", !io::IOManager::loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with syntax error");
 
     createTestFile("malformed.csv", "index,label,weight,neighbors\n1,A,ten,[2]\n");
-    runner.runTest("Load Malformed CSV (Value)", !loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with value error");
+    runner.runTest("Load Malformed CSV (Value)", !io::IOManager::loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with value error");
 
     createTestFile("malformed.csv", "index,label,weight\n1,A,10\n");
-    runner.runTest("Load Malformed CSV (Column)", !loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with missing column");
+    runner.runTest("Load Malformed CSV (Column)", !io::IOManager::loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with missing column");
 
     // Test with extreme values
     Graph extremeGraph;

@@ -1,6 +1,6 @@
 #include "map_logic.h"
 #include "viewer_logic.h"
-#include "file_logic.h"
+#include "io/io_manager.h"
 #include "io/io_manager.h"
 #include <iostream>
 #include <iomanip>
@@ -84,10 +84,10 @@ void testGraphSerialization() {
     g.addNode(GraphNode("Node C", 2, {1}, 1, 1));
     g.addEdge(0, 1);
     g.addEdge(1, 2);
-    saveGraphToCSV(g, "test_graph_tmp.csv");
+    io::IOManager::saveGraphToCSV(g, "test_graph_tmp.csv");
 
     Graph g2;
-    bool ok = loadGraphFromCSV(g2, "test_graph_tmp.csv");
+    bool ok = io::IOManager::loadGraphFromCSV(g2, "test_graph_tmp.csv");
     TEST("CSV reload success", ok);
     TEST("CSV reload node count", g2.nodeMap.size() == 3);
     TEST("CSV reload edge count", g2.edgeCount() == 2);
@@ -111,7 +111,7 @@ void testGraphSerializationJSON() {
 void testBaselinePersistence() {
     // CSV Baseline
     Graph g_csv;
-    bool ok_csv = loadGraphFromCSV(g_csv, "test_graph.csv");
+    bool ok_csv = io::IOManager::loadGraphFromCSV(g_csv, "test_graph.csv");
     TEST("Baseline CSV load success", ok_csv);
     if (ok_csv) {
         TEST("Baseline CSV node count", g_csv.nodes.size() == 2);
@@ -135,10 +135,10 @@ void testBaselinePersistence() {
 
 // Test 1: existing CSV neighbor parsing
 void testParseNeighbors() {
-  auto s1 = parseNeighbors("[]");
-  TEST("parseNeighbors empty", s1.empty());
-  auto s2 = parseNeighbors("[1,2,3]");
-  TEST("parseNeighbors size==3", s2.size()==3 && s2.count(2)==1);
+  auto s1 = io::IOManager::parseNeighbors("[]");
+  TEST("io::IOManager::parseNeighbors empty", s1.empty());
+  auto s2 = io::IOManager::parseNeighbors("[1,2,3]");
+  TEST("io::IOManager::parseNeighbors size==3", s2.size()==3 && s2.count(2)==1);
 }
 
 // Test 2: adaptive label length by depth & zoom

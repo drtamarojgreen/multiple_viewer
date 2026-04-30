@@ -10,7 +10,7 @@
 #include "unit/testsuite3_logic.h"
 #include "unit/dynamic_graph_tests.h"
 #include "tests/bdd/bdd_test_main.h"
-#include "file_logic.h" // Explicitly include for file operations
+#include "io/io_manager.h" // Explicitly include for file operations
 #include <string>
 #include <vector>
 #include "cmd_line_parser.h"
@@ -56,7 +56,7 @@ void runInteractiveSession(const CmdLineParser& parser) {
     std::cout << "Loading graph from '" << inputFile << "'...\n";
 
     // Initial load 
-    if (!loadGraphFromCSV(graph, inputFile)) {
+    if (!io::IOManager::loadGraphFromCSV(graph, inputFile)) {
         std::cout << "Starting with empty graph.\n";
     }
 
@@ -103,7 +103,7 @@ int runApplication(const CmdLineParser& parser) {
         std::string loadPath = parser.getOption("load-graph");
         if (loadPath.empty()) loadPath = "graph_input.csv";
 
-        if (!loadGraphFromCSV(graph, loadPath)) {
+        if (!io::IOManager::loadGraphFromCSV(graph, loadPath)) {
             std::cerr << "Error: Could not load graph from " << loadPath << "\n";
             return 1;
         }
@@ -124,7 +124,7 @@ int runApplication(const CmdLineParser& parser) {
 
         if (parser.hasOption("save-graph")) {
             std::string savePath = parser.getOption("save-graph");
-            if (saveGraphToCSV(graph, savePath)) {
+            if (io::IOManager::saveGraphToCSV(graph, savePath)) {
                 std::cout << "Graph saved to " << savePath << "\n";
             } else {
                 std::cerr << "Error: Could not save graph to " << savePath << "\n";

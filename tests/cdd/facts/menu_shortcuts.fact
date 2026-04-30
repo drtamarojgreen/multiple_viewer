@@ -1,0 +1,13 @@
+# Fact: Menu displays configured shortcut keys
+# Situation: The MainMenu class is used to render the menu footer.
+# Constraint: Each registered shortcut must appear in the menu output with its correct key and description.
+
+Shortcut 'A' is registered with description "Add Node"
+Shortcut 'R' is registered with description "Remove Node"
+Shortcut 'S' is registered with description "Save CSV"
+Shortcut 'U' is registered with description "Load CSV"
+
+FACT: Menu should contain "[A] Add Node"
+FACT: Menu should contain "[R] Remove Node"
+FACT: Menu should contain "[S] Save CSV"
+FACT: Menu should contain "[U] Load CSV"

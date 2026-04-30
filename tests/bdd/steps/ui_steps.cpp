@@ -8,7 +8,7 @@
 #include "input/shortcut_manager.h"
 #include "input/command_stack.h"
 #include "map_logic.h"
-#include "file_logic.h"
+#include "io/io_manager.h"
 #include "layout/layout_manager.h"
 
 namespace bdd {

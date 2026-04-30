@@ -4,19 +4,29 @@
 #include <map>
 #include <string>
 #include <functional>
+#include <vector>
 
 namespace input {
 
+struct Shortcut {
+    char key;
+    std::string description;
+    std::function<void()> action;
+};
+
 class ShortcutManager {
 public:
-    void registerShortcut(char key, std::function<void()> action);
+    void registerShortcut(char key, const std::string& description, std::function<void()> action);
     void handleKey(char key);
 
     void setInputMode(bool enabled) { inputMode_ = enabled; }
     bool isInputMode() const { return inputMode_; }
 
+    const std::vector<Shortcut>& getShortcuts() const { return shortcutList_; }
+
 private:
-    std::map<char, std::function<void()>> shortcuts_;
+    std::map<char, size_t> keyToIndex_;
+    std::vector<Shortcut> shortcutList_;
     bool inputMode_ = false;
 };
 
