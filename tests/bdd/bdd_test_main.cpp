@@ -12,6 +12,7 @@ namespace bdd {
     void registerUISteps();
     void registerBrainAPISteps();
     void registerBrainAdvancedSteps();
+    void registerRenderingSteps();
 }
 
 #ifndef PROJECT_ROOT_DIR
@@ -30,6 +31,7 @@ void runBDDTests() {
     bdd::registerDomainSteps();
     bdd::registerBrainAPISteps();
     bdd::registerBrainAdvancedSteps();
+    bdd::registerRenderingSteps();
     
     bool allSuccess = true;
     std::string root = PROJECT_ROOT_DIR;
@@ -40,7 +42,8 @@ void runBDDTests() {
         root + "/tests/bdd/features/rendering_ui.feature",
         root + "/tests/bdd/features/data_analytics.feature",
         root + "/tests/bdd/features/layout_stability.feature",
-        root + "/tests/bdd/features/menu_functionality.feature"
+        root + "/tests/bdd/features/menu_functionality.feature",
+        root + "/tests/bdd/features/rendering_flicker.feature"
     };
 
     for (const auto& feature : features) {

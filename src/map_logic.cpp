@@ -153,7 +153,7 @@ int Graph::countIsolatedNodes() const {
     return isolated;
 }
 
-std::vector<int> extractTopIndices(const std::vector<std::pair<int, int>>& list, int count) {
+static std::vector<int> extractTopIndices(const std::vector<std::pair<int, int>>& list, int count) {
     std::vector<int> result;
     for (int i = 0; i < std::min(count, (int)list.size()); ++i) {
         result.push_back(list[i].first);

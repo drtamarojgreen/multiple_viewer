@@ -62,4 +62,56 @@ void MinimapRenderer::render(const Graph& graph, const ViewContext& view) {
     std::cout << "-------------------------\n";
 }
 
+void MinimapRenderer::draw(render::FrameBuffer& fb, int startX, int startY, const Graph& graph, const ViewContext& view) {
+    int mmW = 20;
+    int mmH = 10;
+    std::vector<std::string> minimap(mmH, std::string(mmW, ' '));
+
+    float minX = 0, maxX = 100, minY = 0, maxY = 100;
+    if (!graph.nodePos.empty()) {
+        minX = minY = 1e9f;
+        maxX = maxY = -1e9f;
+        for (const auto& [id, pos] : graph.nodePos) {
+            minX = std::min(minX, pos.x); maxX = std::max(maxX, pos.x);
+            minY = std::min(minY, pos.y); maxY = std::max(maxY, pos.y);
+        }
+    }
+    float worldW = maxX - minX;
+    float worldH = maxY - minY;
+    if (worldW < 1) worldW = 1;
+    if (worldH < 1) worldH = 1;
+
+    auto toMapX = [&](float x) { return (int)((x - minX) / worldW * (mmW - 1)); };
+    auto toMapY = [&](float y) { return (int)((y - minY) / worldH * (mmH - 1)); };
+
+    for (const auto& [id, pos] : graph.nodePos) {
+        int mx = toMapX(pos.x);
+        int my = toMapY(pos.y);
+        if (mx >= 0 && mx < mmW && my >= 0 && my < mmH) {
+            minimap[my][mx] = graph.isNodeFocused(id) ? 'O' : '.';
+        }
+    }
+
+    int vx = toMapX(-view.panX);
+    int vy = toMapY(-view.panY);
+    int vw = (int)(view.width / worldW * mmW);
+    int vh = (int)(view.height / worldH * mmH);
+    if (vw < 1) vw = 1; if (vh < 1) vh = 1;
+
+    for (int r = vy; r < vy + vh; ++r) {
+        for (int c = vx; c < vx + vw; ++c) {
+            if (r >= 0 && r < mmH && c >= 0 && c < mmW) {
+                if (r == vy || r == vy + vh - 1 || c == vx || c == vx + vw - 1) {
+                    if (minimap[r][c] == ' ') minimap[r][c] = '#';
+                }
+            }
+        }
+    }
+
+    fb.drawString(startX, startY++, "--- MINIMAP ---", -1.0f);
+    for (int i = 0; i < mmH; ++i) {
+        fb.drawString(startX, startY++, "[" + minimap[i] + "]", -1.0f);
+    }
+}
+
 } // namespace render

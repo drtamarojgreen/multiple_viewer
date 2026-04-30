@@ -6,7 +6,10 @@
 #include <cmath>
 
 void AnalyticsEngine::runFullAnalysis(Graph& g) {
-    GraphSummary& s = g.summary;
+    runFullAnalysis(g, g.summary);
+}
+
+void AnalyticsEngine::runFullAnalysis(const Graph& g, GraphSummary& s) {
     s.totalNodes = g.nodes.size();
     s.totalEdges = g.edgeCount();
     s.averageDegree = g.computeAvgDegree();
@@ -129,10 +132,8 @@ std::vector<int> AnalyticsEngine::extractTopIndices(const std::vector<std::pair<
 void AnalyticsEngine::drawAnalyticsPanelOverlay(const Graph& g) {
     if (!Config::viewerOverlayMode) return;
 
-    // Use a copy for analysis to avoid modifying original graph's cached summary if we don't want to
-    Graph temp = g;
-    runFullAnalysis(temp);
-    const auto& s = temp.summary;
+    GraphSummary s;
+    runFullAnalysis(g, s);
 
     std::cout << "\n==== ANALYTICS OVERLAY ====\n";
     std::cout << "Nodes: " << s.totalNodes << " | Edges: " << s.totalEdges << "\n";

@@ -5,6 +5,7 @@
 #include "frame_buffer.h"
 #include "viewport.h"
 #include "../search_logic.h"
+#include "../input/shortcut_manager.h"
 #include <memory>
 
 namespace render {
@@ -17,7 +18,7 @@ public:
     bool initialize(int width, int height) override;
     void clear() override;
     void render(const Graph& graph, const ViewContext& view) override;
-    void renderWithSearch(const Graph& graph, const ViewContext& view, const SearchState& search);
+    void renderWithUI(const Graph& graph, const ViewContext& view, const SearchState& search, const input::ShortcutManager& shortcutManager);
     void present() override;
     void shutdown() override;
 

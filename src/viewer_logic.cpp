@@ -51,19 +51,6 @@ void clearScreen() {
     }
 }
 
-void drawStatusBar(const SearchState& search) {
-    if (search.isActive) {
-        std::cout << " SEARCH: " << search.keyword << "_";
-        if (search.lastSearchHadNoResults) {
-            std::cout << " [No Results]";
-        } else if (!search.matches.empty()) {
-            std::cout << " [" << (search.activeMatchIndex + 1) << "/" << search.matches.size() << "]";
-        }
-    } else {
-        std::cout << " [Mode: Navigation]";
-    }
-    std::cout << "\n\n";
-}
 
 void renderGraph(const Graph& graph, const ViewContext& view, const SearchState& search) {
     vector<string> screen(view.height, string(view.width, ' '));
@@ -276,7 +263,7 @@ void runEditor(Graph& graph, bool runTests) {
         renderer->clear();
         auto consoleRenderer = dynamic_cast<render::ConsoleRenderer*>(renderer.get());
         if (consoleRenderer) {
-            consoleRenderer->renderWithSearch(graph, view, searchState);
+            consoleRenderer->renderWithUI(graph, view, searchState, shortcutManager);
         } else {
             renderer->render(graph, view);
         }

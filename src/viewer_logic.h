@@ -31,7 +31,6 @@ void drawAnalyticsPanelOverlay(const Graph& g);   // draws full-screen overlay i
 void runEditor(Graph& graph, bool runTests = false);                     // main viewer loop with menu+analytics
 void renderGraph(const Graph& graph, const ViewContext& view, const SearchState& search = {});                   // renders visual graph content
 
-void drawStatusBar(const SearchState& search);
 
 void promptFocusAdd(Graph& graph);
 void promptFocusRemove(Graph& graph);

@@ -2,12 +2,13 @@
 #define MAIN_MENU_H
 
 #include "../input/shortcut_manager.h"
+#include "../render/frame_buffer.h"
 
 namespace ui {
 
 class MainMenu {
 public:
-    static void draw(const input::ShortcutManager& shortcutManager);
+    static void draw(render::FrameBuffer& fb, int y, const input::ShortcutManager& shortcutManager);
 };
 
 } // namespace ui

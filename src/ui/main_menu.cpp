@@ -4,20 +4,20 @@
 
 namespace ui {
 
-void MainMenu::draw(const input::ShortcutManager& shortcutManager) {
-    std::cout << "\n=== CBT Graph Viewer Menu ===\n";
+void MainMenu::draw(render::FrameBuffer& fb, int y, const input::ShortcutManager& shortcutManager) {
+    fb.drawString(0, y++, "=== CBT Graph Viewer Menu ===", -1.0f);
 
     const auto& shortcuts = shortcutManager.getShortcuts();
+    std::string line;
     for (size_t i = 0; i < shortcuts.size(); ++i) {
-        std::cout << "[" << shortcuts[i].key << "] " << shortcuts[i].description;
+        line += "[" + std::string(1, shortcuts[i].key) + "] " + shortcuts[i].description + "  ";
         if ((i + 1) % 4 == 0 || i == shortcuts.size() - 1) {
-            std::cout << "\n";
-        } else {
-            std::cout << "  ";
+            fb.drawString(0, y++, line, -1.0f);
+            line.clear();
         }
     }
 
-    std::cout << "==============================\n";
+    fb.drawString(0, y++, "==============================", -1.0f);
 }
 
 } // namespace ui

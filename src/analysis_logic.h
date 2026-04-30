@@ -10,6 +10,7 @@ class AnalyticsEngine {
 public:
     // Performs full analysis on the graph and updates its summary
     static void runFullAnalysis(Graph& g);
+    static void runFullAnalysis(const Graph& g, GraphSummary& s);
 
     // Individual metrics
     static double calculateClusteringCoefficient(const Graph& g);

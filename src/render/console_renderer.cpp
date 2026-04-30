@@ -2,6 +2,8 @@
 #include "layout/layout_manager.h"
 #include "layout/book_view.h"
 #include "layout/minimap_renderer.h"
+#include "ui/main_menu.h"
+#include "ui/status_bar.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -28,10 +30,10 @@ void ConsoleRenderer::clear() {
 }
 
 void ConsoleRenderer::render(const Graph& graph, const ViewContext& view) {
-    renderWithSearch(graph, view, {});
+    // Note: renderWithUI is usually called directly from viewer_logic
 }
 
-void ConsoleRenderer::renderWithSearch(const Graph& graph, const ViewContext& view, const SearchState& search) {
+void ConsoleRenderer::renderWithUI(const Graph& graph, const ViewContext& view, const SearchState& search, const input::ShortcutManager& shortcutManager) {
     if (!frameBuffer_ || !viewport_) return;
 
     viewport_->setPan(view.panX, view.panY);
@@ -44,48 +46,7 @@ void ConsoleRenderer::renderWithSearch(const Graph& graph, const ViewContext& vi
         frameBuffer_->setTitle("CBT Graph Viewer (Book View)");
     }
 
-    // Render Edges
-    for (const auto& node : graph.nodes) {
-        if (graph.layoutPositions.count(node.index) == 0) continue;
-        Point2D p1 = viewport_->worldToScreen(graph.layoutPositions.at(node.index).x, graph.layoutPositions.at(node.index).y);
-
-        for (int neighbor_id : node.neighbors) {
-            if (graph.layoutPositions.count(neighbor_id) == 0) continue;
-            Point2D p2 = viewport_->worldToScreen(graph.layoutPositions.at(neighbor_id).x, graph.layoutPositions.at(neighbor_id).y);
-
-            frameBuffer_->drawLine(static_cast<int>(p1.x), static_cast<int>(p1.y),
-                                   static_cast<int>(p2.x), static_cast<int>(p2.y), '.', 1.0f);
-        }
-    }
-
-    // Render Nodes
-    for (const auto& node : graph.nodes) {
-        if (graph.layoutPositions.count(node.index) == 0) continue;
-        Point2D p = viewport_->worldToScreen(graph.layoutPositions.at(node.index).x, graph.layoutPositions.at(node.index).y);
-
-        int depth = 0;
-        if (graph.nodePos.count(node.index)) {
-            depth = static_cast<int>(graph.nodePos.at(node.index).z);
-        }
-
-        int size = graph.calculateNodeSize(depth, view.zoomLevel);
-        char glyph = (graph.isNodeFocused(node.index)) ? 'O' :
-                     (node.subjectIndex % 4 == 0 ? '@' :
-                      node.subjectIndex % 4 == 1 ? '#' : 'X');
-
-        if (search.isActive && std::find(search.matches.begin(), search.matches.end(), node.index) != search.matches.end()) {
-            glyph = (search.getActiveMatchNodeId() == node.index) ? 'S' : 's';
-        }
-
-        if (size <= 1) {
-            frameBuffer_->drawChar(static_cast<int>(p.x), static_cast<int>(p.y), glyph, static_cast<float>(depth));
-        } else {
-            frameBuffer_->drawRect(static_cast<int>(p.x - size / 2), static_cast<int>(p.y - size / 2), size, size, glyph, static_cast<float>(depth));
-        }
-
-        // Label
-        frameBuffer_->drawString(static_cast<int>(p.x + size / 2 + 1), static_cast<int>(p.y + size / 2 + 1), node.label, static_cast<float>(depth));
-    }
+    // --- Mode-Specific Rendering ---
 
     if (view.currentViewMode == VM_BOOK_VIEW) {
         frameBuffer_->setTitle("Book View");
@@ -107,23 +68,88 @@ void ConsoleRenderer::renderWithSearch(const Graph& graph, const ViewContext& vi
             }
             y++;
         }
+    } else if (view.currentViewMode == VM_PAGED) {
+        frameBuffer_->setTitle("Node Page View");
+        int nodeId = -1;
+        if (!graph.focusedNodeIndices.empty()) {
+            nodeId = *graph.focusedNodeIndices.begin();
+        }
+
+        if (nodeId != -1 && graph.nodeExists(nodeId)) {
+            const auto& n = graph.nodeMap.at(nodeId);
+            int y = 2;
+            frameBuffer_->drawString(2, y++, "=== CBT Node Page View ===", -1.0f);
+            frameBuffer_->drawString(2, y++, "Label: " + n.label, -1.0f);
+            frameBuffer_->drawString(2, y++, "Index: " + std::to_string(n.index), -1.0f);
+            frameBuffer_->drawString(2, y++, "Subject: " + std::to_string(n.subjectIndex), -1.0f);
+            frameBuffer_->drawString(2, y++, "Weight: " + std::to_string(n.weight), -1.0f);
+
+            y++;
+            frameBuffer_->drawString(2, y++, "Neighbors:", -1.0f);
+            for (int nbr : n.neighbors) {
+                if (graph.nodeExists(nbr)) {
+                    frameBuffer_->drawString(4, y++, "• " + graph.nodeMap.at(nbr).label, -1.0f);
+                }
+            }
+        } else {
+            frameBuffer_->drawString(2, 2, "No node selected for Page View.", -1.0f);
+        }
+    } else {
+        // Full Layout or Nexus Flow (Spatial views)
+        // Render Edges
+        for (const auto& node : graph.nodes) {
+            if (graph.layoutPositions.count(node.index) == 0) continue;
+            Point2D p1 = viewport_->worldToScreen(graph.layoutPositions.at(node.index).x, graph.layoutPositions.at(node.index).y);
+
+            for (int neighbor_id : node.neighbors) {
+                if (graph.layoutPositions.count(neighbor_id) == 0) continue;
+                Point2D p2 = viewport_->worldToScreen(graph.layoutPositions.at(neighbor_id).x, graph.layoutPositions.at(neighbor_id).y);
+
+                frameBuffer_->drawLine(static_cast<int>(p1.x), static_cast<int>(p1.y),
+                                       static_cast<int>(p2.x), static_cast<int>(p2.y), '.', 1.0f);
+            }
+        }
+
+        // Render Nodes
+        for (const auto& node : graph.nodes) {
+            if (graph.layoutPositions.count(node.index) == 0) continue;
+            Point2D p = viewport_->worldToScreen(graph.layoutPositions.at(node.index).x, graph.layoutPositions.at(node.index).y);
+
+            int depth = 0;
+            if (graph.nodePos.count(node.index)) {
+                depth = static_cast<int>(graph.nodePos.at(node.index).z);
+            }
+
+            int size = graph.calculateNodeSize(depth, view.zoomLevel);
+            char glyph = (graph.isNodeFocused(node.index)) ? 'O' :
+                         (node.subjectIndex % 4 == 0 ? '@' :
+                          node.subjectIndex % 4 == 1 ? '#' : 'X');
+
+            if (search.isActive && std::find(search.matches.begin(), search.matches.end(), node.index) != search.matches.end()) {
+                glyph = (search.getActiveMatchNodeId() == node.index) ? 'S' : 's';
+            }
+
+            if (size <= 1) {
+                frameBuffer_->drawChar(static_cast<int>(p.x), static_cast<int>(p.y), glyph, static_cast<float>(depth));
+            } else {
+                frameBuffer_->drawRect(static_cast<int>(p.x - size / 2), static_cast<int>(p.y - size / 2), size, size, glyph, static_cast<float>(depth));
+            }
+
+            // Label
+            frameBuffer_->drawString(static_cast<int>(p.x + size / 2 + 1), static_cast<int>(p.y + size / 2 + 1), node.label, static_cast<float>(depth));
+        }
     }
 
+
     if (view.showMinimap && view.currentViewMode == VM_PERSPECTIVE) {
-        // NOTE: MinimapRenderer currently uses direct cout, which may cause flickering.
-        // It should ideally be refactored to use FrameBuffer.
-        MinimapRenderer::render(graph, view);
+        MinimapRenderer::draw(*frameBuffer_, width_ - 25, 2, graph, view);
     }
 
     if (view.showHelp) {
-        int y = view.height + 1;
-        frameBuffer_->drawString(0, y++, "================================================================================", -1.0f);
-        frameBuffer_->drawString(0, y++, "=== CBT Graph Viewer Menu ===", -1.0f);
-        frameBuffer_->drawString(0, y++, "[↑↓←→/IJKL] Pan  [A] Add  [R] Remove  [F] Focus  [O] Unfocus  [T] Set Dist", -1.0f);
-        frameBuffer_->drawString(0, y++, "[/] Search  [TAB] Cycle Focus  [B] Book View  [N] Next View [E] Page View", -1.0f);
-        frameBuffer_->drawString(0, y++, "[V] Page Cycle [Z] Zoom In [X] Zoom Out [M] Multi Foci Toggle [H] Toggle Help", -1.0f);
-        frameBuffer_->drawString(0, y++, "[G] Analytics  [D] DepthScale  [W] Weights  [S] Save  [U] Load  [ESC] Exit", -1.0f);
-        frameBuffer_->drawString(0, y++, "================================================================================", -1.0f);
+        ui::MainMenu::draw(*frameBuffer_, view.height + 1, shortcutManager);
+        ui::StatusBar::draw(*frameBuffer_, view.height + 6, search);
+    } else {
+        ui::StatusBar::draw(*frameBuffer_, view.height + 1, search);
     }
 }
 
