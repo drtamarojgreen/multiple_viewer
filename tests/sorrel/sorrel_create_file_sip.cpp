@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream> // For error reporting
 
-class SorrelTest_CreateFile
+class ChaiTest_CreateFile
 {
 public:
     static int run(int argc, char** argv)
@@ -24,5 +24,5 @@ public:
 
 int main(int argc, char** argv)
 {
-    return SorrelTest_CreateFile::run(argc, argv);
+    return ChaiTest_CreateFile::run(argc, argv);
 }

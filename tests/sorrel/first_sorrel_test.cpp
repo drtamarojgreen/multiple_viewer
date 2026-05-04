@@ -1,6 +1,6 @@
 #include <iostream>
 
-class SorrelTest_ArgumentEcho
+class ChaiTest_ArgumentEcho
 {
 public:
     static int run(int argc, char** argv)
@@ -15,5 +15,5 @@ public:
 
 int main(int argc, char** argv)
 {
-    return SorrelTest_ArgumentEcho::run(argc, argv);
+    return ChaiTest_ArgumentEcho::run(argc, argv);
 }

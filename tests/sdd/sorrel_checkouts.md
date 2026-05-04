@@ -36,4 +36,4 @@
 -   **SDD Test Automation:** Created a Makefile to manage SDD card compilation and execution.
     -   *Artifacts:* `tests/sdd/Makefile`
     -   *Observation:* `sdd_makefile_created = true`
-    -   *Notes:* Updated to recursively include all core objects from the build directory to resolve deep linker dependencies. Fixed type mismatch in `LayoutClass.cpp`. Corrected fact file paths for runtime execution and adjusted layout test for stubbed implementation. Enhanced FactReader utility for robust path resolution across execution environments, supporting `SORREL_FACTS_DIR` and automatic heuristic search.
+    -   *Notes:* Updated to recursively include all core objects from the build directory to resolve deep linker dependencies. Fixed type mismatch in `LayoutClass.cpp`. Corrected fact file paths for runtime execution and adjusted layout test for stubbed implementation. Enhanced FactReader utility for robust path resolution across execution environments, supporting `CHAI_FACTS_DIR` and automatic heuristic search.

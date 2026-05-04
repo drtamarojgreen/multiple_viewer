@@ -1,5 +1,5 @@
-#ifndef SORREL_SDD_UTIL_FACT_UTILS_H
-#define SORREL_SDD_UTIL_FACT_UTILS_H
+#ifndef CHAI_CDD_UTIL_FACT_UTILS_H
+#define CHAI_CDD_UTIL_FACT_UTILS_H
 
 #include <iostream>
 #include <fstream>
@@ -35,7 +35,7 @@ public:
         std::string target_path = "";
 
         // 1. Check environment variable
-        const char* env_dir = std::getenv("SORREL_FACTS_DIR");
+        const char* env_dir = std::getenv("CHAI_FACTS_DIR");
         if (env_dir) {
             fs::path p = fs::path(env_dir) / filename;
             if (fs::exists(p)) target_path = p.string();
@@ -79,7 +79,7 @@ public:
 
             std::string rest = trim(trimmed.substr(space_pos + 1));
             size_t eq_pos = rest.find('=');
-            if (eq_pos != std::npos) {
+            if (eq_pos != std::string::npos) {
                 std::string key = trim(rest.substr(0, eq_pos));
                 std::string value = trim(rest.substr(eq_pos + 1));
                 facts[key] = value;
@@ -91,4 +91,4 @@ public:
 
 } // namespace Sorrel::Sdd::Util
 
-#endif // SORREL_SDD_UTIL_FACT_UTILS_H
+#endif // CHAI_CDD_UTIL_FACT_UTILS_H
