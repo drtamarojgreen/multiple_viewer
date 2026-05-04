@@ -1,5 +1,5 @@
-#ifndef CHAI_STRING_UTILS_H
-#define CHAI_STRING_UTILS_H
+#ifndef SORREL_STRING_UTILS_H
+#define SORREL_STRING_UTILS_H
 
 #include <string>
 #include <cctype> // Required for std::isspace
@@ -15,4 +15,4 @@ std::string trim(const std::string& str);
 } // namespace Cpp
 } // namespace Sorrel
 
-#endif // CHAI_STRING_UTILS_H
+#endif // SORREL_STRING_UTILS_H

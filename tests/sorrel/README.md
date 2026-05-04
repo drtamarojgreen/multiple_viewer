@@ -105,7 +105,7 @@ Agents must **discover environment context** instead of assuming it.
 ```
 tests/sorrel/
 ├── README.md              (This document)
-├── CDD_Cheat_Sheet.md     (Quick technical reference)
+├── SDD_Cheat_Sheet.md     (Quick technical reference)
 └── sdd/
     ├── card_runner.cpp    (Core SORREL runner)
     ├── sorrel_checkins.md   (Sip tracking)

@@ -31,10 +31,10 @@ clean:
 	rm -rf $(BIN_DIR)
 
 test: all
-	@echo "Running SDD Tests with CHAI_FACTS_DIR=$(FACTS_DIR)..."
+	@echo "Running SDD Tests with SORREL_FACTS_DIR=$(FACTS_DIR)..."
 	@for bin in $(BINS); do \
 		echo "Executing $$bin..."; \
-		CHAI_FACTS_DIR=$(FACTS_DIR) ./$$bin; \
+		SORREL_FACTS_DIR=$(FACTS_DIR) ./$$bin; \
 	done
 
 .PHONY: all clean test
