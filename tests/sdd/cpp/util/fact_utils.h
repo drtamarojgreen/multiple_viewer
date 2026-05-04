@@ -75,11 +75,11 @@ public:
             if (trimmed.empty() || trimmed[0] == '#' || trimmed.find("Situation:") == 0) continue;
 
             size_t space_pos = trimmed.find(' ');
-            if (space_pos == std::string::npos) continue;
+            if (space_pos == std::npos) continue;
 
             std::string rest = trim(trimmed.substr(space_pos + 1));
             size_t eq_pos = rest.find('=');
-            if (eq_pos != std::string::npos) {
+            if (eq_pos != std::npos) {
                 std::string key = trim(rest.substr(0, eq_pos));
                 std::string value = trim(rest.substr(eq_pos + 1));
                 facts[key] = value;
