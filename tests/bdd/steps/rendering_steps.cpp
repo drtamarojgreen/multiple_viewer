@@ -84,7 +84,7 @@ void registerRenderingSteps() {
     });
 
     runner.registerStep("no text should be printed directly to stdout outside the FrameBuffer", [](BDDContext& ctx, const std::vector<std::string>& args) {
-        // This is verified by the CDD test, but here we can check if the mock output is clean
+        // This is verified by the SDD test, but here we can check if the mock output is clean
         EXPECT(true, ctx, "Clean stdout");
     });
 
