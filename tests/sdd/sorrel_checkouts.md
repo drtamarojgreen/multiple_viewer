@@ -37,3 +37,8 @@
     -   *Artifacts:* `tests/sdd/Makefile`
     -   *Observation:* `sdd_makefile_created = true`
     -   *Notes:* Updated to recursively include all core objects from the build directory to resolve deep linker dependencies. Fixed type mismatch in `LayoutClass.cpp`. Corrected fact file paths for runtime execution and adjusted layout test for stubbed implementation. Enhanced FactReader utility for robust path resolution across execution environments, supporting `SORREL_FACTS_DIR` and automatic heuristic search.
+
+-   **Build System Restoration:** Fixed global Makefile to ensure recursive source discovery and correct include paths.
+    -   *Artifacts:* `Makefile`, `test_graph.csv`
+    -   *Observation:* `compilation_restored = true`
+    -   *Notes:* Added `-I.` to `CXXFLAGS` and updated `CORE_FILES` to use `find` for comprehensive source inclusion. Restored `test_graph.csv` to fix baseline unit/BDD tests.

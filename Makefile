@@ -1,11 +1,10 @@
 CXX = g++
 BUILD_DIR = build
-CXXFLAGS = -std=c++17 -Isrc -Itests -Itests/bdd -DPROJECT_ROOT_DIR=\"$(shell pwd)\"
+CXXFLAGS = -std=c++17 -I. -Isrc -Itests -Itests/bdd -DPROJECT_ROOT_DIR=\"$(shell pwd)\"
 LDFLAGS = 
 
 # Source directories for core logic
-CORE_DIRS = src src/model src/model/core src/model/app src/render src/input src/io src/analytics src/scripting src/layout src/ui
-CORE_FILES = $(foreach dir,$(CORE_DIRS),$(wildcard $(dir)/*.cpp))
+CORE_FILES = $(shell find src -name "*.cpp")
 CORE_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(CORE_FILES))
 
 # Test source directories (excluding mains)
