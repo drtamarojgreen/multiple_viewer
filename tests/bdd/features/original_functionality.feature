@@ -22,9 +22,9 @@ Feature: Original Viewer Functionality
 
   Scenario: Graph Persistence
     Given a persistent graph with nodes 1 and 2
-    When I save the graph to "bdd_persist_test.csv"
+    When I save the graph to "tests/temp/bdd_persist_test.csv"
     And I clear the current graph
-    And I load the graph from "bdd_persist_test.csv"
+    And I load the graph from "tests/temp/bdd_persist_test.csv"
     Then the graph should restore all previous nodes and edges
 
   Scenario: Graph Analytics

@@ -152,12 +152,12 @@ void testFileOperations(TestRunner& runner) {
     graph.addEdge(1, 2);
     
     // Test saving to CSV
-    bool saveSuccess = io::IOManager::saveGraphToCSV(graph, "test_output.csv");
+    bool saveSuccess = io::IOManager::saveGraphToCSV(graph, "tests/temp/test_output.csv");
     runner.runTest("Save Graph to CSV", saveSuccess, "Should successfully save graph to CSV");
     
     // Test loading from CSV
     Graph loadedGraph;
-    bool loadSuccess = io::IOManager::loadGraphFromCSV(loadedGraph, "test_output.csv");
+    bool loadSuccess = io::IOManager::loadGraphFromCSV(loadedGraph, "tests/temp/test_output.csv");
     runner.runTest("Load Graph from CSV", loadSuccess, "Should successfully load graph from CSV");
     
     if (loadSuccess) {
@@ -523,14 +523,14 @@ void testEdgeCases(TestRunner& runner) {
 
     // Test loading malformed CSV files
     Graph malformedGraph;
-    createTestFile("malformed.csv", "index,label,weight,neighbors\n1,A,10,[2\n");
-    runner.runTest("Load Malformed CSV (Bracket)", !io::IOManager::loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with syntax error");
+    createTestFile("tests/temp/malformed.csv", "index,label,weight,neighbors\n1,A,10,[2\n");
+    runner.runTest("Load Malformed CSV (Bracket)", !io::IOManager::loadGraphFromCSV(malformedGraph, "tests/temp/malformed.csv"), "Should fail to load CSV with syntax error");
 
-    createTestFile("malformed.csv", "index,label,weight,neighbors\n1,A,ten,[2]\n");
-    runner.runTest("Load Malformed CSV (Value)", !io::IOManager::loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with value error");
+    createTestFile("tests/temp/malformed.csv", "index,label,weight,neighbors\n1,A,ten,[2]\n");
+    runner.runTest("Load Malformed CSV (Value)", !io::IOManager::loadGraphFromCSV(malformedGraph, "tests/temp/malformed.csv"), "Should fail to load CSV with value error");
 
-    createTestFile("malformed.csv", "index,label,weight\n1,A,10\n");
-    runner.runTest("Load Malformed CSV (Column)", !io::IOManager::loadGraphFromCSV(malformedGraph, "malformed.csv"), "Should fail to load CSV with missing column");
+    createTestFile("tests/temp/malformed.csv", "index,label,weight\n1,A,10\n");
+    runner.runTest("Load Malformed CSV (Column)", !io::IOManager::loadGraphFromCSV(malformedGraph, "tests/temp/malformed.csv"), "Should fail to load CSV with missing column");
 
     // Test with extreme values
     Graph extremeGraph;
@@ -542,7 +542,7 @@ void testEdgeCases(TestRunner& runner) {
     runner.runTest("Add Node with Extreme Values", extremeGraph.nodeExists(2147483647), "Should handle max int index");
 
     // Clean up test file
-    remove("malformed.csv");
+    remove("tests/temp/malformed.csv");
 }
 
 // Main test runner

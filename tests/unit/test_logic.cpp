@@ -84,10 +84,10 @@ void testGraphSerialization() {
     g.addNode(GraphNode("Node C", 2, {1}, 1, 1));
     g.addEdge(0, 1);
     g.addEdge(1, 2);
-    io::IOManager::saveGraphToCSV(g, "test_graph_tmp.csv");
+    io::IOManager::saveGraphToCSV(g, "tests/temp/test_graph_tmp.csv");
 
     Graph g2;
-    bool ok = io::IOManager::loadGraphFromCSV(g2, "test_graph_tmp.csv");
+    bool ok = io::IOManager::loadGraphFromCSV(g2, "tests/temp/test_graph_tmp.csv");
     TEST("CSV reload success", ok);
     TEST("CSV reload node count", g2.nodeMap.size() == 3);
     TEST("CSV reload edge count", g2.edgeCount() == 2);
@@ -99,10 +99,10 @@ void testGraphSerializationJSON() {
     g.addNode(GraphNode("Node A", 0));
     g.addNode(GraphNode("Node B", 1));
     g.addEdge(0, 1);
-    io::IOManager::saveJSON(g, "test_graph_tmp.json");
+    io::IOManager::saveJSON(g, "tests/temp/test_graph_tmp.json");
 
     Graph g2;
-    bool ok = io::IOManager::loadJSON(g2, "test_graph_tmp.json");
+    bool ok = io::IOManager::loadJSON(g2, "tests/temp/test_graph_tmp.json");
     TEST("JSON reload success", ok);
     TEST("JSON reload node count", g2.nodeMap.size() == 2);
     TEST("JSON reload edge count", g2.edgeCount() == 1);

@@ -77,15 +77,15 @@ void testHotReload() {
     repo.clearAll();
 
     // Create a temporary atlas file
-    std::ofstream tmp("tmp_atlas.csv");
+    std::ofstream tmp("tests/temp/tmp_atlas.csv");
     tmp << "REGION,R1,Region 1,0,0,0,10\n";
     tmp.close();
 
-    repo.loadAtlas("tmp_atlas.csv");
+    repo.loadAtlas("tests/temp/tmp_atlas.csv");
     TEST_PHASE1("Initial load", repo.getModel().getRegions().size() == 1);
 
     // Modify atlas file
-    std::ofstream tmp2("tmp_atlas.csv");
+    std::ofstream tmp2("tests/temp/tmp_atlas.csv");
     tmp2 << "REGION,R1,Region 1,0,0,0,10\n";
     tmp2 << "REGION,R2,Region 2,100,100,100,5\n";
     tmp2.close();
@@ -99,11 +99,11 @@ void testProbabilisticMembership() {
     auto& repo = ModelRepository::getInstance();
 
     // Create a temporary overlay file
-    std::ofstream tmp("tmp_overlay.csv");
+    std::ofstream tmp("tests/temp/tmp_overlay.csv");
     tmp << "MAP,1,R1,,0.85\n"; // probabilistic mapping
     tmp.close();
 
-    repo.loadOverlay("tmp_overlay.csv");
+    repo.loadOverlay("tests/temp/tmp_overlay.csv");
     const auto& mappings = repo.getOverlay().getAllMappings();
     bool found = false;
     for (const auto& [nodeId, m] : mappings) {
