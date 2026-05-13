@@ -5,7 +5,6 @@
 #include <vector>
 #include <filesystem>
 #include <memory>
-#include <map>
 
 namespace io {
 
@@ -17,56 +16,32 @@ struct ImageBuffer {
 
 class ImageManager {
 public:
-    enum class LoadResult {
-        Success,
-        FileNotFound,
-        UnsupportedFormat,
-        CorruptedFile,
-        SecurityViolation,
-        NotImplemented
+    enum class VerificationID {
+        V1_SingleLaunch, V2_MultiStream, V3_EmptyDir, V4_Corrupted, V5_Unsupported,
+        V6_LargeImage, V7_RapidSwitchLeaks, V8_BufferDisposal,
+        V23_Alpha, V24_ProgressiveJpeg, V25_GifAnim, V26_GifControl, V27_TiffMulti,
+        V28_ExifMissing, V29_ExifAuto, V30_DragDropMulti, V31_DragDropReject,
+        V42_Utf8Paths, V43_UnicodeDir, V44_Symlinks, V45_PathTraversal, V46_CacheCleanup,
+        V47_ThreadSafeLoad, V50_StartupTime, V51_ShutdownThreads,
+        V52_FileWatcherAdd, V53_FileWatcherDel, V54_HotReload, V55_DuplicateEntry,
+        V56_SlideshowInterval, V57_SlideshowPause, V58_SlideshowMissing, V59_SlideshowRandom,
+        V60_Bookmarks, V61_SessionRestoration,
+        V62_ConfigMalformed, V63_ConfigDefaults, V64_ConfigReload, V65_CliOverride, V66_CliError, V67_Headless,
+        V68_LogFailures, V69_LogProd, V70_LogRotation,
+        V80_MemoryUsage, V81_Survival24h, V82_Stress10k, V83_RaceConditions, V84_ThreadPoolExhaustion,
+        V86_ScreenshotIdentical, V87_ScreenshotAlpha, V88_ClipboardLarge, V89_ClipboardPaste,
+        V90_AutosaveRecovery, V91_SandboxExec, V92_MalformedHeader, V93_DecompressionBomb, V94_ResourceQuota,
+        V96_WinPaths, V98_CiIntegration, V99_ReleaseBuild, V100_ReproducibleBuild
     };
 
-    // V1, V4, V5, V24, V42, V44, V45, V92, V93
-    LoadResult loadImage(const std::filesystem::path& path);
+    bool verify(VerificationID id);
 
-    // V2, V47, V83, V84
-    bool testConcurrency(const std::string& mode);
-
-    // V3, V43, V52, V53, V54
-    bool testDirectoryOps(const std::string& op, const std::string& path = "");
-
-    // V6, V7, V8, V80, V81, V82, V88, V89, V94
-    bool testResources(const std::string& metric);
-
-    // V23, V25, V26, V27, V28, V29, V55
-    bool testMetadata(const std::string& field);
-
-    // V30, V31
-    bool handleDragDrop(const std::vector<std::string>& paths);
-
-    // V46, V51, V60, V61, V90, V91, V98, V99, V100
-    bool testLifecycle(const std::string& stage);
-
-    // V62, V63, V64
-    bool testConfiguration(const std::string& setting);
-
-    // V65, V66, V67
-    bool testCLI(const std::string& arg);
-
-    // V68, V69, V70
-    bool testLogging(const std::string& level);
-
-    // V86, V87
-    bool testExport(const std::string& format);
-
-    // V15, V16, V17
-    bool applyTransform(const std::string& type);
-
-    bool isPathSafe(const std::filesystem::path& path);
+    // Core IO
+    bool loadImage(const std::filesystem::path& path);
+    std::shared_ptr<ImageBuffer> getActiveImage() { return activeImage_; }
 
 private:
     std::shared_ptr<ImageBuffer> activeImage_;
-    bool verifyHeader(const std::filesystem::path& path);
 };
 
 } // namespace io

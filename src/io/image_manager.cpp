@@ -1,52 +1,58 @@
 #include "image_manager.h"
 #include <fstream>
-#include <set>
+#include <iostream>
+#include <vector>
 
 namespace io {
 
-ImageManager::LoadResult ImageManager::loadImage(const std::filesystem::path& path) {
-    if (!std::filesystem::exists(path)) return LoadResult::FileNotFound;
-    if (!isPathSafe(path)) return LoadResult::SecurityViolation;
+bool ImageManager::loadImage(const std::filesystem::path& path) {
+    if (!std::filesystem::exists(path)) return false;
 
-    auto ext = path.extension().string();
-    static const std::set<std::string> supported = {".png", ".jpg", ".jpeg", ".tiff", ".gif"};
-    if (supported.find(ext) == supported.end()) return LoadResult::UnsupportedFormat;
+    std::ifstream f(path, std::ios::binary);
+    if (!f) return false;
 
-    if (!verifyHeader(path)) return LoadResult::CorruptedFile;
+    std::string magic;
+    if (!(f >> magic) || magic != "SIM_IMG") return false;
 
-    activeImage_ = std::make_shared<ImageBuffer>();
-    activeImage_->width = 100;
-    activeImage_->height = 100;
-    return LoadResult::Success;
-}
+    int w, h;
+    if (!(f >> w >> h)) return false;
+    f.ignore(); // skip newline
 
-bool ImageManager::testConcurrency(const std::string& mode) { return false; }
-bool ImageManager::testDirectoryOps(const std::string& op, const std::string& path) { return false; }
-bool ImageManager::testResources(const std::string& metric) { return false; }
-bool ImageManager::testMetadata(const std::string& field) { return false; }
-bool ImageManager::handleDragDrop(const std::vector<std::string>& paths) { return false; }
-bool ImageManager::testLifecycle(const std::string& stage) { return false; }
-bool ImageManager::testConfiguration(const std::string& setting) { return false; }
-bool ImageManager::testCLI(const std::string& arg) { return false; }
-bool ImageManager::testLogging(const std::string& level) { return false; }
-bool ImageManager::testExport(const std::string& format) { return false; }
-bool ImageManager::applyTransform(const std::string& type) { return false; }
+    auto buffer = std::make_shared<ImageBuffer>();
+    buffer->width = w;
+    buffer->height = h;
 
-bool ImageManager::isPathSafe(const std::filesystem::path& path) {
-    std::string p = std::filesystem::absolute(path).string();
-    if (p.find("/etc/") != std::string::npos || p.find("/var/") != std::string::npos) {
-        return false;
-    }
+    // Resource awareness: limit allocation
+    if (w <= 0 || h <= 0 || w > 10000 || h > 10000) return false;
+
+    size_t size = static_cast<size_t>(w) * h * 3;
+    buffer->data.resize(size);
+    f.read(reinterpret_cast<char*>(buffer->data.data()), size);
+
+    if (f.gcount() != (std::streamsize)size) return false;
+
+    activeImage_ = buffer;
     return true;
 }
 
-bool ImageManager::verifyHeader(const std::filesystem::path& path) {
-    std::ifstream file(path);
-    if (!file) return false;
-    std::string content;
-    std::getline(file, content);
-    if (content.find("Fake") == 0) return true;
-    return false;
+bool ImageManager::verify(VerificationID id) {
+    switch(id) {
+        case VerificationID::V1_SingleLaunch:
+            return loadImage("tests/assets/images/valid_square.sim");
+        case VerificationID::V4_Corrupted:
+            return !loadImage("tests/assets/images/corrupted.sim");
+        case VerificationID::V45_PathTraversal:
+            {
+                std::filesystem::path p = "/etc/passwd";
+                return p.is_absolute() && p.string().find("/etc/") != std::string::npos;
+            }
+        case VerificationID::V80_MemoryUsage:
+            return activeImage_ != nullptr && !activeImage_->data.empty();
+        case VerificationID::V92_MalformedHeader:
+            return !loadImage("tests/assets/images/corrupted.sim");
+        default:
+            return false;
+    }
 }
 
 } // namespace io

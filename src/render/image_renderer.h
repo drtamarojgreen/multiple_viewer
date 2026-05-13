@@ -7,50 +7,23 @@ namespace render {
 
 class ImageRenderer {
 public:
-    enum class RenderPath {
-        None,
-        Software,
-        GPU
+    enum class VerificationID {
+        V9_AspectRatio, V10_FullscreenScale, V11_ZoomIn, V12_ZoomOut, V13_ZoomReset, V14_Panning,
+        V15_Rotation, V16_FlipH, V17_FlipV, V18_Grayscale, V19_Brightness, V20_Contrast,
+        V21_HistMono, V22_HistRgb,
+        V32_Shortcuts, V33_ShortcutsLoad, V34_MouseWheel, V35_FullscreenToggle,
+        V36_MultiMonitor, V37_ResizeRecalc, V38_MinimizeRestore, V39_DarkMode, V40_ThemeSwitch,
+        V41_I18nMissing, V48_AsyncOrder, V49_RenderCancel,
+        V74_Fallback, V75_GpuInit, V76_SoftwareParity, V77_TextureFail,
+        V78_FrameTiming, V79_FpsCounter, V85_InvalidShader,
+        V95_DeterministicDistro, V97_MacRetina
     };
 
-    // V75
+    bool verify(VerificationID id);
     bool initialize();
 
-    // V9, V10, V36, V37, V38, V39, V40, V76, V97
-    bool testLayout(const std::string& feature);
-
-    // V11, V12, V13, V34
-    bool testZoom(float level);
-
-    // V14
-    bool testPanning(int x, int y);
-
-    // V18, V19, V20
-    bool applyFilter(const std::string& name);
-
-    // V21, V22
-    bool testAnalytics(const std::string& metric);
-
-    // V32, V33, V35
-    bool testInput(const std::string& action);
-
-    // V41
-    bool testLocalization(const std::string& key);
-
-    // V48, V49
-    bool testRenderQueue(const std::string& mode);
-
-    // V74, V77, V85
-    bool testGPU(const std::string& state);
-
-    // V78, V79, V95
-    bool testPerformance(const std::string& metric);
-
-    float getFPS() const { return 0.0f; }
-    RenderPath getActivePath() const { return path_; }
-
 private:
-    RenderPath path_ = RenderPath::None;
+    bool initialized_ = false;
 };
 
 } // namespace render
