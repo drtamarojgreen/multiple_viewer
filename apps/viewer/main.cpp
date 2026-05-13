@@ -15,6 +15,7 @@
 #include <vector>
 #include "cmd_line_parser.h"
 #include "model/model_repository.h"
+#include "sdd_checker.h"
 
 #ifdef _WIN32
 #include <conio.h>
@@ -90,11 +91,23 @@ int runApplication(const CmdLineParser& parser) {
         std::cout << "  --load-atlas <file.brn>   Load brain atlas\n";
         std::cout << "  --load-labels <file.txt>  Load brain labels\n";
         std::cout << "  --load-overlay <file.txt> Load node-to-brain overlay\n";
+        std::cout << "  --check-sdd <repo>        Check repository for SDD adherence\n";
         std::cout << "  --test-unit               Run unit tests\n";
         std::cout << "  --test-bdd                Run BDD tests\n";
         std::cout << "  --test                    Run all tests\n";
         std::cout << "  --help                    Show this help\n";
         return 0;
+    }
+
+    if (parser.hasOption("check-sdd")) {
+        std::string repo = parser.getOption("check-sdd");
+        SddChecker checker;
+        SddCheckResult result = checker.checkRepository(repo);
+        std::cout << result.message << std::endl;
+        for (const auto& detail : result.details) {
+            std::cout << "  - " << detail << std::endl;
+        }
+        return result.passed ? 0 : 1;
     }
 
     // Headless operations
