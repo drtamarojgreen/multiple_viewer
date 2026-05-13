@@ -12,3 +12,5 @@ graph_output.csv
 # IDEs
 .vscode/
 .idea/
+tests/sdd/bin/*
+!tests/sdd/bin/.gitkeep
