@@ -1,0 +1,8 @@
+Situation: Image IO Environment
+# Verification of real assets and environmental state
+
+Is valid_png_present = true
+Is valid_jpg_present = true
+Is corrupted_jpg_present = true
+Is invalid_txt_present = true
+Is assets_dir_writable = true
