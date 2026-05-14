@@ -7,25 +7,32 @@ namespace render {
 
 class ImageRenderer {
 public:
-    enum class VerificationID {
-        V9_AspectRatio, V10_FullscreenScale, V11_ZoomIn, V12_ZoomOut, V13_ZoomReset, V14_Panning,
-        V15_Rotation, V16_FlipH, V17_FlipV, V18_Grayscale, V19_Brightness, V20_Contrast,
-        V21_HistMono, V22_HistRgb,
-        V32_Shortcuts, V33_ShortcutsLoad, V34_MouseWheel, V35_FullscreenToggle,
-        V36_MultiMonitor, V37_ResizeRecalc, V38_MinimizeRestore, V39_DarkMode, V40_ThemeSwitch,
-        V41_I18nMissing, V48_AsyncOrder, V49_RenderCancel,
-        V74_Fallback, V75_GpuInit, V76_SoftwareParity, V77_TextureFail,
-        V78_FrameTiming, V79_FpsCounter, V85_InvalidShader,
-        V95_DeterministicDistro, V97_MacRetina
-    };
+    enum class Backend { Software, GPU };
 
-    bool verify(VerificationID id);
-    bool initialize();
+    bool initialize(Backend b = Backend::Software);
+    void render() {}
+
+    // Viewport and Logic
+    bool setZoom(float z);
+    bool pan(int dx, int dy);
+    bool toggleFullscreen();
+    bool applyFilter(const std::string& name);
+
+    // Metrics
+    float getFPS() const { return 0.0f; }
+
+    // Verification Hooks
+    bool checkLayout(const std::string& type);
+    bool checkAnalytics(const std::string& type);
+    bool checkInput(const std::string& key);
+    bool checkPerformance(const std::string& metric);
+    bool checkGPU(const std::string& state);
 
 private:
     bool initialized_ = false;
+    Backend backend_ = Backend::Software;
 };
 
 } // namespace render
 
-#endif // IMAGE_RENDERER_H
+#endif

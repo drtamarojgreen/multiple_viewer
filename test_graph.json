@@ -1,9 +1,0 @@
-{
-  "nodes": [
-    {"label": "JSONNode", "index": 200},
-    {"label": "OtherNode", "index": 201}
-  ],
-  "edges": [
-    {"source": 200, "target": 201}
-  ]
-}

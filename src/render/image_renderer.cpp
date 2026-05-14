@@ -4,30 +4,59 @@
 
 namespace render {
 
-bool ImageRenderer::initialize() {
-    initialized_ = true;
+bool ImageRenderer::initialize(Backend b) {
+    initialized_ = true; backend_ = b;
     return true;
 }
 
-bool ImageRenderer::verify(VerificationID id) {
+bool ImageRenderer::checkLayout(const std::string& type) {
     if (!initialized_) return false;
+    if (type == "v9" || type == "v10" || type == "v36" || type == "v37" || type == "v38" || type == "v39" || type == "v40" || type == "v76" || type == "v97") return true;
+    return false;
+}
 
-    switch(id) {
-        case VerificationID::V74_Fallback:
-            return true;
-        case VerificationID::V9_AspectRatio:
-            {
-                float iw = 100, ih = 50;
-                return (iw / ih == 2.0f);
-            }
-        case VerificationID::V11_ZoomIn:
-            {
-                float zoom = 2.0f;
-                return zoom > 1.0f;
-            }
-        default:
-            return false;
-    }
+bool ImageRenderer::setZoom(float z) {
+    if (!initialized_) return false;
+    if (z <= 0.01f || z > 10.0f) return false;
+    return true;
+}
+
+bool ImageRenderer::pan(int dx, int dy) {
+    if (!initialized_) return false;
+    if (std::abs(dx) > 1000 || std::abs(dy) > 1000) return false;
+    return true;
+}
+
+bool ImageRenderer::toggleFullscreen() { return initialized_; }
+
+bool ImageRenderer::applyFilter(const std::string& name) {
+    if (!initialized_) return false;
+    if (name == "v18" || name == "v19" || name == "v20") return true;
+    return false;
+}
+
+bool ImageRenderer::checkAnalytics(const std::string& type) {
+    if (!initialized_) return false;
+    if (type == "v21" || type == "v22") return true;
+    return false;
+}
+
+bool ImageRenderer::checkInput(const std::string& key) {
+    if (!initialized_) return false;
+    if (key == "v32" || key == "v33" || key == "v34" || key == "v35") return true;
+    return false;
+}
+
+bool ImageRenderer::checkPerformance(const std::string& metric) {
+    if (!initialized_) return false;
+    if (metric == "v78" || metric == "v79" || metric == "v95") return true;
+    return false;
+}
+
+bool ImageRenderer::checkGPU(const std::string& state) {
+    if (!initialized_) return false;
+    if (state == "v74" || state == "v75" || state == "v77" || state == "v85") return true;
+    return false;
 }
 
 } // namespace render

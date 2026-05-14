@@ -3,23 +3,18 @@ CXXFLAGS = -std=c++17 -I../../src -I../../src/model -I../../src/io -I../../src/a
 LDFLAGS =
 
 BUILD_DIR = ../../build
-BIN_DIR = bin
+BIN_DIR = transient_bin
 
 # Automatically find all core objects built by the main Makefile
 CORE_OBJS = $(shell find $(BUILD_DIR)/src -name "*.o")
 
-# SDD Cards
-CARDS = cards/LoggingClass.cpp \
-        cards/EvaluatorsClass.cpp \
-        cards/QuantaGliaClass.cpp \
-        cards/PrunerClass.cpp \
-        cards/ViewportClass.cpp \
-        cards/LayoutClass.cpp \
-        cards/ImageUniversalCard.cpp
+# SDD Cards - explicitly listed or wildcarded
+V_CARDS = $(wildcard cards/sdd_v*.cpp)
+
+CARDS = $(V_CARDS)
 
 BINS = $(patsubst cards/%.cpp, $(BIN_DIR)/%, $(CARDS))
 
-# Optional facts directory (can be overridden on command line)
 FACTS_DIR ?= ../../facts
 
 all: $(BINS)

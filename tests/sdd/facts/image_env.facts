@@ -1,8 +1,10 @@
-Situation: Image IO Environment
-# Verification of real assets and environmental state
-
-Is valid_png_present = true
-Is valid_jpg_present = true
-Is corrupted_jpg_present = true
-Is invalid_txt_present = true
-Is assets_dir_writable = true
+# Image Viewer Environmental Facts
+Situation: Standard execution
+os linux
+arch x64
+max_ram_mb 1024
+max_threads 8
+gpu_enabled true
+backend software
+allowed_path /tmp
+allowed_path .
