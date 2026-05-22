@@ -16,6 +16,8 @@
 #include "cmd_line_parser.h"
 #include "model/model_repository.h"
 #include "sdd_checker.h"
+#include "analytics/mesh_discovery_engine.h"
+#include "analytics/worker_pool.h"
 
 #ifdef _WIN32
 #include <conio.h>
@@ -97,6 +99,7 @@ int runApplication(const CmdLineParser& parser) {
         std::cout << "Options:\n";
         std::cout << "  --load-graph <file.csv>   Load graph from CSV\n";
         std::cout << "  --load-mesh <file.json>    Load graph from Mesh JSON\n";
+        std::cout << "  --discover-mesh <seed>     Run hierarchical MeSH discovery\n";
         std::cout << "  --save-graph <file.csv>   Save graph to CSV (headless)\n";
         std::cout << "  --get-node-details <id>  Print node details and exit\n";
         std::cout << "  --load-atlas <file.brn>   Load brain atlas\n";
@@ -122,6 +125,22 @@ int runApplication(const CmdLineParser& parser) {
     }
 
     // Headless operations
+    if (parser.hasOption("discover-mesh")) {
+        Graph graph;
+        analytics::WorkerPool pool(4);
+        analytics::MeshDiscoveryEngine engine(pool);
+        std::string seed = parser.getOption("discover-mesh");
+        std::cout << "Discovering MeSH terms for: " << seed << "...\n";
+        auto future = engine.runDiscovery(graph, seed);
+        future.wait();
+        std::cout << "Discovery complete. Nodes: " << graph.nodes.size() << "\n";
+
+        if (parser.hasOption("save-graph")) {
+            io::IOManager::saveGraphToCSV(graph, parser.getOption("save-graph"));
+        }
+        return 0;
+    }
+
     if (parser.hasOption("load-graph") || parser.hasOption("save-graph") || parser.hasOption("get-node-details")) {
         Graph graph;
         std::string loadPath = parser.getOption("load-graph");

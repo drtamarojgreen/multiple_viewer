@@ -1,0 +1,8 @@
+Situation: Discovery
+# MeSH Discovery Facts
+Is mesh_discovery_recursive = true
+Is mesh_max_levels = 4
+Is mesh_pruning_threshold = 0.1
+Is logistic_model_formula = "L / (1 + exp(-k * (x - x0)))"
+Is pubmed_efetch_format = "XML"
+Is mesh_descriptor_tag = "DescriptorName"

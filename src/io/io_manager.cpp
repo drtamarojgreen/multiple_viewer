@@ -23,14 +23,23 @@ void IOManager::setBackend(StorageBackend* backend) {
 static std::string getJsonVal(const std::string& l, const std::string& key) {
     size_t pos = l.find(key);
     if (pos == std::string::npos) return std::string("");
-    size_t start = l.find(":", pos);
-    if (start == std::string::npos) return std::string("");
-    start++;
+
+    // Find the colon after the key
+    size_t colon = l.find(":", pos + key.length());
+    if (colon == std::string::npos) return std::string("");
+
+    size_t start = colon + 1;
+    // Skip spaces and opening quote
     while (start < l.size() && (std::isspace(static_cast<unsigned char>(l[start])) || l[start] == '\"')) start++;
+
     size_t end = start;
+    // Values end at a quote, comma, closing brace or bracket
     while (end < l.size() && l[end] != '\"' && l[end] != ',' && l[end] != '}' && l[end] != ']') end++;
+
+    // Trim trailing whitespace
     size_t actualEnd = end;
     while (actualEnd > start && std::isspace(static_cast<unsigned char>(l[actualEnd - 1]))) actualEnd--;
+
     return l.substr(start, actualEnd - start);
 }
 

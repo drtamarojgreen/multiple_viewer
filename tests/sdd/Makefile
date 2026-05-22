@@ -17,7 +17,11 @@ CARDS = cards/LoggingClass.cpp \
         cards/LayoutClass.cpp \
         cards/MeshLoadClass.cpp \
         cards/WorkerPoolClass.cpp \
-        cards/StorageBackendClass.cpp
+        cards/StorageBackendClass.cpp \
+        cards/XmlExtractionClass.cpp \
+        cards/MeshDiscoveryClass.cpp \
+        cards/TrendAnalysisClass.cpp \
+        cards/GraphThreadSafetyClass.cpp
 
 BINS = $(patsubst cards/%.cpp, $(BIN_DIR)/%, $(CARDS))
 

@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include "model/model_common.h"
 #include "model/brain_overlay.h"
 
@@ -111,7 +112,34 @@ struct Point3D { float x, y, z; };
 struct Point2D { float x, y; };
 
 class Graph {
+private:
+    mutable std::mutex graphMutex;
+
 public:
+    Graph& operator=(const Graph& other) {
+        if (this != &other) {
+            std::lock_guard<std::mutex> lock1(graphMutex);
+            std::lock_guard<std::mutex> lock2(other.graphMutex);
+            nodes = other.nodes;
+            nodeMap = other.nodeMap;
+            nodePos = other.nodePos;
+            layoutPositions = other.layoutPositions;
+            layoutDirty = other.layoutDirty;
+            focusedNodeIndices = other.focusedNodeIndices;
+            focusedNodeIndex = other.focusedNodeIndex;
+            summary = other.summary;
+            subjectFilterOnly = other.subjectFilterOnly;
+            focusOnlyAtMaxZoom = other.focusOnlyAtMaxZoom;
+            showLines = other.showLines;
+            needsLayoutReset = other.needsLayoutReset;
+        }
+        return *this;
+    }
+
+    Graph(const Graph& other) {
+        *this = other;
+    }
+
     std::vector<GraphNode> nodes;
     std::unordered_map<int, GraphNode> nodeMap;
     std::map<int,Coord3>      nodePos;
