@@ -23,6 +23,7 @@ class MeshDiscoveryEngine {
 public:
     MeshDiscoveryEngine(WorkerPool& pool, DiscoveryConfig config = DiscoveryConfig());
 
+    void loadConfig(const std::string& filepath);
     std::future<void> runDiscovery(Graph& graph, const std::string& seedTerm);
 
 private:

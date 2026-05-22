@@ -1,5 +1,6 @@
 #include "map_logic.h"
 #include "analysis_logic.h"
+#include "io/yaml_parser.h"
 #include <queue>
 #include <algorithm>
 #include <chrono>
@@ -403,6 +404,35 @@ float Graph::getProximityDepth(int nodeId, int width, int height) const {
     float dy = it->second.x - cy;
     float dist = std::sqrt(dx*dx + dy*dy);
     return std::min(1.0f, dist / std::max(cx, cy));
+}
+
+namespace Config {
+    bool showAnalyticsPanel = false;
+    bool viewerOverlayMode = false;
+    bool autoScaleDepth = true;
+    bool showTopicWeights = true;
+    bool allowMultiFocus = false;
+    int panOffsetX = 0;
+    int panOffsetY = 0;
+    float viewerZoom = 1.0f;
+    int nodePadding = 1;
+    bool quietMode = false;
+    int consoleWidth = DEFAULT_CONSOLE_WIDTH;
+    int consoleHeight = DEFAULT_CONSOLE_HEIGHT;
+
+    void loadFromYaml(const std::string& filepath) {
+        auto config = io::YamlParser::loadSimpleYaml(filepath);
+        showAnalyticsPanel = io::YamlParser::getBool(config, "show_analytics_panel", showAnalyticsPanel);
+        viewerOverlayMode = io::YamlParser::getBool(config, "viewer_overlay_mode", viewerOverlayMode);
+        autoScaleDepth = io::YamlParser::getBool(config, "auto_scale_depth", autoScaleDepth);
+        showTopicWeights = io::YamlParser::getBool(config, "show_topic_weights", showTopicWeights);
+        allowMultiFocus = io::YamlParser::getBool(config, "allow_multi_focus", allowMultiFocus);
+        viewerZoom = io::YamlParser::getFloat(config, "viewer_zoom", viewerZoom);
+        nodePadding = io::YamlParser::getInt(config, "node_padding", nodePadding);
+        quietMode = io::YamlParser::getBool(config, "quiet_mode", quietMode);
+        consoleWidth = io::YamlParser::getInt(config, "console_width", consoleWidth);
+        consoleHeight = io::YamlParser::getInt(config, "console_height", consoleHeight);
+    }
 }
 
 void Graph::applyBrainOverlay(const model::BrainOverlay& overlay) {

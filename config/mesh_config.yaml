@@ -1,0 +1,14 @@
+# MeSH Discovery Pipeline Configuration
+
+# Discovery Limits
+max_levels: 3
+max_children_per_node: 5
+max_total_terms: 50
+
+# Hierarchical Thresholds (Publication Count)
+threshold_level_1: 1000
+threshold_level_2: 500
+threshold_level_3: 100
+
+# Significance Score Pruning
+significance_score_threshold: 0.1

@@ -17,16 +17,20 @@ static constexpr int DEFAULT_CONSOLE_HEIGHT = 25;
 
 // === Configuration Flags (formerly config.h) ===
 namespace Config {
-    inline bool showAnalyticsPanel = false;
-    inline bool viewerOverlayMode = false;
-    inline bool autoScaleDepth = true;
-    inline bool showTopicWeights = true;
-    inline bool allowMultiFocus = false;
-    inline int panOffsetX = 0;
-    inline int panOffsetY = 0;
-    inline float viewerZoom = 1.0f;
-    inline int nodePadding = 1;
-    inline bool quietMode = false;
+    extern bool showAnalyticsPanel;
+    extern bool viewerOverlayMode;
+    extern bool autoScaleDepth;
+    extern bool showTopicWeights;
+    extern bool allowMultiFocus;
+    extern int panOffsetX;
+    extern int panOffsetY;
+    extern float viewerZoom;
+    extern int nodePadding;
+    extern bool quietMode;
+    extern int consoleWidth;
+    extern int consoleHeight;
+
+    void loadFromYaml(const std::string& filepath);
 }
 
 // Different visualization layouts (from viewer_logic.h)

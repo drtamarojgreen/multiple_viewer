@@ -1,5 +1,6 @@
 #include "mesh_discovery_engine.h"
 #include "../io/xml_extractor.h"
+#include "../io/yaml_parser.h"
 #include "../logger.h"
 #include <algorithm>
 
@@ -7,6 +8,16 @@ namespace analytics {
 
 MeshDiscoveryEngine::MeshDiscoveryEngine(WorkerPool& pool, DiscoveryConfig cfg)
     : workerPool(pool), config(cfg) {}
+
+void MeshDiscoveryEngine::loadConfig(const std::string& filepath) {
+    auto cfg = io::YamlParser::loadSimpleYaml(filepath);
+    config.maxLevels = io::YamlParser::getInt(cfg, "max_levels", config.maxLevels);
+    config.maxChildren = io::YamlParser::getInt(cfg, "max_children_per_node", config.maxChildren);
+    config.maxTotalTerms = io::YamlParser::getInt(cfg, "max_total_terms", config.maxTotalTerms);
+    config.levelThresholds[1] = io::YamlParser::getInt(cfg, "threshold_level_1", config.levelThresholds[1]);
+    config.levelThresholds[2] = io::YamlParser::getInt(cfg, "threshold_level_2", config.levelThresholds[2]);
+    config.levelThresholds[3] = io::YamlParser::getInt(cfg, "threshold_level_3", config.levelThresholds[3]);
+}
 
 std::future<void> MeshDiscoveryEngine::runDiscovery(Graph& graph, const std::string& seedTerm) {
     visited.clear();

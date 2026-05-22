@@ -89,6 +89,9 @@ void runInteractiveSession(const CmdLineParser& parser) {
 }
 
 int runApplication(const CmdLineParser& parser) {
+    // Initial configuration load
+    Config::loadFromYaml("config/app_config.yaml");
+
     if (parser.hasOption("test") || parser.hasOption("test-unit") || parser.hasOption("test-bdd")) {
         std::cout << "Tests are now available via separate executables: unit_tests and bdd_tests\n";
         return 0;
@@ -129,6 +132,7 @@ int runApplication(const CmdLineParser& parser) {
         Graph graph;
         analytics::WorkerPool pool(4);
         analytics::MeshDiscoveryEngine engine(pool);
+        engine.loadConfig("config/mesh_config.yaml");
         std::string seed = parser.getOption("discover-mesh");
         std::cout << "Discovering MeSH terms for: " << seed << "...\n";
         auto future = engine.runDiscovery(graph, seed);
