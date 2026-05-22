@@ -11,6 +11,7 @@ using namespace Sorrel::Sdd::Util;
 // @Card: quanta_glia_extraction
 // @Results quanta_glia_extraction_operational == true
 void quanta_glia_extraction_card(const std::map<std::string, std::string>& facts) {
+    fs::create_directories("../../tests/temp/");
     std::string test_file = "../../tests/temp/sdd_test_graph.json";
     Graph g;
     g.addNode(GraphNode("Extraction Test", 0));

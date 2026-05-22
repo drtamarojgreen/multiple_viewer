@@ -13,3 +13,6 @@
 - sdd_runtime_fix_sip: Fixed fact file paths and adjusted layout test for current stubbed implementation.
 - fact_loading_robustness_sip: Enhanced `FactReader` with automatic path redirection to handle different execution contexts.
 - fact_loading_configurable_sip: Implemented `SORREL_FACTS_DIR` env support and heuristic search for fact files.
+- mesh_json_ingestion_sip: Implemented `loadMeshJSON` in `IOManager` for Greenhouse pipeline integration.
+- analytics_worker_pool_sip: Implemented `WorkerPool` for concurrent analytics tasks.
+- io_abstraction_sip: Implemented `StorageBackend` and `LocalFS` for distributed file system support.

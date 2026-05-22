@@ -48,7 +48,11 @@ void runInteractiveSession(const CmdLineParser& parser) {
 
     std::cout << "=== CBT Graph Editor ===\n";
     std::string inputFile = "graph_input.csv";
-    if (parser.hasOption("load-graph")) {
+    bool meshMode = false;
+    if (parser.hasOption("load-mesh")) {
+        inputFile = parser.getOption("load-mesh");
+        meshMode = true;
+    } else if (parser.hasOption("load-graph")) {
         inputFile = parser.getOption("load-graph");
     } else if (parser.hasOption("load")) { // Fallback for old flag
         inputFile = parser.getOption("load");
@@ -57,8 +61,14 @@ void runInteractiveSession(const CmdLineParser& parser) {
     std::cout << "Loading graph from '" << inputFile << "'...\n";
 
     // Initial load 
-    if (!io::IOManager::loadGraphFromCSV(graph, inputFile)) {
-        std::cout << "Starting with empty graph.\n";
+    if (meshMode) {
+        if (!io::IOManager::loadMeshJSON(graph, inputFile)) {
+            std::cout << "Starting with empty graph (Mesh JSON failed).\n";
+        }
+    } else {
+        if (!io::IOManager::loadGraphFromCSV(graph, inputFile)) {
+            std::cout << "Starting with empty graph.\n";
+        }
     }
 
     // Load brain model if specified
@@ -86,6 +96,7 @@ int runApplication(const CmdLineParser& parser) {
         std::cout << "Usage: viewer [options]\n";
         std::cout << "Options:\n";
         std::cout << "  --load-graph <file.csv>   Load graph from CSV\n";
+        std::cout << "  --load-mesh <file.json>    Load graph from Mesh JSON\n";
         std::cout << "  --save-graph <file.csv>   Save graph to CSV (headless)\n";
         std::cout << "  --get-node-details <id>  Print node details and exit\n";
         std::cout << "  --load-atlas <file.brn>   Load brain atlas\n";

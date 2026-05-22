@@ -8,6 +8,7 @@ bdd_persist_test.csv
 test_graph.csv
 test_output.csv
 graph_output.csv
+tests/sdd/bin/
 
 # IDEs
 .vscode/

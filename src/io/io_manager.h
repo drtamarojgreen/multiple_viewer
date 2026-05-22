@@ -8,9 +8,24 @@
 
 namespace io {
 
+class StorageBackend {
+public:
+    virtual ~StorageBackend() = default;
+    virtual bool read(const std::string& path, std::string& outData) = 0;
+    virtual bool write(const std::string& path, const std::string& inData) = 0;
+};
+
+class LocalFS : public StorageBackend {
+public:
+    bool read(const std::string& path, std::string& outData) override;
+    bool write(const std::string& path, const std::string& inData) override;
+};
+
 class IOManager {
 public:
+    static void setBackend(StorageBackend* backend);
     static bool loadJSON(Graph& graph, const std::string& filepath);
+    static bool loadMeshJSON(Graph& graph, const std::string& filepath);
     static bool saveJSON(const Graph& graph, const std::string& filepath);
     static bool exportSVG(const Graph& graph, const std::string& filepath);
 

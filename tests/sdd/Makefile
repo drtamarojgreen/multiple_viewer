@@ -14,7 +14,10 @@ CARDS = cards/LoggingClass.cpp \
         cards/QuantaGliaClass.cpp \
         cards/PrunerClass.cpp \
         cards/ViewportClass.cpp \
-        cards/LayoutClass.cpp
+        cards/LayoutClass.cpp \
+        cards/MeshLoadClass.cpp \
+        cards/WorkerPoolClass.cpp \
+        cards/StorageBackendClass.cpp
 
 BINS = $(patsubst cards/%.cpp, $(BIN_DIR)/%, $(CARDS))
 
