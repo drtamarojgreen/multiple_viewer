@@ -13,10 +13,12 @@
 namespace analytics {
 
 struct DiscoveryConfig {
-    int maxLevels = 3;
-    std::map<int, int> levelThresholds = {{1, 1000}, {2, 500}, {3, 100}};
-    int maxChildren = 5;
-    int maxTotalTerms = 50;
+    int maxLevels = 0;
+    std::map<int, int> levelThresholds;
+    int maxChildren = 0;
+    int maxTotalTerms = 0;
+    float significanceThreshold = 0.0f;
+    int fallbackThreshold = 0;
 };
 
 class MeshDiscoveryEngine {
@@ -24,6 +26,7 @@ public:
     MeshDiscoveryEngine(WorkerPool& pool, DiscoveryConfig config = DiscoveryConfig());
 
     void loadConfig(const std::string& filepath);
+    void loadMockData(const std::string& filepath);
     std::future<void> runDiscovery(Graph& graph, const std::string& seedTerm);
 
 private:
@@ -33,6 +36,7 @@ private:
 
     WorkerPool& workerPool;
     DiscoveryConfig config;
+    std::map<std::string, std::string> mockData;
     std::set<std::string> visited;
     std::mutex visitedMutex;
     int totalTerms = 0;

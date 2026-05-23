@@ -11,12 +11,25 @@ MeshDiscoveryEngine::MeshDiscoveryEngine(WorkerPool& pool, DiscoveryConfig cfg)
 
 void MeshDiscoveryEngine::loadConfig(const std::string& filepath) {
     auto cfg = io::YamlParser::loadSimpleYaml(filepath);
+    if (cfg.empty()) {
+        Logger::error("MeSH Discovery Configuration file missing or empty: " + filepath);
+        return;
+    }
     config.maxLevels = io::YamlParser::getInt(cfg, "max_levels", config.maxLevels);
     config.maxChildren = io::YamlParser::getInt(cfg, "max_children_per_node", config.maxChildren);
     config.maxTotalTerms = io::YamlParser::getInt(cfg, "max_total_terms", config.maxTotalTerms);
     config.levelThresholds[1] = io::YamlParser::getInt(cfg, "threshold_level_1", config.levelThresholds[1]);
     config.levelThresholds[2] = io::YamlParser::getInt(cfg, "threshold_level_2", config.levelThresholds[2]);
     config.levelThresholds[3] = io::YamlParser::getInt(cfg, "threshold_level_3", config.levelThresholds[3]);
+    config.significanceThreshold = io::YamlParser::getFloat(cfg, "significance_score_threshold", config.significanceThreshold);
+    config.fallbackThreshold = io::YamlParser::getInt(cfg, "fallback_threshold", config.fallbackThreshold);
+}
+
+void MeshDiscoveryEngine::loadMockData(const std::string& filepath) {
+    mockData = io::YamlParser::loadSimpleYaml(filepath);
+    if (mockData.empty()) {
+        Logger::error("MeSH Mock Data file missing or empty: " + filepath);
+    }
 }
 
 std::future<void> MeshDiscoveryEngine::runDiscovery(Graph& graph, const std::string& seedTerm) {
@@ -48,8 +61,8 @@ void MeshDiscoveryEngine::discoverRecursive(Graph& graph, std::string term, int 
     float significance = 1.0f;
     if (parentCount > 0) significance = static_cast<float>(count) / parentCount;
 
-    int threshold = config.levelThresholds.count(level) ? config.levelThresholds.at(level) : 100;
-    bool isSignificant = (count >= threshold) || (parentCount > 0 && significance > 0.1f);
+    int threshold = config.levelThresholds.count(level) ? config.levelThresholds.at(level) : config.fallbackThreshold;
+    bool isSignificant = (count >= threshold) || (parentCount > 0 && significance > config.significanceThreshold);
 
     if (!isSignificant) return;
 
@@ -79,32 +92,27 @@ void MeshDiscoveryEngine::discoverRecursive(Graph& graph, std::string term, int 
 }
 
 int MeshDiscoveryEngine::fetchPublicationCount(const std::string& term) {
-    // Stub for actual API call
-    if (term == "Alzheimer") return 50000;
-    if (term == "Amyloid") return 20000;
-    if (term == "Tau") return 15000;
+    std::string key = "count_" + term;
+    if (mockData.count(key)) {
+        try {
+            return std::stoi(mockData.at(key));
+        } catch (...) {}
+    }
 
     // Demonstrate usage of internal logic even if network is stubbed
     std::string mockXml = "<PubmedArticleSet><PubmedArticle><DescriptorName>" + term + "</DescriptorName></PubmedArticle></PubmedArticleSet>";
     auto extracted = io::XmlExtractor::extractMeshTerms(mockXml);
-    if (!extracted.empty()) return 100;
+    if (!extracted.empty()) return config.fallbackThreshold;
 
-    return 50;
+    return config.fallbackThreshold / 2;
 }
 
 std::set<std::string> MeshDiscoveryEngine::fetchRelatedTerms(const std::string& term) {
-    // In a real implementation, this would fetch from NCBI and use XmlExtractor.
-    // For this integration, we demonstrate the architectural link.
-    std::string mockXml;
-    if (term == "Alzheimer") {
-        mockXml = "<PubmedArticleSet><PubmedArticle><DescriptorName>Amyloid</DescriptorName><DescriptorName>Tau</DescriptorName><DescriptorName>Dementia</DescriptorName></PubmedArticle></PubmedArticleSet>";
-    } else if (term == "Amyloid") {
-        mockXml = "<PubmedArticleSet><PubmedArticle><DescriptorName>Plaques</DescriptorName><DescriptorName>Protein Aggregation</DescriptorName></PubmedArticle></PubmedArticleSet>";
-    } else {
-        return {};
+    std::string key = "related_" + term;
+    if (mockData.count(key)) {
+        return io::XmlExtractor::extractMeshTerms(mockData.at(key));
     }
-
-    return io::XmlExtractor::extractMeshTerms(mockXml);
+    return {};
 }
 
 } // namespace analytics

@@ -409,19 +409,27 @@ float Graph::getProximityDepth(int nodeId, int width, int height) const {
 namespace Config {
     bool showAnalyticsPanel = false;
     bool viewerOverlayMode = false;
-    bool autoScaleDepth = true;
-    bool showTopicWeights = true;
+    bool autoScaleDepth = false;
+    bool showTopicWeights = false;
     bool allowMultiFocus = false;
     int panOffsetX = 0;
     int panOffsetY = 0;
-    float viewerZoom = 1.0f;
-    int nodePadding = 1;
+    float viewerZoom = 0.0f;
+    int nodePadding = 0;
     bool quietMode = false;
-    int consoleWidth = DEFAULT_CONSOLE_WIDTH;
-    int consoleHeight = DEFAULT_CONSOLE_HEIGHT;
+    int consoleWidth = 0;
+    int consoleHeight = 0;
+    int maxSpatialDepth = 0;
+    float cameraLerpSpeed = 0.0f;
+    int nodeWeightThresholdHigh = 0;
+    int nodeWeightThresholdLow = 0;
 
     void loadFromYaml(const std::string& filepath) {
         auto config = io::YamlParser::loadSimpleYaml(filepath);
+        if (config.empty()) {
+            std::cerr << "[CRITICAL] Configuration file missing or empty: " << filepath << std::endl;
+            return;
+        }
         showAnalyticsPanel = io::YamlParser::getBool(config, "show_analytics_panel", showAnalyticsPanel);
         viewerOverlayMode = io::YamlParser::getBool(config, "viewer_overlay_mode", viewerOverlayMode);
         autoScaleDepth = io::YamlParser::getBool(config, "auto_scale_depth", autoScaleDepth);
@@ -432,6 +440,10 @@ namespace Config {
         quietMode = io::YamlParser::getBool(config, "quiet_mode", quietMode);
         consoleWidth = io::YamlParser::getInt(config, "console_width", consoleWidth);
         consoleHeight = io::YamlParser::getInt(config, "console_height", consoleHeight);
+        maxSpatialDepth = io::YamlParser::getInt(config, "max_spatial_depth", maxSpatialDepth);
+        cameraLerpSpeed = io::YamlParser::getFloat(config, "camera_lerp_speed", cameraLerpSpeed);
+        nodeWeightThresholdHigh = io::YamlParser::getInt(config, "node_weight_threshold_high", nodeWeightThresholdHigh);
+        nodeWeightThresholdLow = io::YamlParser::getInt(config, "node_weight_threshold_low", nodeWeightThresholdLow);
     }
 }
 

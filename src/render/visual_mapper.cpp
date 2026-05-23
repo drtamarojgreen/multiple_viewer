@@ -1,10 +1,11 @@
 #include "visual_mapper.h"
+#include "../map_logic.h"
 
 namespace render {
 
 std::string VisualMapper::getColorForWeight(int weight) {
-    if (weight > 10) return "RED";
-    if (weight > 5) return "YELLOW";
+    if (weight > Config::nodeWeightThresholdHigh) return "RED";
+    if (weight > Config::nodeWeightThresholdLow) return "YELLOW";
     return "WHITE";
 }
 

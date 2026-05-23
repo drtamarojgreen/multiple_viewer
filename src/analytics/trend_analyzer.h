@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cmath>
+#include <string>
 
 namespace analytics {
 
@@ -15,6 +16,7 @@ struct LogisticParams {
 
 class TrendAnalyzer {
 public:
+    static void loadConfig(const std::string& filepath);
     static LogisticParams fitGrowthModel(const std::vector<double>& series);
 };
 

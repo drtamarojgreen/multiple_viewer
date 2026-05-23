@@ -18,6 +18,9 @@
 #include "sdd_checker.h"
 #include "analytics/mesh_discovery_engine.h"
 #include "analytics/worker_pool.h"
+#include "analytics/nlp_engine.h"
+#include "analytics/trend_analyzer.h"
+#include "genome/genome_manager.h"
 
 #ifdef _WIN32
 #include <conio.h>
@@ -91,6 +94,8 @@ void runInteractiveSession(const CmdLineParser& parser) {
 int runApplication(const CmdLineParser& parser) {
     // Initial configuration load
     Config::loadFromYaml("config/app_config.yaml");
+    analytics::NlpEngine::loadConfig("config/mesh_config.yaml");
+    analytics::TrendAnalyzer::loadConfig("config/mesh_config.yaml");
 
     if (parser.hasOption("test") || parser.hasOption("test-unit") || parser.hasOption("test-bdd")) {
         std::cout << "Tests are now available via separate executables: unit_tests and bdd_tests\n";
@@ -103,6 +108,7 @@ int runApplication(const CmdLineParser& parser) {
         std::cout << "  --load-graph <file.csv>   Load graph from CSV\n";
         std::cout << "  --load-mesh <file.json>    Load graph from Mesh JSON\n";
         std::cout << "  --discover-mesh <seed>     Run hierarchical MeSH discovery\n";
+        std::cout << "  --genome-query <query>    Query Genome API and cache locally\n";
         std::cout << "  --save-graph <file.csv>   Save graph to CSV (headless)\n";
         std::cout << "  --get-node-details <id>  Print node details and exit\n";
         std::cout << "  --load-atlas <file.brn>   Load brain atlas\n";
@@ -128,11 +134,18 @@ int runApplication(const CmdLineParser& parser) {
     }
 
     // Headless operations
+    if (parser.hasOption("genome-query")) {
+        genome::GenomeManager::initialize("config/genome_cache.json");
+        genome::GenomeManager::requestGenomeData(parser.getOption("genome-query"));
+        return 0;
+    }
+
     if (parser.hasOption("discover-mesh")) {
         Graph graph;
         analytics::WorkerPool pool(4);
         analytics::MeshDiscoveryEngine engine(pool);
         engine.loadConfig("config/mesh_config.yaml");
+        engine.loadMockData("config/mock_mesh_data.yaml");
         std::string seed = parser.getOption("discover-mesh");
         std::cout << "Discovering MeSH terms for: " << seed << "...\n";
         auto future = engine.runDiscovery(graph, seed);

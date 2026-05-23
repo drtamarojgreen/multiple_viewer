@@ -9,6 +9,7 @@ namespace analytics {
 
 class NlpEngine {
 public:
+    static void loadConfig(const std::string& filepath);
     static std::set<std::string> extractKeywords(const std::vector<std::string>& texts);
     static std::set<std::string> detectEntities(const std::vector<std::string>& texts);
 };

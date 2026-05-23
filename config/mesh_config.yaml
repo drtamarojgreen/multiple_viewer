@@ -12,3 +12,13 @@ threshold_level_3: 100
 
 # Significance Score Pruning
 significance_score_threshold: 0.1
+fallback_threshold: 100
+
+# NLP Configuration
+stop_words: the,and,for,with,from,that,this,these
+ner_suffixes: mab,nib,vir,afil,stat,tinib
+
+# Trend Analysis Configuration
+initial_l: 1.0
+initial_k: 0.1
+midpoint_divisor: 2.0

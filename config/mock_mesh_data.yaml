@@ -1,0 +1,10 @@
+# Mock data for MeSH discovery engine (stubs)
+
+# Publication Counts
+count_Alzheimer: 50000
+count_Amyloid: 20000
+count_Tau: 15000
+
+# Related Terms (XML strings)
+related_Alzheimer: "<DescriptorName>Amyloid</DescriptorName><DescriptorName>Tau</DescriptorName><DescriptorName>Dementia</DescriptorName>"
+related_Amyloid: "<DescriptorName>Plaques</DescriptorName><DescriptorName>Protein Aggregation</DescriptorName>"

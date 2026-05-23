@@ -76,4 +76,20 @@ float YamlParser::getFloat(const std::map<std::string, std::string>& config, con
     }
 }
 
+std::vector<std::string> YamlParser::getStringList(const std::map<std::string, std::string>& config, const std::string& key) {
+    std::string val = getValue(config, key);
+    std::vector<std::string> results;
+    if (val.empty()) return results;
+
+    std::stringstream ss(val);
+    std::string item;
+    while (std::getline(ss, item, ',')) {
+        item.erase(0, item.find_first_not_of(" \t\""));
+        size_t last = item.find_last_not_of(" \t\"");
+        if (last != std::string::npos) item = item.substr(0, last + 1);
+        if (!item.empty()) results.push_back(item);
+    }
+    return results;
+}
+
 } // namespace io

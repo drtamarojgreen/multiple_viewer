@@ -1,0 +1,27 @@
+<Rules>
+    <Command key="A" action="ADD_NODE" description="Add Node" />
+    <Command key="R" action="REMOVE_NODE" description="Remove Node" />
+    <Command key="1" action="UNDO" description="Undo" />
+    <Command key="2" action="REDO" description="Redo" />
+    <Command key="S" action="SAVE_CSV" description="Save CSV" />
+    <Command key="U" action="LOAD_CSV" description="Load CSV" />
+    <Command key="G" action="TOGGLE_ANALYTICS" description="Toggle Analytics" />
+    <Command key="D" action="TOGGLE_AUTOSCALE" description="Toggle AutoScale Depth" />
+    <Command key="W" action="TOGGLE_WEIGHTS" description="Toggle Weights" />
+    <Command key="F" action="ADD_FOCUS" description="Add Focus" />
+    <Command key="O" action="REMOVE_FOCUS" description="Remove Focus" />
+    <Command key="T" action="SET_DIST" description="Set Dist" />
+    <Command key="/" action="SEARCH" description="Search" />
+    <Command key="Z" action="ZOOM_IN" description="Zoom In" />
+    <Command key="X" action="ZOOM_OUT" description="Zoom Out" />
+    <Command key="I" action="PAN_UP" description="Pan Up" />
+    <Command key="K" action="PAN_DOWN" description="Pan Down" />
+    <Command key="J" action="PAN_LEFT" description="Pan Left" />
+    <Command key="L" action="PAN_RIGHT" description="Pan Right" />
+    <Command key="B" action="BOOK_VIEW" description="Book View" />
+    <Command key="E" action="PAGE_VIEW" description="Page View" />
+    <Command key="M" action="TOGGLE_MULTI_FOCI" description="Multi Foci Toggle" />
+    <Command key="H" action="TOGGLE_HELP" description="Help Toggle" />
+    <Command key="TAB" action="CYCLE_FOCUS" description="Cycle Focus" />
+    <Command key="N" action="NEXT_VIEW" description="Next View" />
+</Rules>

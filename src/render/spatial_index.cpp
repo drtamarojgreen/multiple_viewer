@@ -12,7 +12,7 @@ void OctreeIndex::insert(int nodeId, float x, float y, float z) {
         return;
     }
 
-    if (entries_.size() < (size_t)capacity_ || depth_ >= MAX_DEPTH) {
+    if (entries_.size() < (size_t)capacity_ || depth_ >= get_max_depth()) {
         entries_.push_back({nodeId, x, y, z});
         return;
     }

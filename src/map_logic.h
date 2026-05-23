@@ -11,7 +11,7 @@
 #include "model/model_common.h"
 #include "model/brain_overlay.h"
 
-// Console dimensions (shared globally)
+// Constants
 static constexpr int DEFAULT_CONSOLE_WIDTH  = 80;
 static constexpr int DEFAULT_CONSOLE_HEIGHT = 25;
 
@@ -29,6 +29,10 @@ namespace Config {
     extern bool quietMode;
     extern int consoleWidth;
     extern int consoleHeight;
+    extern int maxSpatialDepth;
+    extern float cameraLerpSpeed;
+    extern int nodeWeightThresholdHigh;
+    extern int nodeWeightThresholdLow;
 
     void loadFromYaml(const std::string& filepath);
 }

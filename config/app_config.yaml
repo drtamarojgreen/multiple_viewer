@@ -15,6 +15,11 @@ allow_multi_focus: false
 viewer_zoom: 1.0
 node_padding: 1
 quiet_mode: false
+camera_lerp_speed: 5.0
+
+# Visuals
+node_weight_threshold_high: 10
+node_weight_threshold_low: 5
 
 # Render Layers
 max_spatial_depth: 16

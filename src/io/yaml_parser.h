@@ -16,6 +16,7 @@ public:
     static int getInt(const std::map<std::string, std::string>& config, const std::string& key, int defaultVal = 0);
     static bool getBool(const std::map<std::string, std::string>& config, const std::string& key, bool defaultVal = false);
     static float getFloat(const std::map<std::string, std::string>& config, const std::string& key, float defaultVal = 0.0f);
+    static std::vector<std::string> getStringList(const std::map<std::string, std::string>& config, const std::string& key);
 };
 
 } // namespace io
