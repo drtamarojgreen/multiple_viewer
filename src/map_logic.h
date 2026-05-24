@@ -7,25 +7,34 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include "model/model_common.h"
 #include "model/brain_overlay.h"
 
-// Console dimensions (shared globally)
+// Constants
 static constexpr int DEFAULT_CONSOLE_WIDTH  = 80;
 static constexpr int DEFAULT_CONSOLE_HEIGHT = 25;
 
 // === Configuration Flags (formerly config.h) ===
 namespace Config {
-    inline bool showAnalyticsPanel = false;
-    inline bool viewerOverlayMode = false;
-    inline bool autoScaleDepth = true;
-    inline bool showTopicWeights = true;
-    inline bool allowMultiFocus = false;
-    inline int panOffsetX = 0;
-    inline int panOffsetY = 0;
-    inline float viewerZoom = 1.0f;
-    inline int nodePadding = 1;
-    inline bool quietMode = false;
+    extern bool showAnalyticsPanel;
+    extern bool viewerOverlayMode;
+    extern bool autoScaleDepth;
+    extern bool showTopicWeights;
+    extern bool allowMultiFocus;
+    extern int panOffsetX;
+    extern int panOffsetY;
+    extern float viewerZoom;
+    extern int nodePadding;
+    extern bool quietMode;
+    extern int consoleWidth;
+    extern int consoleHeight;
+    extern int maxSpatialDepth;
+    extern float cameraLerpSpeed;
+    extern int nodeWeightThresholdHigh;
+    extern int nodeWeightThresholdLow;
+
+    void loadFromYaml(const std::string& filepath);
 }
 
 // Different visualization layouts (from viewer_logic.h)
@@ -111,7 +120,34 @@ struct Point3D { float x, y, z; };
 struct Point2D { float x, y; };
 
 class Graph {
+private:
+    mutable std::mutex graphMutex;
+
 public:
+    Graph& operator=(const Graph& other) {
+        if (this != &other) {
+            std::lock_guard<std::mutex> lock1(graphMutex);
+            std::lock_guard<std::mutex> lock2(other.graphMutex);
+            nodes = other.nodes;
+            nodeMap = other.nodeMap;
+            nodePos = other.nodePos;
+            layoutPositions = other.layoutPositions;
+            layoutDirty = other.layoutDirty;
+            focusedNodeIndices = other.focusedNodeIndices;
+            focusedNodeIndex = other.focusedNodeIndex;
+            summary = other.summary;
+            subjectFilterOnly = other.subjectFilterOnly;
+            focusOnlyAtMaxZoom = other.focusOnlyAtMaxZoom;
+            showLines = other.showLines;
+            needsLayoutReset = other.needsLayoutReset;
+        }
+        return *this;
+    }
+
+    Graph(const Graph& other) {
+        *this = other;
+    }
+
     std::vector<GraphNode> nodes;
     std::unordered_map<int, GraphNode> nodeMap;
     std::map<int,Coord3>      nodePos;

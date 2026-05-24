@@ -16,6 +16,11 @@
 #include "cmd_line_parser.h"
 #include "model/model_repository.h"
 #include "sdd_checker.h"
+#include "analytics/mesh_discovery_engine.h"
+#include "analytics/worker_pool.h"
+#include "analytics/nlp_engine.h"
+#include "analytics/trend_analyzer.h"
+#include "genome/genome_manager.h"
 
 #ifdef _WIN32
 #include <conio.h>
@@ -48,7 +53,11 @@ void runInteractiveSession(const CmdLineParser& parser) {
 
     std::cout << "=== CBT Graph Editor ===\n";
     std::string inputFile = "graph_input.csv";
-    if (parser.hasOption("load-graph")) {
+    bool meshMode = false;
+    if (parser.hasOption("load-mesh")) {
+        inputFile = parser.getOption("load-mesh");
+        meshMode = true;
+    } else if (parser.hasOption("load-graph")) {
         inputFile = parser.getOption("load-graph");
     } else if (parser.hasOption("load")) { // Fallback for old flag
         inputFile = parser.getOption("load");
@@ -57,8 +66,14 @@ void runInteractiveSession(const CmdLineParser& parser) {
     std::cout << "Loading graph from '" << inputFile << "'...\n";
 
     // Initial load 
-    if (!io::IOManager::loadGraphFromCSV(graph, inputFile)) {
-        std::cout << "Starting with empty graph.\n";
+    if (meshMode) {
+        if (!io::IOManager::loadMeshJSON(graph, inputFile)) {
+            std::cout << "Starting with empty graph (Mesh JSON failed).\n";
+        }
+    } else {
+        if (!io::IOManager::loadGraphFromCSV(graph, inputFile)) {
+            std::cout << "Starting with empty graph.\n";
+        }
     }
 
     // Load brain model if specified
@@ -77,6 +92,11 @@ void runInteractiveSession(const CmdLineParser& parser) {
 }
 
 int runApplication(const CmdLineParser& parser) {
+    // Initial configuration load
+    Config::loadFromYaml("config/app_config.yaml");
+    analytics::NlpEngine::loadConfig("config/mesh_config.yaml");
+    analytics::TrendAnalyzer::loadConfig("config/mesh_config.yaml");
+
     if (parser.hasOption("test") || parser.hasOption("test-unit") || parser.hasOption("test-bdd")) {
         std::cout << "Tests are now available via separate executables: unit_tests and bdd_tests\n";
         return 0;
@@ -86,6 +106,9 @@ int runApplication(const CmdLineParser& parser) {
         std::cout << "Usage: viewer [options]\n";
         std::cout << "Options:\n";
         std::cout << "  --load-graph <file.csv>   Load graph from CSV\n";
+        std::cout << "  --load-mesh <file.json>    Load graph from Mesh JSON\n";
+        std::cout << "  --discover-mesh <seed>     Run hierarchical MeSH discovery\n";
+        std::cout << "  --genome-query <query>    Query Genome API and cache locally\n";
         std::cout << "  --save-graph <file.csv>   Save graph to CSV (headless)\n";
         std::cout << "  --get-node-details <id>  Print node details and exit\n";
         std::cout << "  --load-atlas <file.brn>   Load brain atlas\n";
@@ -111,6 +134,30 @@ int runApplication(const CmdLineParser& parser) {
     }
 
     // Headless operations
+    if (parser.hasOption("genome-query")) {
+        genome::GenomeManager::initialize("config/genome_cache.json");
+        genome::GenomeManager::requestGenomeData(parser.getOption("genome-query"));
+        return 0;
+    }
+
+    if (parser.hasOption("discover-mesh")) {
+        Graph graph;
+        analytics::WorkerPool pool(4);
+        analytics::MeshDiscoveryEngine engine(pool);
+        engine.loadConfig("config/mesh_config.yaml");
+        engine.loadMockData("config/mock_mesh_data.yaml");
+        std::string seed = parser.getOption("discover-mesh");
+        std::cout << "Discovering MeSH terms for: " << seed << "...\n";
+        auto future = engine.runDiscovery(graph, seed);
+        future.wait();
+        std::cout << "Discovery complete. Nodes: " << graph.nodes.size() << "\n";
+
+        if (parser.hasOption("save-graph")) {
+            io::IOManager::saveGraphToCSV(graph, parser.getOption("save-graph"));
+        }
+        return 0;
+    }
+
     if (parser.hasOption("load-graph") || parser.hasOption("save-graph") || parser.hasOption("get-node-details")) {
         Graph graph;
         std::string loadPath = parser.getOption("load-graph");

@@ -11,6 +11,7 @@ using namespace Sorrel::Sdd::Util;
 // @Results keyword_validator_operational == true
 void keyword_validator_verification_card(const std::map<std::string, std::string>& facts) {
     std::string keyword = facts.at("keyword_target");
+    if (!keyword.empty() && keyword.front() == '"') keyword = keyword.substr(1, keyword.size()-2);
 
     Graph g;
     g.addNode(GraphNode("The quick brown fox", 0));
@@ -19,13 +20,16 @@ void keyword_validator_verification_card(const std::map<std::string, std::string
     std::vector<int> results = findSimilarTopics(g, keyword);
 
     bool operational = (results.size() == 1 && results[0] == 0);
+    if (!operational) {
+        std::cout << "[DEBUG] Search results size: " << results.size() << std::endl;
+        if (!results.empty()) std::cout << "[DEBUG] First result ID: " << results[0] << std::endl;
+    }
     std::cout << "keyword_validator_operational = " << (operational ? "true" : "false") << std::endl;
 }
 
 // @Card: citation_validator_verification
 // @Results citation_validator_operational == true
 void citation_validator_verification_card(const std::map<std::string, std::string>& facts) {
-    // For this context, let's say "citation" means searching for brackets like [1]
     Graph g;
     g.addNode(GraphNode("See ref [1] and [2].", 0));
     g.addNode(GraphNode("No citations here.", 1));
@@ -38,9 +42,7 @@ void citation_validator_verification_card(const std::map<std::string, std::strin
 
 int main(int argc, char* argv[]) {
     auto facts = FactReader::readFacts("evaluators.facts");
-    if (facts.empty()) {
-        return 1;
-    }
+    if (facts.empty()) return 1;
 
     if (argc > 1 && std::string(argv[1]) == "citation") {
         citation_validator_verification_card(facts);

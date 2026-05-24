@@ -1,0 +1,4 @@
+Situation: Analytics
+# Facts for Worker Pool verification
+Is worker_pool_operational = false
+Is task_count = 10

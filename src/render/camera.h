@@ -1,6 +1,8 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "../map_logic.h"
+
 namespace render {
 
 class Camera {
@@ -25,7 +27,7 @@ private:
     float targetY_ = 0.0f;
     float targetZoom_ = 1.0f;
 
-    float lerpSpeed_ = 5.0f;
+    float lerpSpeed_ = Config::cameraLerpSpeed;
 };
 
 } // namespace render

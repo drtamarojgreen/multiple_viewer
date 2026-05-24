@@ -1,0 +1,14 @@
+Situation: Integration
+# Structural guardrails for Greenhouse Mesh Integration
+
+# No external libraries allowed for JSON parsing or core logic
+Is external_libs_prohibited = true
+
+# Multi-threading must use std::thread and std::mutex for safety
+Is std_threading_enforced = true
+
+# All I/O must be abstracted via StorageBackend
+Is io_abstraction_required = true
+
+# SDD cards must verify empirical outputs before checkout
+Is empirical_verification_mandatory = true

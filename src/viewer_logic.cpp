@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <functional>
 #include "io/io_manager.h"
+#include "io/recovery_manager.h"
 #include "map_logic.h"
 #include "search_logic.h"
 #include <fstream>
@@ -177,43 +178,43 @@ void runEditor(Graph& graph, bool runTests) {
     auto renderer = render::RendererFactory::createRenderer(render::RendererType::CONSOLE);
     renderer->initialize(view.width, view.height + 10);
 
-    shortcutManager.registerShortcut('A', "Add Node", [&]() {
+    shortcutManager.registerAction("ADD_NODE", [&]() {
         int newIndex = 0;
         while (graph.nodeExists(newIndex)) newIndex++;
         commandStack.pushAndExecute(std::make_unique<input::AddNodeCommand>(graph, GraphNode("New", newIndex)));
     });
-    shortcutManager.registerShortcut('R', "Remove Node", [&]() {
+    shortcutManager.registerAction("REMOVE_NODE", [&]() {
         if (!graph.nodes.empty())
             commandStack.pushAndExecute(std::make_unique<input::RemoveNodeCommand>(graph, graph.nodes.back().index));
     });
-    shortcutManager.registerShortcut('1', "Undo", [&]() { commandStack.undo(); });
-    shortcutManager.registerShortcut('2', "Redo", [&]() { commandStack.redo(); });
-    shortcutManager.registerShortcut('S', "Save CSV", [&]() { io::IOManager::saveGraphToCSV(graph, "graph_output.csv"); });
-    shortcutManager.registerShortcut('U', "Load CSV", [&]() { io::IOManager::loadGraphFromCSV(graph, "graph_input.csv"); });
-    shortcutManager.registerShortcut('G', "Toggle Analytics", [&]() { Config::viewerOverlayMode = !Config::viewerOverlayMode; });
-    shortcutManager.registerShortcut('D', "Toggle AutoScale Depth", [&]() { Config::autoScaleDepth = !Config::autoScaleDepth; });
-    shortcutManager.registerShortcut('W', "Toggle Weights", [&]() { Config::showTopicWeights = !Config::showTopicWeights; });
-    shortcutManager.registerShortcut('F', "Add Focus", [&]() {
+    shortcutManager.registerAction("UNDO", [&]() { commandStack.undo(); });
+    shortcutManager.registerAction("REDO", [&]() { commandStack.redo(); });
+    shortcutManager.registerAction("SAVE_CSV", [&]() { io::IOManager::saveGraphToCSV(graph, "graph_output.csv"); });
+    shortcutManager.registerAction("LOAD_CSV", [&]() { io::IOManager::loadGraphFromCSV(graph, "graph_input.csv"); });
+    shortcutManager.registerAction("TOGGLE_ANALYTICS", [&]() { Config::viewerOverlayMode = !Config::viewerOverlayMode; });
+    shortcutManager.registerAction("TOGGLE_AUTOSCALE", [&]() { Config::autoScaleDepth = !Config::autoScaleDepth; });
+    shortcutManager.registerAction("TOGGLE_WEIGHTS", [&]() { Config::showTopicWeights = !Config::showTopicWeights; });
+    shortcutManager.registerAction("ADD_FOCUS", [&]() {
         renderer->setStatusMessage("Enter node index to ADD as focus: ");
         renderer->present();
         int idx; std::cin >> idx; std::cin.ignore(1000, '\n');
         graph.addFocus(idx);
         renderer->setStatusMessage("Focused node " + std::to_string(idx));
     });
-    shortcutManager.registerShortcut('O', "Remove Focus", [&]() {
+    shortcutManager.registerAction("REMOVE_FOCUS", [&]() {
         renderer->setStatusMessage("Enter focus index to REMOVE: ");
         renderer->present();
         int idx; std::cin >> idx; std::cin.ignore(1000, '\n');
         graph.removeFocus(idx);
         renderer->setStatusMessage("Unfocused node " + std::to_string(idx));
     });
-    shortcutManager.registerShortcut('T', "Set Dist", [&]() {
+    shortcutManager.registerAction("SET_DIST", [&]() {
         renderer->setStatusMessage("Enter new max render distance: ");
         renderer->present();
         int d; std::cin >> d; std::cin.ignore(1000, '\n');
         view.maxRenderDistance = d;
     });
-    shortcutManager.registerShortcut('/', "Search", [&]() {
+    shortcutManager.registerAction("SEARCH", [&]() {
         renderer->setStatusMessage("Enter search keyword: ");
         renderer->present();
         std::string keyword;
@@ -230,30 +231,45 @@ void runEditor(Graph& graph, bool runTests) {
         }
         searchState.isActive = true;
     });
-    shortcutManager.registerShortcut('Z', "Zoom In", [&]() { view.zoomIn(); });
-    shortcutManager.registerShortcut('X', "Zoom Out", [&]() { view.zoomOut(); });
-    shortcutManager.registerShortcut('I', "Pan Up", [&]() { view.pan(0, -1); });
-    shortcutManager.registerShortcut('K', "Pan Down", [&]() { view.pan(0, 1); });
-    shortcutManager.registerShortcut('J', "Pan Left", [&]() { view.pan(-1, 0); });
-    shortcutManager.registerShortcut('L', "Pan Right", [&]() { view.pan(1, 0); });
-    shortcutManager.registerShortcut('B', "Book View", [&]() { view.currentViewMode = VM_BOOK_VIEW; });
-    shortcutManager.registerShortcut('E', "Page View", [&]() {
+    shortcutManager.registerAction("ZOOM_IN", [&]() { view.zoomIn(); });
+    shortcutManager.registerAction("ZOOM_OUT", [&]() { view.zoomOut(); });
+    shortcutManager.registerAction("PAN_UP", [&]() { view.pan(0, -1); });
+    shortcutManager.registerAction("PAN_DOWN", [&]() { view.pan(0, 1); });
+    shortcutManager.registerAction("PAN_LEFT", [&]() { view.pan(-1, 0); });
+    shortcutManager.registerAction("PAN_RIGHT", [&]() { view.pan(1, 0); });
+    shortcutManager.registerAction("BOOK_VIEW", [&]() { view.currentViewMode = VM_BOOK_VIEW; });
+    shortcutManager.registerAction("PAGE_VIEW", [&]() {
         renderer->setStatusMessage("Enter node index for Page View: ");
         renderer->present();
         int idx; std::cin >> idx; std::cin.ignore();
         layout::PageView::renderNodePage(graph, idx);
     });
-    shortcutManager.registerShortcut('M', "Multi Foci Toggle", [&]() { Config::allowMultiFocus = !Config::allowMultiFocus; });
-    shortcutManager.registerShortcut('H', "Help Toggle", [&]() { view.showHelp = !view.showHelp; });
-    shortcutManager.registerShortcut('\t', "Cycle Focus", [&]() { graph.cycleFocus(); });
-    shortcutManager.registerShortcut('N', "Next View", [&]() {
+    shortcutManager.registerAction("TOGGLE_MULTI_FOCI", [&]() { Config::allowMultiFocus = !Config::allowMultiFocus; });
+    shortcutManager.registerAction("TOGGLE_HELP", [&]() { view.showHelp = !view.showHelp; });
+    shortcutManager.registerAction("CYCLE_FOCUS", [&]() { graph.cycleFocus(); });
+    shortcutManager.registerAction("NEXT_VIEW", [&]() {
         int current = (static_cast<int>(view.currentViewMode) + 1) % (static_cast<int>(VM_COUNT));
         if (static_cast<ViewMode>(current) == VM_BOOK_VIEW) current = (current + 1) % VM_COUNT;
         view.currentViewMode = static_cast<ViewMode>(current);
         graph.needsLayoutReset = true;
     });
 
+    shortcutManager.loadFromXml("rules/commands.xml");
+
+    io::RecoveryManager::initialize("tests/temp/autosave.csv");
+    if (io::RecoveryManager::detectAndRestore(graph)) {
+        renderer->setStatusMessage("Recovered state from autosave.");
+    }
+
+    auto lastAutosave = std::chrono::steady_clock::now();
+
     while (true) {
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - lastAutosave).count() > 30) {
+            io::RecoveryManager::triggerAutosave(graph);
+            lastAutosave = now;
+        }
+
         if (view.currentViewMode == VM_PERSPECTIVE) {
             layout::LayoutManager::applyPerspectiveBFS(graph, view);
         } else if (view.currentViewMode == VM_NEXUS_FLOW) {

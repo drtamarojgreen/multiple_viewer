@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include "../map_logic.h"
 
 namespace render {
 
@@ -27,7 +28,7 @@ public:
     std::vector<int> queryRange(const SpatialBounds& bounds) override;
 
 private:
-    static constexpr int MAX_DEPTH = 16;
+    static int get_max_depth() { return Config::maxSpatialDepth; }
     void subdivide();
     bool contains(const SpatialBounds& b, float x, float y, float z) const;
     bool intersects(const SpatialBounds& a, const SpatialBounds& b) const;

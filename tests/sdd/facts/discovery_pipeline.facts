@@ -1,0 +1,14 @@
+Situation: Discovery
+# Structural guardrails for MeSH Discovery re-implementation
+
+# Re-implementation must not use external NLP (nltk, spaCy) or ML libraries (scikit-learn)
+Is external_nlp_prohibited = true
+
+# Logistic curve fitting must be implemented manually (no scipy.optimize)
+Is manual_curve_fitting_mandatory = true
+
+# Recursive discovery must use the WorkerPool to avoid UI blocking
+Is async_discovery_mandatory = true
+
+# All API interactions must go through a stub/mock layer in tests
+Is api_mocking_mandatory = true

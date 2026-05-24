@@ -8,49 +8,157 @@
 #include <cctype>
 #include <sstream>
 #include <chrono>
+#include <mutex>
 
 namespace io {
 
-bool IOManager::loadJSON(Graph& graph, const std::string& filepath) {
-    std::ifstream file(filepath);
-    if (!file.is_open()) return false;
-    graph.clear();
-    std::string line;
+static StorageBackend* g_backend = nullptr;
+static std::mutex g_backend_mutex;
 
-    auto getVal = [&](const std::string& l, const std::string& key) {
-        size_t pos = l.find(key);
-        if (pos == std::string::npos) return std::string("");
-        size_t start = l.find(":", pos);
-        if (start == std::string::npos) return std::string("");
-        start++; // Skip colon
-        while (start < l.size() && (std::isspace(static_cast<unsigned char>(l[start])) || l[start] == '\"')) start++;
-        size_t end = start;
-        while (end < l.size() && l[end] != '\"' && l[end] != ',' && l[end] != '}' && l[end] != ']') end++;
-        // Trim trailing whitespace
-        size_t actualEnd = end;
-        while (actualEnd > start && std::isspace(static_cast<unsigned char>(l[actualEnd - 1]))) actualEnd--;
-        return l.substr(start, actualEnd - start);
-    };
+void IOManager::setBackend(StorageBackend* backend) {
+    std::lock_guard<std::mutex> lock(g_backend_mutex);
+    g_backend = backend;
+}
+
+static std::string getJsonVal(const std::string& l, const std::string& key) {
+    size_t pos = l.find(key);
+    if (pos == std::string::npos) return std::string("");
+
+    // Find the colon after the key
+    size_t colon = l.find(":", pos + key.length());
+    if (colon == std::string::npos) return std::string("");
+
+    size_t start = colon + 1;
+    // Skip spaces and opening quote
+    while (start < l.size() && (std::isspace(static_cast<unsigned char>(l[start])) || l[start] == '\"')) start++;
+
+    size_t end = start;
+    // Values end at a quote, comma, closing brace or bracket
+    while (end < l.size() && l[end] != '\"' && l[end] != ',' && l[end] != '}' && l[end] != ']') end++;
+
+    // Trim trailing whitespace
+    size_t actualEnd = end;
+    while (actualEnd > start && std::isspace(static_cast<unsigned char>(l[actualEnd - 1]))) actualEnd--;
+
+    return l.substr(start, actualEnd - start);
+}
+
+bool LocalFS::read(const std::string& path, std::string& outData) {
+    std::ifstream in(path, std::ios::in | std::ios::binary);
+    if (!in) return false;
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    outData = ss.str();
+    return true;
+}
+
+bool LocalFS::write(const std::string& path, const std::string& inData) {
+    std::ofstream out(path, std::ios::out | std::ios::binary);
+    if (!out) return false;
+    out << inData;
+    return true;
+}
+
+bool IOManager::loadJSON(Graph& graph, const std::string& filepath) {
+    std::string data;
+    {
+        std::lock_guard<std::mutex> lock(g_backend_mutex);
+        if (g_backend) {
+            if (!g_backend->read(filepath, data)) {
+                return false;
+            }
+        } else {
+            std::ifstream file(filepath);
+            if (!file.is_open()) return false;
+            std::ostringstream ss;
+            ss << file.rdbuf();
+            data = ss.str();
+        }
+    }
+
+    graph.clear();
+    std::stringstream file(data);
+    std::string line;
 
     while (std::getline(file, line)) {
         if (line.find("\"label\":") != std::string::npos) {
-            std::string label = getVal(line, "\"label\"");
-            std::string indexStr = getVal(line, "\"index\"");
+            std::string label = getJsonVal(line, "\"label\"");
+            std::string indexStr = getJsonVal(line, "\"index\"");
             if (!indexStr.empty()) {
                 try {
                     int index = std::stoi(indexStr);
                     graph.addNode(GraphNode(label, index));
-                } catch (...) {}
+                } catch (const std::exception& e) {
+                    Logger::error("Failed to parse node index: " + indexStr + " Error: " + e.what());
+                }
             }
         } else if (line.find("\"source\":") != std::string::npos) {
-            std::string srcStr = getVal(line, "\"source\"");
-            std::string dstStr = getVal(line, "\"target\"");
+            std::string srcStr = getJsonVal(line, "\"source\"");
+            std::string dstStr = getJsonVal(line, "\"target\"");
             if (!srcStr.empty() && !dstStr.empty()) {
                 try {
                     int src = std::stoi(srcStr);
                     int dst = std::stoi(dstStr);
                     graph.addEdge(src, dst);
-                } catch (...) {}
+                } catch (const std::exception& e) {
+                    Logger::error("Failed to parse edge: " + srcStr + "->" + dstStr + " Error: " + e.what());
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool IOManager::loadMeshJSON(Graph& graph, const std::string& filepath) {
+    std::string data;
+    {
+        std::lock_guard<std::mutex> lock(g_backend_mutex);
+        if (g_backend) {
+            if (!g_backend->read(filepath, data)) return false;
+        } else {
+            std::ifstream file(filepath);
+            if (!file.is_open()) return false;
+            std::ostringstream ss;
+            ss << file.rdbuf();
+            data = ss.str();
+        }
+    }
+
+    graph.clear();
+    std::stringstream file(data);
+    std::string line;
+
+    while (std::getline(file, line)) {
+        if (line.find("\"label\":") != std::string::npos) {
+            GraphNode node;
+            node.label = getJsonVal(line, "\"label\"");
+            std::string idStr = getJsonVal(line, "\"id\"");
+            if (idStr.empty()) idStr = getJsonVal(line, "\"index\"");
+
+            if (!idStr.empty()) {
+                try {
+                    node.index = std::stoi(idStr);
+                    std::string weightStr = getJsonVal(line, "\"weight\"");
+                    if (!weightStr.empty()) node.weight = std::stoi(weightStr);
+                    std::string subjectStr = getJsonVal(line, "\"subjectIndex\"");
+                    if (!subjectStr.empty()) node.subjectIndex = std::stoi(subjectStr);
+
+                    graph.addNode(node);
+                } catch (const std::exception& e) {
+                    Logger::error("Failed to parse mesh node: " + idStr + " Error: " + e.what());
+                }
+            }
+        } else if (line.find("\"source\":") != std::string::npos) {
+            std::string srcStr = getJsonVal(line, "\"source\"");
+            std::string dstStr = getJsonVal(line, "\"target\"");
+            if (!srcStr.empty() && !dstStr.empty()) {
+                try {
+                    int src = std::stoi(srcStr);
+                    int dst = std::stoi(dstStr);
+                    graph.addEdge(src, dst);
+                } catch (const std::exception& e) {
+                    Logger::error("Failed to parse mesh edge: " + srcStr + "->" + dstStr + " Error: " + e.what());
+                }
             }
         }
     }

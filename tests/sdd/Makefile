@@ -14,7 +14,16 @@ CARDS = cards/LoggingClass.cpp \
         cards/QuantaGliaClass.cpp \
         cards/PrunerClass.cpp \
         cards/ViewportClass.cpp \
-        cards/LayoutClass.cpp
+        cards/LayoutClass.cpp \
+        cards/MeshLoadClass.cpp \
+        cards/WorkerPoolClass.cpp \
+        cards/StorageBackendClass.cpp \
+        cards/XmlExtractionClass.cpp \
+        cards/MeshDiscoveryClass.cpp \
+        cards/TrendAnalysisClass.cpp \
+        cards/GraphThreadSafetyClass.cpp \
+        cards/ConfigLoadClass.cpp \
+        cards/ConfigStrictnessClass.cpp
 
 BINS = $(patsubst cards/%.cpp, $(BIN_DIR)/%, $(CARDS))
 
@@ -38,3 +47,9 @@ test: all
 	done
 
 .PHONY: all clean test
+bin/ConfigStrictnessClass: cards/ConfigStrictnessClass.cpp $(CORE_OBJS)
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $< $(CORE_OBJS) -o $@ $(LDFLAGS)
+bin/ConfigStrictnessClass: cards/ConfigStrictnessClass.cpp $(CORE_OBJS)
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $< $(CORE_OBJS) -o $@ $(LDFLAGS)

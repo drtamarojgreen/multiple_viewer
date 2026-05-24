@@ -1,0 +1,7 @@
+Situation: Mesh
+# Facts for Mesh JSON loading verification
+Is mesh_json_load_operational = false
+Is mesh_node_label = "Mesh Test Node"
+Is mesh_node_id = 123
+Is mesh_edge_source = 123
+Is mesh_edge_target = 456

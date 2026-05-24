@@ -1,0 +1,4 @@
+Situation: IO
+# Facts for StorageBackend verification
+Is storage_backend_operational = false
+Is test_data = "SDD Storage Backend Test Data"

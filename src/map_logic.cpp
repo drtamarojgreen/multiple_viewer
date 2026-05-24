@@ -1,18 +1,21 @@
 #include "map_logic.h"
 #include "analysis_logic.h"
+#include "io/yaml_parser.h"
 #include <queue>
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 
 void Graph::addNode(const GraphNode& node) {
-    if (nodeExists(node.index)) return;
+    std::lock_guard<std::mutex> lock(graphMutex);
+    if (nodeMap.find(node.index) != nodeMap.end()) return;
     nodes.push_back(node);
     nodeMap[node.index] = node;
 }
 
 void Graph::removeNode(int index) {
-    if (!nodeExists(index)) return;
+    std::lock_guard<std::mutex> lock(graphMutex);
+    if (nodeMap.find(index) == nodeMap.end()) return;
 
     // Remove this node from neighbors of others
     for (auto& [otherIndex, otherNode] : nodeMap) {
@@ -21,7 +24,11 @@ void Graph::removeNode(int index) {
         if (it != nbrs.end()) {
             nbrs.erase(it);
             // Sync with nodes vector
-            updateNode(otherIndex, otherNode);
+            auto it2 = std::find_if(nodes.begin(), nodes.end(),
+                [otherIndex](const GraphNode& n) { return n.index == otherIndex; });
+            if (it2 != nodes.end()) {
+                *it2 = otherNode;
+            }
         }
     }
 
@@ -37,11 +44,13 @@ void Graph::removeNode(int index) {
 }
 
 bool Graph::nodeExists(int index) const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     return nodeMap.find(index) != nodeMap.end();
 }
 
 // Update a node in both nodes vector and nodeMap
 void Graph::updateNode(int index, const GraphNode& updatedNode) {
+    std::lock_guard<std::mutex> lock(graphMutex);
     // Update in nodeMap
     nodeMap[index] = updatedNode;
 
@@ -54,23 +63,29 @@ void Graph::updateNode(int index, const GraphNode& updatedNode) {
 }
 
 void Graph::addEdge(int from, int to) {
-    if (!nodeExists(from) || !nodeExists(to)) return;
+    std::lock_guard<std::mutex> lock(graphMutex);
+    if (nodeMap.find(from) == nodeMap.end() || nodeMap.find(to) == nodeMap.end()) return;
 
     // Check if edge already exists to avoid duplicates
     auto& n1 = nodeMap[from].neighbors;
     if (std::find(n1.begin(), n1.end(), to) == n1.end()) {
         n1.push_back(to);
-        updateNode(from, nodeMap[from]);
+        auto it1 = std::find_if(nodes.begin(), nodes.end(),
+            [from](const GraphNode& n) { return n.index == from; });
+        if (it1 != nodes.end()) *it1 = nodeMap[from];
     }
 
     auto& n2 = nodeMap[to].neighbors;
     if (std::find(n2.begin(), n2.end(), from) == n2.end()) {
         n2.push_back(from);
-        updateNode(to, nodeMap[to]);
+        auto it2 = std::find_if(nodes.begin(), nodes.end(),
+            [to](const GraphNode& n) { return n.index == to; });
+        if (it2 != nodes.end()) *it2 = nodeMap[to];
     }
 }
 
 void Graph::clear() {
+    std::lock_guard<std::mutex> lock(graphMutex);
     nodes.clear();
     nodeMap.clear();
     nodePos.clear();
@@ -81,7 +96,10 @@ void Graph::clear() {
 
 // BFS Shortest Path
 std::unordered_map<int, int> Graph::calculateShortestPaths(int fromIndex) const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     std::unordered_map<int, int> distance;
+    if (nodeMap.find(fromIndex) == nodeMap.end()) return distance;
+
     std::queue<int> q;
     q.push(fromIndex);
     distance[fromIndex] = 0;
@@ -102,6 +120,7 @@ std::unordered_map<int, int> Graph::calculateShortestPaths(int fromIndex) const 
 
 // Connectivity Checks
 bool Graph::isConnected() const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     if (nodes.empty()) return true;
     std::set<int> visited;
     std::queue<int> q;
@@ -133,6 +152,7 @@ bool Graph::isInViewport(int worldX, int worldY, int blockSize, const ViewContex
 
 
 int Graph::edgeCount() const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     int count = 0;
     for (const auto& node : nodes) {
         count += node.neighbors.size();
@@ -141,11 +161,15 @@ int Graph::edgeCount() const {
 }
 
 float Graph::computeAvgDegree() const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     if (nodes.empty()) return 0.0f;
-    return (float)(edgeCount() * 2) / nodes.size();
+    int edges = 0;
+    for (const auto& node : nodes) edges += node.neighbors.size();
+    return (float)(edges) / nodes.size();
 }
 
 int Graph::countIsolatedNodes() const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     int isolated = 0;
     for (const auto& node : nodes) {
         if (node.neighbors.empty()) ++isolated;
@@ -154,7 +178,8 @@ int Graph::countIsolatedNodes() const {
 }
 
 void Graph::addFocus(int idx) {
-    if (!nodeExists(idx)) return;
+    std::lock_guard<std::mutex> lock(graphMutex);
+    if (nodeMap.find(idx) == nodeMap.end()) return;
     if (Config::allowMultiFocus) {
         focusedNodeIndices.insert(idx);
         focusedNodeIndex = idx; 
@@ -167,15 +192,18 @@ void Graph::addFocus(int idx) {
 }
 
 void Graph::removeFocus(int idx) {
+    std::lock_guard<std::mutex> lock(graphMutex);
     focusedNodeIndices.erase(idx);
 }
 
 void Graph::clearFocuses() {
+    std::lock_guard<std::mutex> lock(graphMutex);
     focusedNodeIndices.clear();
 }
 
 // BFS depth limit
 int Graph::getMaxDistance(ZoomLevel zoom) const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     static int baseMax[6] = {0, 2, 4, 8, 10, 20};
     int d = baseMax[static_cast<int>(zoom)];
     if (summary.totalNodes > 500) {
@@ -195,6 +223,7 @@ void Graph::pause() const {
 
 
 std::unordered_map<int,int> Graph::computeMultiFocusDistances() const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     // multi-source BFS
     std::unordered_map<int,int> dist;
     std::queue<int> q;
@@ -219,6 +248,7 @@ std::unordered_map<int,int> Graph::computeMultiFocusDistances() const {
 
 // Navigation
 void Graph::cycleFocus() {
+    std::lock_guard<std::mutex> lock(graphMutex);
     if (nodes.empty()) return;
 
     int currentFocus = -1;
@@ -306,6 +336,7 @@ Point2D projectToVanishingPoint(const Point3D& wp, const VanishingPoint& vp) {
 }
 
 int Graph::getMaxLabelLength() const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     int maxLen = 0;
     for (const auto& node : nodes)
         maxLen = std::max(maxLen, static_cast<int>(node.label.size()));
@@ -344,13 +375,16 @@ void Graph::updateSummary() {
 }
 
 bool Graph::isNodeFocused(int index) const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     return focusedNodeIndices.count(index) > 0;
 }
 
 // subject filter
 bool Graph::passesSubjectFilter(int nodeId) const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     if (!subjectFilterOnly) return true;
     if (focusedNodeIndex < 0) return true;
+    if (nodeMap.find(nodeId) == nodeMap.end() || nodeMap.find(focusedNodeIndex) == nodeMap.end()) return true;
     return nodeMap.at(nodeId).subjectIndex
          == nodeMap.at(focusedNodeIndex).subjectIndex;
 }
@@ -362,6 +396,7 @@ bool Graph::isFocusOnlyView(ZoomLevel zoom) const {
 
 // proximity depth
 float Graph::getProximityDepth(int nodeId, int width, int height) const {
+    std::lock_guard<std::mutex> lock(graphMutex);
     auto it = nodePos.find(nodeId);
     if (it == nodePos.end()) return 1.0f;
     float cx = width / 2.0f, cy = height / 2.0f;
@@ -371,7 +406,49 @@ float Graph::getProximityDepth(int nodeId, int width, int height) const {
     return std::min(1.0f, dist / std::max(cx, cy));
 }
 
+namespace Config {
+    bool showAnalyticsPanel = false;
+    bool viewerOverlayMode = false;
+    bool autoScaleDepth = false;
+    bool showTopicWeights = false;
+    bool allowMultiFocus = false;
+    int panOffsetX = 0;
+    int panOffsetY = 0;
+    float viewerZoom = 0.0f;
+    int nodePadding = 0;
+    bool quietMode = false;
+    int consoleWidth = 0;
+    int consoleHeight = 0;
+    int maxSpatialDepth = 0;
+    float cameraLerpSpeed = 0.0f;
+    int nodeWeightThresholdHigh = 0;
+    int nodeWeightThresholdLow = 0;
+
+    void loadFromYaml(const std::string& filepath) {
+        auto config = io::YamlParser::loadSimpleYaml(filepath);
+        if (config.empty()) {
+            std::cerr << "[CRITICAL] Configuration file missing or empty: " << filepath << std::endl;
+            return;
+        }
+        showAnalyticsPanel = io::YamlParser::getBool(config, "show_analytics_panel", showAnalyticsPanel);
+        viewerOverlayMode = io::YamlParser::getBool(config, "viewer_overlay_mode", viewerOverlayMode);
+        autoScaleDepth = io::YamlParser::getBool(config, "auto_scale_depth", autoScaleDepth);
+        showTopicWeights = io::YamlParser::getBool(config, "show_topic_weights", showTopicWeights);
+        allowMultiFocus = io::YamlParser::getBool(config, "allow_multi_focus", allowMultiFocus);
+        viewerZoom = io::YamlParser::getFloat(config, "viewer_zoom", viewerZoom);
+        nodePadding = io::YamlParser::getInt(config, "node_padding", nodePadding);
+        quietMode = io::YamlParser::getBool(config, "quiet_mode", quietMode);
+        consoleWidth = io::YamlParser::getInt(config, "console_width", consoleWidth);
+        consoleHeight = io::YamlParser::getInt(config, "console_height", consoleHeight);
+        maxSpatialDepth = io::YamlParser::getInt(config, "max_spatial_depth", maxSpatialDepth);
+        cameraLerpSpeed = io::YamlParser::getFloat(config, "camera_lerp_speed", cameraLerpSpeed);
+        nodeWeightThresholdHigh = io::YamlParser::getInt(config, "node_weight_threshold_high", nodeWeightThresholdHigh);
+        nodeWeightThresholdLow = io::YamlParser::getInt(config, "node_weight_threshold_low", nodeWeightThresholdLow);
+    }
+}
+
 void Graph::applyBrainOverlay(const model::BrainOverlay& overlay) {
+    std::lock_guard<std::mutex> lock(graphMutex);
     for (auto& node : nodes) {
         model::RegionID rid = overlay.getRegionForNode(node.index);
         if (!rid.empty()) {
