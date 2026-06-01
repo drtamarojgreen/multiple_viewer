@@ -21,6 +21,8 @@
 #include "analytics/nlp_engine.h"
 #include "analytics/trend_analyzer.h"
 #include "genome/genome_manager.h"
+#include "processor_logic.h"
+#include "analysis_logic.h"
 
 #ifdef _WIN32
 #include <conio.h>
@@ -115,6 +117,11 @@ int runApplication(const CmdLineParser& parser) {
         std::cout << "  --load-labels <file.txt>  Load brain labels\n";
         std::cout << "  --load-overlay <file.txt> Load node-to-brain overlay\n";
         std::cout << "  --check-sdd <repo>        Check repository for SDD adherence\n";
+        std::cout << "  --process                 Process topics from source to target\n";
+        std::cout << "  --source <dir>            Source directory for processing (default: source)\n";
+        std::cout << "  --target <dir>            Target directory for processing (default: target)\n";
+        std::cout << "  --summary                 Report graph summary data\n";
+        std::cout << "  --filename <file.csv>     Filename for summary (default: graph.csv)\n";
         std::cout << "  --test-unit               Run unit tests\n";
         std::cout << "  --test-bdd                Run BDD tests\n";
         std::cout << "  --test                    Run all tests\n";
@@ -131,6 +138,28 @@ int runApplication(const CmdLineParser& parser) {
             std::cout << "  - " << detail << std::endl;
         }
         return result.passed ? 0 : 1;
+    }
+
+    if (parser.hasOption("process")) {
+        std::string source = parser.getOption("source");
+        if (source.empty()) source = "source";
+        std::string target = parser.getOption("target");
+        if (target.empty()) target = "target";
+        return tp::processTopics(source, target);
+    }
+
+    if (parser.hasOption("summary")) {
+        std::string filename = parser.getOption("filename");
+        if (filename.empty()) filename = "graph.csv";
+        Graph graph;
+        if (io::IOManager::loadGraphFromCSV(graph, filename)) {
+            graph.updateSummary();
+            AnalyticsEngine::printSummary(graph);
+        } else {
+            std::cerr << "Error: Could not load graph from " << filename << "\n";
+            return 1;
+        }
+        return 0;
     }
 
     // Headless operations

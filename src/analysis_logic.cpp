@@ -178,3 +178,47 @@ void AnalyticsEngine::drawAnalyticsPanelOverlay(const Graph& g) {
     std::cout << "Render Time: " << s.timeToRenderMs << " ms\n";
     std::cout << "=================================\n";
 }
+
+void AnalyticsEngine::printSummary(const Graph& g) {
+    const auto& s = g.summary;
+    std::cout << "=== Graph Summary ===\n";
+    std::cout << "Total Nodes: " << s.totalNodes << "\n";
+    std::cout << "Total Edges: " << s.totalEdges << "\n";
+    std::cout << "Average Degree: " << s.averageDegree << "\n";
+    std::cout << "Density: " << s.density << "\n";
+    std::cout << "Connected: " << (s.isConnected ? "Yes" : "No") << "\n";
+    std::cout << "Isolated Nodes: " << s.isolatedNodeCount << "\n";
+    std::cout << "Clustering Coefficient: " << s.avgClusteringCoeff << "\n";
+    std::cout << "Diameter: " << s.diameter << "\n";
+    std::cout << "Components: " << s.components.size() << "\n";
+
+    // Calculate top and bottom nodes by degree
+    std::vector<std::pair<int, int>> nodeDegrees;
+    for (const auto& node : g.nodes) {
+        nodeDegrees.push_back({node.index, (int)node.neighbors.size()});
+    }
+
+    auto byHigh = [](const auto& a, const auto& b) {
+        if (a.second != b.second) return a.second > b.second;
+        return a.first < b.first;
+    };
+
+    std::sort(nodeDegrees.begin(), nodeDegrees.end(), byHigh);
+
+    auto printList = [&](const std::string& title, const std::vector<std::pair<int, int>>& list, size_t count, bool reverse) {
+        std::cout << "\n" << title << ":\n";
+        size_t n = std::min(count, list.size());
+        for (size_t i = 0; i < n; ++i) {
+            size_t idx = reverse ? (list.size() - 1 - i) : i;
+            int nodeIdx = list[idx].first;
+            int deg = list[idx].second;
+            if (g.nodeExists(nodeIdx)) {
+                std::cout << "  " << (i + 1) << ". [" << g.nodeMap.at(nodeIdx).label 
+                          << "] (Index: " << nodeIdx << ", Degree: " << deg << ")\n";
+            }
+        }
+    };
+
+    printList("Top 50 Connected Nodes", nodeDegrees, 50, false);
+    printList("Lowest 50 Connected Nodes", nodeDegrees, 50, true);
+}

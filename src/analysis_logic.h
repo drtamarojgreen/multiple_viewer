@@ -21,6 +21,7 @@ public:
 
     // UI/Output
     static void drawAnalyticsPanelOverlay(const Graph& g);
+    static void printSummary(const Graph& g);
 };
 
 #endif // ANALYSIS_LOGIC_H
