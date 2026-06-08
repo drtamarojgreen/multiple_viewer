@@ -209,8 +209,8 @@ bool IOManager::exportSVG(const Graph& graph, const std::string& filepath) {
         minY = std::min(minY, p.y); maxY = std::max(maxY, p.y);
     }
 
-    float offsetX = 600 - (minX + maxX) * 10;
-    float offsetY = 400 - (minY + maxY) * 15;
+    float offsetX = 600 - (minX + maxX) * 25; // Increased scale for centering
+    float offsetY = 400 - (minY + maxY) * 35;
 
     // Draw Edges
     for (const auto& node : graph.nodes) {
@@ -222,9 +222,9 @@ bool IOManager::exportSVG(const Graph& graph, const std::string& filepath) {
             if (node.index > neighbor_id) continue; // Draw each edge once
             const auto& p2 = graph.layoutPositions.at(neighbor_id);
 
-            file << "  <line x1=\"" << offsetX + p1.x * 20 << "\" y1=\"" << offsetY + p1.y * 30
-                 << "\" x2=\"" << offsetX + p2.x * 20 << "\" y2=\"" << offsetY + p2.y * 30
-                 << "\" stroke=\"#555\" stroke-width=\"1\" />\n";
+            file << "  <line x1=\"" << offsetX + p1.x * 50 << "\" y1=\"" << offsetY + p1.y * 70
+                 << "\" x2=\"" << offsetX + p2.x * 50 << "\" y2=\"" << offsetY + p2.y * 70
+                 << "\" stroke=\"#555\" stroke-width=\"2\" />\n";
         }
     }
 
@@ -237,10 +237,12 @@ bool IOManager::exportSVG(const Graph& graph, const std::string& filepath) {
         if (node.weight >= 10) color = "#e74c3c"; // Red for high weight
         else if (node.weight >= 5) color = "#f1c40f"; // Yellow
 
-        file << "  <circle cx=\"" << offsetX + p.x * 20 << "\" cy=\"" << offsetY + p.y * 30
-             << "\" r=\"5\" fill=\"" << color << "\" />\n";
-        file << "  <text x=\"" << offsetX + p.x * 20 + 8 << "\" y=\"" << offsetY + p.y * 30 + 4
-             << "\" fill=\"white\" font-family=\"Arial\" font-size=\"10\">" << node.label << "</text>\n";
+        float radius = 10.0f + (node.weight * 0.5f); // Scale radius by weight
+
+        file << "  <circle cx=\"" << offsetX + p.x * 50 << "\" cy=\"" << offsetY + p.y * 70
+             << "\" r=\"" << radius << "\" fill=\"" << color << "\" stroke=\"white\" stroke-width=\"1\" />\n";
+        file << "  <text x=\"" << offsetX + p.x * 50 << "\" y=\"" << offsetY + p.y * 70 + radius + 15
+             << "\" fill=\"white\" font-family=\"Arial\" font-size=\"12\" font-weight=\"bold\" text-anchor=\"middle\">" << node.label << "</text>\n";
     }
 
     file << "</svg>\n";
