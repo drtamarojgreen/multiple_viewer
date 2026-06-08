@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+  <rect width="100%" height="100%" fill="#1e1e1e"/>
+  <line x1="520" y1="280" x2="610" y2="280" stroke="#555" stroke-width="1" />
+  <line x1="520" y1="280" x2="510" y2="430" stroke="#555" stroke-width="1" />
+  <line x1="610" y1="280" x2="690" y2="280" stroke="#555" stroke-width="1" />
+  <line x1="610" y1="280" x2="610" y2="400" stroke="#555" stroke-width="1" />
+  <line x1="510" y1="430" x2="590" y2="430" stroke="#555" stroke-width="1" />
+  <line x1="610" y1="400" x2="670" y2="400" stroke="#555" stroke-width="1" />
+  <line x1="590" y1="430" x2="650" y2="430" stroke="#555" stroke-width="1" />
+  <line x1="590" y1="430" x2="590" y2="520" stroke="#555" stroke-width="1" />
+  <circle cx="520" cy="280" r="5" fill="#e74c3c" />
+  <text x="528" y="284" fill="white" font-family="Arial" font-size="10">Behavioral Activation</text>
+  <circle cx="610" cy="280" r="5" fill="#f1c40f" />
+  <text x="618" y="284" fill="white" font-family="Arial" font-size="10">Cognitive Distortions</text>
+  <circle cx="510" cy="430" r="5" fill="#f1c40f" />
+  <text x="518" y="434" fill="white" font-family="Arial" font-size="10">Exposure Therapy</text>
+  <circle cx="690" cy="280" r="5" fill="#f1c40f" />
+  <text x="698" y="284" fill="white" font-family="Arial" font-size="10">Thought Record</text>
+  <circle cx="610" cy="400" r="5" fill="#f1c40f" />
+  <text x="618" y="404" fill="white" font-family="Arial" font-size="10">Relaxation Techniques</text>
+  <circle cx="590" cy="430" r="5" fill="#f1c40f" />
+  <text x="598" y="434" fill="white" font-family="Arial" font-size="10">Mindfulness Meditation</text>
+  <circle cx="670" cy="400" r="5" fill="#f1c40f" />
+  <text x="678" y="404" fill="white" font-family="Arial" font-size="10">Self-Monitoring</text>
+  <circle cx="650" cy="430" r="5" fill="#f1c40f" />
+  <text x="658" y="434" fill="white" font-family="Arial" font-size="10">Problem Solving</text>
+  <circle cx="590" cy="520" r="5" fill="#f1c40f" />
+  <text x="598" y="524" fill="white" font-family="Arial" font-size="10">Sleep Hygiene</text>
+</svg>

@@ -49,15 +49,15 @@ Feature: Original Viewer Functionality
 
   Scenario: Baseline CSV Persistence
     Given an empty graph
-    When I load the graph from "test_graph.csv"
-    Then node 100 should exist
-    And node 100 should have label "CSVNode"
-    And node 101 should exist
-    And node 100 should be connected to node 101
+    When I load the graph from "tests/test_graph.csv"
+    Then node 0 should exist
+    And node 0 should have label "NodeA"
+    And node 1 should exist
+    And node 0 should be connected to node 1
 
   Scenario: Baseline JSON Persistence
     Given an empty graph
-    When I load the graph from "test_graph.json" in JSON format
+    When I load the graph from "tests/test_graph.json" in JSON format
     Then node 200 should exist
     And node 200 should have label "JSONNode"
     And node 201 should exist

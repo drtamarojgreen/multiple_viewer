@@ -2,13 +2,37 @@
 
 Multiple Viewer is a C++17 console application for exploring graph data and experimenting with brain-model overlays. It combines interactive navigation, graph analytics, headless CLI workflows, and a deterministic model/simulation core used by domain plugins and BDD scenarios.
 
-## What it does
+## Overview
 
-- Interactive terminal graph viewer/editor with pan/zoom, focus tools, search, multiple layout modes, and save/load flows.
-- Headless CLI operations for loading graphs, saving graphs, and printing node metadata.
-- Brain-model data loading for atlas, labels, and overlay mappings.
-- Extended architecture modules for analytics, scripting runtime, IO management, layout, and UI helpers.
-- Test coverage across unit-style logic checks and BDD feature scenarios (core kernel, UI, data, rendering, domain behavior).
+Multiple Viewer is a robust system for graph visualization and brain-model simulation.
+
+![Graph Preview](docs/graph_screenshot.png)
+
+## Core Features
+
+### 1. Interactive Graph Viewer
+- **Multiple View Modes**:
+    - **Perspective (BFS)**: Expansion from a central focus node with collision-free layout.
+    - **Nexus Flow**: Organic force-directed layout with dynamic physics simulation.
+    - **Book View**: Hierarchical subject-based grouping of nodes.
+    - **Page View**: Detailed drill-down into individual node properties and neighbors.
+- **Advanced Navigation**: Real-time pan and zoom, focus cycling, and multi-token search.
+- **Visual Feedback**: Depth-based node sizing and weight-based color coding.
+
+### 2. Brain Modeling Sandbox
+- **Atlas Integration**: Load `.brn` atlas files and region labels.
+- **Overlay System**: Map graph nodes to anatomical brain regions with Z-ordered rendering.
+
+### 3. Headless CLI Workflows
+- Load/Save graphs in CSV and JSON formats.
+- **SVG Export**: Generate high-quality vector representations of graph layouts.
+- MeSH Discovery: Automated hierarchical discovery from seed terms.
+- Genome Query: Integrated API support for genomic data ingestion.
+
+### 4. SDD-Aligned Architecture
+- **Sorrel Driven Development (SDD)**: A testing architecture that enforces structural constraints before execution.
+- **Verification Cards**: C++ based units that perform empirical observations (e.g., measuring latency, verifying filesystem state).
+- **BDD Testing**: Comprehensive feature verification using a Gherkin-like DSL and a mock `UIPrinter` for visual assertions.
 
 ## Repository layout
 
@@ -88,6 +112,12 @@ Load and re-save a graph:
 
 ```bash
 ./build/viewer --load-graph graph_input.csv --save-graph out.csv
+```
+
+Export a graph layout as SVG:
+
+```bash
+./build/viewer --load-graph graph_input.csv --export-svg output.svg
 ```
 
 ## Testing

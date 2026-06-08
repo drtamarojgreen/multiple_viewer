@@ -199,8 +199,50 @@ bool IOManager::saveJSON(const Graph& graph, const std::string& filepath) {
 bool IOManager::exportSVG(const Graph& graph, const std::string& filepath) {
     std::ofstream file(filepath);
     if (!file.is_open()) return false;
-    file << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"800\" height=\"600\">\n";
-    file << "  <rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n";
+    file << "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1200\" height=\"800\">\n";
+    file << "  <rect width=\"100%\" height=\"100%\" fill=\"#1e1e1e\"/>\n";
+
+    // Find min/max for centering
+    float minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    for (const auto& [id, p] : graph.layoutPositions) {
+        minX = std::min(minX, p.x); maxX = std::max(maxX, p.x);
+        minY = std::min(minY, p.y); maxY = std::max(maxY, p.y);
+    }
+
+    float offsetX = 600 - (minX + maxX) * 10;
+    float offsetY = 400 - (minY + maxY) * 15;
+
+    // Draw Edges
+    for (const auto& node : graph.nodes) {
+        if (graph.layoutPositions.count(node.index) == 0) continue;
+        const auto& p1 = graph.layoutPositions.at(node.index);
+
+        for (int neighbor_id : node.neighbors) {
+            if (graph.layoutPositions.count(neighbor_id) == 0) continue;
+            if (node.index > neighbor_id) continue; // Draw each edge once
+            const auto& p2 = graph.layoutPositions.at(neighbor_id);
+
+            file << "  <line x1=\"" << offsetX + p1.x * 20 << "\" y1=\"" << offsetY + p1.y * 30
+                 << "\" x2=\"" << offsetX + p2.x * 20 << "\" y2=\"" << offsetY + p2.y * 30
+                 << "\" stroke=\"#555\" stroke-width=\"1\" />\n";
+        }
+    }
+
+    // Draw Nodes
+    for (const auto& node : graph.nodes) {
+        if (graph.layoutPositions.count(node.index) == 0) continue;
+        const auto& p = graph.layoutPositions.at(node.index);
+
+        std::string color = "#4a90e2"; // Default Blue
+        if (node.weight >= 10) color = "#e74c3c"; // Red for high weight
+        else if (node.weight >= 5) color = "#f1c40f"; // Yellow
+
+        file << "  <circle cx=\"" << offsetX + p.x * 20 << "\" cy=\"" << offsetY + p.y * 30
+             << "\" r=\"5\" fill=\"" << color << "\" />\n";
+        file << "  <text x=\"" << offsetX + p.x * 20 + 8 << "\" y=\"" << offsetY + p.y * 30 + 4
+             << "\" fill=\"white\" font-family=\"Arial\" font-size=\"10\">" << node.label << "</text>\n";
+    }
+
     file << "</svg>\n";
     return true;
 }

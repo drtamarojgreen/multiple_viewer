@@ -21,6 +21,7 @@
 #include "analytics/nlp_engine.h"
 #include "analytics/trend_analyzer.h"
 #include "genome/genome_manager.h"
+#include "layout/layout_manager.h"
 #include "processor_logic.h"
 #include "analysis_logic.h"
 
@@ -122,6 +123,7 @@ int runApplication(const CmdLineParser& parser) {
         std::cout << "  --target <dir>            Target directory for processing (default: target)\n";
         std::cout << "  --summary                 Report graph summary data\n";
         std::cout << "  --filename <file.csv>     Filename for summary (default: graph.csv)\n";
+        std::cout << "  --export-svg <file.svg>   Export graph to SVG (headless)\n";
         std::cout << "  --test-unit               Run unit tests\n";
         std::cout << "  --test-bdd                Run BDD tests\n";
         std::cout << "  --test                    Run all tests\n";
@@ -187,7 +189,7 @@ int runApplication(const CmdLineParser& parser) {
         return 0;
     }
 
-    if (parser.hasOption("load-graph") || parser.hasOption("save-graph") || parser.hasOption("get-node-details")) {
+    if (parser.hasOption("load-graph") || parser.hasOption("save-graph") || parser.hasOption("get-node-details") || parser.hasOption("export-svg")) {
         Graph graph;
         std::string loadPath = parser.getOption("load-graph");
         if (loadPath.empty()) loadPath = "graph_input.csv";
@@ -195,6 +197,18 @@ int runApplication(const CmdLineParser& parser) {
         if (!io::IOManager::loadGraphFromCSV(graph, loadPath)) {
             std::cerr << "Error: Could not load graph from " << loadPath << "\n";
             return 1;
+        }
+
+        if (parser.hasOption("export-svg")) {
+            ViewContext view;
+            layout::LayoutManager::applyPerspectiveBFS(graph, view);
+            std::string svgPath = parser.getOption("export-svg");
+            if (io::IOManager::exportSVG(graph, svgPath)) {
+                std::cout << "Graph exported to SVG: " << svgPath << "\n";
+            } else {
+                std::cerr << "Error: Could not export graph to " << svgPath << "\n";
+                return 1;
+            }
         }
 
         if (parser.hasOption("get-node-details")) {
