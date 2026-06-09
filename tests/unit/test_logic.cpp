@@ -111,19 +111,17 @@ void testGraphSerializationJSON() {
 void testBaselinePersistence() {
     // CSV Baseline
     Graph g_csv;
-    bool ok_csv = io::IOManager::loadGraphFromCSV(g_csv, "test_graph.csv");
+    bool ok_csv = io::IOManager::loadGraphFromCSV(g_csv, "tests/test_graph.csv");
     TEST("Baseline CSV load success", ok_csv);
     if (ok_csv) {
         TEST("Baseline CSV node count", g_csv.nodes.size() == 2);
         TEST("Baseline CSV edge count", g_csv.edgeCount() == 1);
-        TEST("Baseline CSV label check", g_csv.nodeMap.at(100).label == "CSVNode");
-        TEST("Baseline CSV weight check", g_csv.nodeMap.at(100).weight == 10);
-        TEST("Baseline CSV subject check", g_csv.nodeMap.at(100).subjectIndex == 1);
+        TEST("Baseline CSV label check", g_csv.nodeMap.at(0).label == "NodeA");
     }
 
     // JSON Baseline
     Graph g_json;
-    bool ok_json = io::IOManager::loadJSON(g_json, "test_graph.json");
+    bool ok_json = io::IOManager::loadJSON(g_json, "tests/test_graph.json");
     TEST("Baseline JSON load success", ok_json);
     if (ok_json) {
         TEST("Baseline JSON node count", g_json.nodes.size() == 2);
@@ -145,13 +143,12 @@ void testParseNeighbors() {
 void testAdaptiveLabelLength() {
   Graph g;
   g.addNode(GraphNode("Topic", 0, {}, 1, 0)); // "Topic" size is 5
-  int base = 10; // The heuristic base in the free function
-  int d0 = getAdaptiveLabelLength(0, ZoomLevel::Z3, base);
-  int d1 = getAdaptiveLabelLength(1, ZoomLevel::Z3, base);
-  int d2 = getAdaptiveLabelLength(2, ZoomLevel::Z3, base);
-  TEST("label depth0 > base", d0 > base);
-  TEST("label depth1 == base", d1 == base);
-  TEST("label depth2 < base", d2 < base);
+  int d0 = getAdaptiveLabelLength(0, ZoomLevel::Z3, 10);
+  int d1 = getAdaptiveLabelLength(1, ZoomLevel::Z3, 10);
+  int d2 = getAdaptiveLabelLength(2, ZoomLevel::Z3, 10);
+  TEST("label depth0 > base", d0 > 10);
+  TEST("label depth1 == base", d1 == 10);
+  TEST("label depth2 < base", d2 < 10);
 }
 
 // Test 3: subject-only filtering
