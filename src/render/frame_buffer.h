@@ -23,6 +23,9 @@ public:
 
     int getWidth() const { return width_; }
     int getHeight() const { return height_; }
+    const std::vector<std::string>& getBuffer() const { return buffer_; }
+    const std::string& getTitle() const { return title_; }
+    const std::string& getStatusMessage() const { return statusMessage_; }
 
 private:
     int width_;

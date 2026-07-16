@@ -2,7 +2,9 @@
 #include <queue>
 #include <algorithm>
 #include <chrono>
+#include <fstream>
 #include "viewer_logic.h"
+#include "render/console_renderer.h"
 #include "search_logic.h"
 #include <iostream>
 #include "unit/test_logic.h"
@@ -189,7 +191,7 @@ int runApplication(const CmdLineParser& parser) {
         return 0;
     }
 
-    if (parser.hasOption("load-graph") || parser.hasOption("save-graph") || parser.hasOption("get-node-details") || parser.hasOption("export-svg")) {
+    if (parser.hasOption("load-graph") || parser.hasOption("save-graph") || parser.hasOption("get-node-details") || parser.hasOption("export-svg") || parser.hasOption("export-tui")) {
         Graph graph;
         std::string loadPath = parser.getOption("load-graph");
         if (loadPath.empty()) loadPath = "graph_input.csv";
@@ -209,6 +211,119 @@ int runApplication(const CmdLineParser& parser) {
             } else {
                 std::cerr << "Error: Could not export graph to " << svgPath << "\n";
                 return 1;
+            }
+        }
+
+        if (parser.hasOption("export-tui")) {
+            std::string tuiPath = parser.getOption("export-tui");
+            ViewContext view;
+            view.width = 80;
+            view.height = 25;
+            view.currentViewMode = VM_PERSPECTIVE;
+            view.zoomLevel = ZoomLevel::Z3;
+
+            // Apply layout
+            layout::LayoutManager::applyPerspectiveBFS(graph, view);
+
+            // Render using ConsoleRenderer
+            render::ConsoleRenderer renderer;
+            renderer.initialize(view.width, view.height);
+
+            SearchState search;
+            input::ShortcutManager shortcut;
+            renderer.renderWithUI(graph, view, search, shortcut);
+
+            const render::FrameBuffer* fb = renderer.getFrameBuffer();
+            if (fb) {
+                std::ofstream out(tuiPath);
+                if (out.is_open()) {
+                    out << "<!DOCTYPE html>\n<html>\n<head>\n<style>\n"
+                        << "body {\n"
+                        << "  background-color: #1a1a1a;\n"
+                        << "  display: flex;\n"
+                        << "  justify-content: center;\n"
+                        << "  align-items: center;\n"
+                        << "  height: 100vh;\n"
+                        << "  margin: 0;\n"
+                        << "  font-family: sans-serif;\n"
+                        << "}\n"
+                        << ".terminal-window {\n"
+                        << "  width: 720px;\n"
+                        << "  background-color: #0c0c0c;\n"
+                        << "  border-radius: 8px;\n"
+                        << "  box-shadow: 0 20px 50px rgba(0,0,0,0.5);\n"
+                        << "  border: 1px solid #333;\n"
+                        << "  overflow: hidden;\n"
+                        << "}\n"
+                        << ".terminal-header {\n"
+                        << "  background-color: #222;\n"
+                        << "  padding: 10px;\n"
+                        << "  display: flex;\n"
+                        << "  align-items: center;\n"
+                        << "  border-bottom: 1px solid #333;\n"
+                        << "}\n"
+                        << ".buttons {\n"
+                        << "  display: flex;\n"
+                        << "  gap: 6px;\n"
+                        << "}\n"
+                        << ".button {\n"
+                        << "  width: 12px;\n"
+                        << "  height: 12px;\n"
+                        << "  border-radius: 50%;\n"
+                        << "}\n"
+                        << ".close { background-color: #ff5f56; }\n"
+                        << ".minimize { background-color: #ffbd2e; }\n"
+                        << ".maximize { background-color: #27c93f; }\n"
+                        << ".title {\n"
+                        << "  color: #999;\n"
+                        << "  margin-left: auto;\n"
+                        << "  margin-right: auto;\n"
+                        << "  font-size: 13px;\n"
+                        << "  font-weight: bold;\n"
+                        << "}\n"
+                        << ".terminal-body {\n"
+                        << "  padding: 15px;\n"
+                        << "}\n"
+                        << "pre {\n"
+                        << "  margin: 0;\n"
+                        << "  font-family: 'Fira Code', 'Courier New', Courier, monospace;\n"
+                        << "  font-size: 14px;\n"
+                        << "  line-height: 1.25;\n"
+                        << "  color: #00ff00;\n"
+                        << "}\n"
+                        << "</style>\n</head>\n<body>\n"
+                        << "<div class=\"terminal-window\">\n"
+                        << "  <div class=\"terminal-header\">\n"
+                        << "    <div class=\"buttons\">\n"
+                        << "      <div class=\"button close\"></div>\n"
+                        << "      <div class=\"button minimize\"></div>\n"
+                        << "      <div class=\"button maximize\"></div>\n"
+                        << "    </div>\n"
+                        << "    <div class=\"title\">" << fb->getTitle() << "</div>\n"
+                        << "  </div>\n"
+                        << "  <div class=\"terminal-body\">\n"
+                        << "    <pre>";
+
+                    for (const auto& row : fb->getBuffer()) {
+                        // Escape HTML characters
+                        for (char c : row) {
+                            if (c == '<') out << "&lt;";
+                            else if (c == '>') out << "&gt;";
+                            else if (c == '&') out << "&amp;";
+                            else out << c;
+                        }
+                        out << "\n";
+                    }
+
+                    out << "</pre>\n"
+                        << "  </div>\n"
+                        << "</div>\n"
+                        << "</body>\n</html>\n";
+                    std::cout << "Terminal GUI exported to HTML: " << tuiPath << "\n";
+                } else {
+                    std::cerr << "Error: Could not save TUI export to " << tuiPath << "\n";
+                    return 1;
+                }
             }
         }
 

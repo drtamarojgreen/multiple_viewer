@@ -24,6 +24,7 @@ public:
 
     bool isWindowOpen() const override { return true; } // Console is always "open"
     void setStatusMessage(const std::string& message) override;
+    const FrameBuffer* getFrameBuffer() const { return frameBuffer_.get(); }
 
 private:
     int width_ = 80;
