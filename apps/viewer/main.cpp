@@ -201,6 +201,7 @@ int runApplication(const CmdLineParser& parser) {
 
         if (parser.hasOption("export-svg")) {
             ViewContext view;
+            view.maxRenderDistance = 50; // Ensure all nodes in the graph are properly processed and layouted
             layout::LayoutManager::applyPerspectiveBFS(graph, view);
             std::string svgPath = parser.getOption("export-svg");
             if (io::IOManager::exportSVG(graph, svgPath)) {
