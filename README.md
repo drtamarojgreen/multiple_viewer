@@ -6,7 +6,10 @@ Multiple Viewer is a C++17 console application for exploring graph data and expe
 
 Multiple Viewer is a robust system for graph visualization and brain-model simulation.
 
-![Graph Preview](docs/graph_screenshot.png)
+### Terminal TUI Preview
+Below is a live screenshot of the actual interactive terminal-based TUI application showing a full graph layout, real-time panning, active focus nodes, weight-coded color-styling, and an integrated real-time ASCII minimap:
+
+![Terminal TUI Preview](docs/graph_screenshot.png)
 
 ## Core Features
 

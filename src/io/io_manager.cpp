@@ -209,8 +209,18 @@ bool IOManager::exportSVG(const Graph& graph, const std::string& filepath) {
         minY = std::min(minY, p.y); maxY = std::max(maxY, p.y);
     }
 
-    float offsetX = 600 - (minX + maxX) * 25; // Increased scale for centering
-    float offsetY = 400 - (minY + maxY) * 35;
+    float rangeX = maxX - minX;
+    float rangeY = maxY - minY;
+
+    // Scale dynamically to fit within the 1200x800 viewport with clean margins
+    float scaleX = (rangeX > 0) ? 1000.0f / rangeX : 30.0f;
+    float scaleY = (rangeY > 0) ? 600.0f / rangeY : 30.0f;
+    float scale = std::min(scaleX, scaleY);
+    if (scale > 40.0f) scale = 40.0f; // Cap maximum scale to keep nodes nicely sized
+    if (scale < 10.0f) scale = 10.0f; // Lower bound on scaling
+
+    float offsetX = 600 - (minX + maxX) * (scale / 2.0f);
+    float offsetY = 400 - (minY + maxY) * (scale / 2.0f);
 
     // Draw Edges
     for (const auto& node : graph.nodes) {
@@ -222,8 +232,8 @@ bool IOManager::exportSVG(const Graph& graph, const std::string& filepath) {
             if (node.index > neighbor_id) continue; // Draw each edge once
             const auto& p2 = graph.layoutPositions.at(neighbor_id);
 
-            file << "  <line x1=\"" << offsetX + p1.x * 50 << "\" y1=\"" << offsetY + p1.y * 70
-                 << "\" x2=\"" << offsetX + p2.x * 50 << "\" y2=\"" << offsetY + p2.y * 70
+            file << "  <line x1=\"" << offsetX + p1.x * scale << "\" y1=\"" << offsetY + p1.y * scale
+                 << "\" x2=\"" << offsetX + p2.x * scale << "\" y2=\"" << offsetY + p2.y * scale
                  << "\" stroke=\"#555\" stroke-width=\"2\" />\n";
         }
     }
@@ -239,9 +249,9 @@ bool IOManager::exportSVG(const Graph& graph, const std::string& filepath) {
 
         float radius = 10.0f + (node.weight * 0.5f); // Scale radius by weight
 
-        file << "  <circle cx=\"" << offsetX + p.x * 50 << "\" cy=\"" << offsetY + p.y * 70
+        file << "  <circle cx=\"" << offsetX + p.x * scale << "\" cy=\"" << offsetY + p.y * scale
              << "\" r=\"" << radius << "\" fill=\"" << color << "\" stroke=\"white\" stroke-width=\"1\" />\n";
-        file << "  <text x=\"" << offsetX + p.x * 50 << "\" y=\"" << offsetY + p.y * 70 + radius + 15
+        file << "  <text x=\"" << offsetX + p.x * scale << "\" y=\"" << offsetY + p.y * scale + radius + 15
              << "\" fill=\"white\" font-family=\"Arial\" font-size=\"12\" font-weight=\"bold\" text-anchor=\"middle\">" << node.label << "</text>\n";
     }
 
